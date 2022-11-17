@@ -9,14 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@enable3d/ammo-physics": "^0.25.3",
+    "@enable3d/phaser-extension": "0.22.0",
     "@types/node": "18.11.9",
     "@types/react": "18.0.25",
     "@types/react-dom": "18.0.9",
+    "@types/three": "^0.146.0",
+    "enable3d": "^0.25.3",
     "eslint": "8.27.0",
     "eslint-config-next": "13.0.3",
+    "matter-js": "0.16.1",
     "next": "13.0.3",
+    "phaser": "3.52.0",
+    "poly-decomp": "^0.3.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "three": "0.127.0",
     "typescript": "4.9.3"
   }
 }
