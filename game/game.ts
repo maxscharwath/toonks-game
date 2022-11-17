@@ -15,9 +15,4 @@ const config: Phaser.Types.Core.GameConfig = {
   ...Canvas()
 }
 
-let loaded = false
-export function createGame() {
-  if (loaded) return
-  loaded = true
-  enable3d(() => new Phaser.Game(config)).withPhysics('/ammo/kripken')
-}
+enable3d(() => new Phaser.Game(config)).withPhysics('/ammo/kripken')

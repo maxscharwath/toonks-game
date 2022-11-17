@@ -1,7 +1,5 @@
-'use client';
-import { createGame } from '../game/game'
+import Game from './Game'
 
 export default function Home() {
-  createGame();
-  return (<></>);
+  return (<Game />);
 }
