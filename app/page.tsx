@@ -1,5 +1,5 @@
-import Game from './Game'
+import Index from ".";
 
 export default function Home() {
-  return (<Game />);
+  return (<Index />);
 }
