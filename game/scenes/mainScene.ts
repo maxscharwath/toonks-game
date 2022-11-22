@@ -1,8 +1,9 @@
 import { ExtendedObject3D, Scene3D, THREE } from '@enable3d/phaser-extension'
-import Car, { WheelPosition } from '../models/Car'
+import Tank, { WheelPosition } from '../models/Tank'
+import { ExtendedGroup } from 'enable3d'
 
 export default class MainScene extends Scene3D {
-  private car?: Car;
+  private tank?: Tank;
   private keys = {
     w: false,
     a: false,
@@ -45,7 +46,7 @@ export default class MainScene extends Scene3D {
   }
 
   async create() {
-    const { lights } = await this.third.warpSpeed("-ground")
+    const { lights } = await this.third.warpSpeed()
     if (lights) {
       const intensity = 0.4
       lights.hemisphereLight.intensity = intensity
@@ -53,43 +54,19 @@ export default class MainScene extends Scene3D {
       lights.directionalLight.intensity = intensity
     }
 
-    const asphalt = await this.third.load.texture('/img/asphalt.jpg')
-    const asphaltGround = asphalt.clone()
-    asphaltGround.needsUpdate = true
-    asphaltGround.wrapS = asphaltGround.wrapT = 1000 // RepeatWrapping
-    asphaltGround.offset.set(0, 0)
-    asphaltGround.repeat.set(10, 10)
+    const tankGlb = await this.third.load.gltf("/glb/tank.glb");
+    const tankModel = tankGlb.scenes[0] as ExtendedGroup
 
-    this.third.physics.add.ground({ y: -1, width: 100, height: 100 }, { lambert: { map: asphaltGround } })
-
-    const raceTrackGltf = await this.third.load.gltf("/glb/racetrack.glb");
-    const scene = raceTrackGltf.scenes[0];
-
-    scene.scale.set(2, 2, 2);
-    scene.position.set(0, -6, 0);
-
-    this.third.add.existing(scene);
-
-
-
-    const gltf = await this.third.load.gltf("/glb/car.glb");
-    const chassis = gltf.scenes[0].getObjectByName("Chassis") as ExtendedObject3D;
-    chassis.receiveShadow = chassis.castShadow = true;
-
-    const tire = gltf.scenes[0].getObjectByName("Tire") as ExtendedObject3D;
-    tire.receiveShadow = tire.castShadow = true
-    tire.geometry.center()
-
-    this.car = new Car(this.third, chassis, tire)
+    this.tank = new Tank(this.third, tankModel)
 
     //use the car camera
-    this.third.camera = this.car.camera
+    //this.third.camera = this.car.camera
 
   }
 
 
   update() {
-    if(!this.car) return
+    if(!this.tank) return
 
     let engineForce = 0
     let breakingForce = 0
@@ -116,20 +93,20 @@ export default class MainScene extends Scene3D {
     // break
     if (this.keys.space) {
       breakingForce = maxBreakingForce
-      this.car.jump()
+      this.tank.jump()
     }
 
-    this.car.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft)
-    this.car.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight)
+    this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft)
+    this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight)
 
-    this.car.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontLeft)
-    this.car.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontRight)
+    this.tank.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontLeft)
+    this.tank.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontRight)
 
-    this.car.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft)
-    this.car.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight)
-    this.car.vehicle.setBrake(breakingForce, WheelPosition.RearLeft)
-    this.car.vehicle.setBrake(breakingForce, WheelPosition.RearRight)
+    this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft)
+    this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight)
+    this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearLeft)
+    this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearRight)
 
-    this.car.update()
+    this.tank.update()
   }
 }
