@@ -58,6 +58,7 @@ export default class MainScene extends Scene3D {
     const tankModel = tankGlb.scenes[0] as ExtendedGroup
 
     this.tank = new Tank(this.third, tankModel)
+    this.third.add.existing(this.tank)
 
     //use the car camera
     //this.third.camera = this.car.camera

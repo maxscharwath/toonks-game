@@ -9,15 +9,18 @@ export enum WheelPosition {
   RearRight = 3
 }
 
-export default class Car {
+export default class Tank extends ExtendedObject3D {
   private tuning: Ammo.btVehicleTuning
   public vehicle: Ammo.btRaycastVehicle
   private wheelMeshes: ExtendedObject3D[] = []
   private chassis: ExtendedObject3D
   private tower: ExtendedObject3D
   private canon: ExtendedObject3D
+  public canonMotor: Ammo.btHingeConstraint
+  public towerMotor: Ammo.btHingeConstraint
 
     constructor(private third:Third, model: ExtendedGroup) {
+    super()
     model = model.clone(true)
 
     model.traverse((child) => {
@@ -28,17 +31,36 @@ export default class Car {
     this.tower = model.getObjectByName('TankFree_Tower') as ExtendedObject3D
     this.canon = model.getObjectByName('TankFree_Canon') as ExtendedObject3D
 
-      this.tower.add(this.canon)
-      this.chassis.add(this.tower)
-    third.physics.add.existing(this.chassis, { shape: 'convex', mass: 1500 })
-    this.wheelMeshes = [
-      model.getObjectByName('TankFree_Wheel_f_right') as ExtendedObject3D,
-      model.getObjectByName('TankFree_Wheel_b_right') as ExtendedObject3D,
-      model.getObjectByName('TankFree_Wheel_f_left') as ExtendedObject3D,
-      model.getObjectByName('TankFree_Wheel_b_left') as ExtendedObject3D
-    ]
+      this.add(this.chassis)
+      this.add(this.tower)
+      this.add(this.canon)
 
-    third.scene.add(this.chassis)
+      third.physics.add.existing(this.chassis, { shape: 'convex', mass: 1500, autoCenter: true })
+      third.physics.add.existing(this.tower, { shape: 'convex', mass: 100, autoCenter: true })
+      third.physics.add.existing(this.canon, { shape: 'convex', mass: 10, autoCenter: true })
+
+      //attach the tower to the chassis
+      this.towerMotor = third.physics.add.constraints.hinge(this.chassis.body, this.tower.body, {
+        pivotA: { y: 0.3 },
+        pivotB: { y: -0.22 },
+        axisA: { y: 1 },
+        axisB: { y: 1 }
+      })
+
+      //attach the canon to the tower
+      this.canonMotor = third.physics.add.constraints.hinge(this.tower.body, this.canon.body, {
+        pivotA: { y: -0.05, z: 0.4 },
+        pivotB: { y: 0, z: -0.3 },
+        axisA: { x: 1 },
+        axisB: { x: 1 }
+      })
+
+      this.wheelMeshes = [
+        model.getObjectByName('TankFree_Wheel_f_right') as ExtendedObject3D,
+        model.getObjectByName('TankFree_Wheel_b_right') as ExtendedObject3D,
+        model.getObjectByName('TankFree_Wheel_f_left') as ExtendedObject3D,
+        model.getObjectByName('TankFree_Wheel_b_left') as ExtendedObject3D
+      ]
 
     this.tuning = new Ammo.btVehicleTuning()
     const rayCaster = new Ammo.btDefaultVehicleRaycaster(third.physics.physicsWorld)
@@ -86,7 +108,10 @@ export default class Car {
   }
 
   public jump() {
-    this.vehicle.getChassisWorldTransform().getOrigin().setY(5)
+    this.vehicle.getRigidBody().applyCentralImpulse(new Ammo.btVector3(0, 1000, 0))
+    //destroy constraint
+    this.third.physics.physicsWorld.removeConstraint(this.towerMotor)
+    this.third.physics.physicsWorld.removeConstraint(this.canonMotor)
   }
 
     private addWheel(isFront: boolean, pos: Ammo.btVector3, radius: number, index: number) {
@@ -118,11 +143,12 @@ export default class Car {
       wheelInfo.set_m_frictionSlip(friction)
       wheelInfo.set_m_rollInfluence(rollInfluence)
       this.wheelMeshes[index].geometry.center()
-      this.third.scene.add(this.wheelMeshes[index])
+      this.add(this.wheelMeshes[index])
     }
 
   public update() {
     this.third.physics.debug?.enable()
+    this.third.physics.debug?.mode(1 + 2048 + 4096)
     let tm, p, q, i
     const n = this.vehicle.getNumWheels()
     for (i = 0; i < n; i++) {
