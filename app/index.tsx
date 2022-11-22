@@ -1,12 +1,9 @@
 'use client'
 import { SetStateAction, useState } from 'react'
-import { Peer } from 'peerjs'
 import './index.css'
 
 export default function Index () {
    const [gameId, setGameId] = useState('')
-
-   let peer = new Peer()
 
    const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
       setGameId(e.target.value)
@@ -21,11 +18,6 @@ export default function Index () {
 
       console.log('joining')
 
-      const conn = peer.connect(gameId)
-
-      conn.on('open', () => {
-         conn.send('hi!')
-      })
    }
 
    return (

@@ -1,6 +1,5 @@
 import { ExtendedObject3D } from '@enable3d/phaser-extension'
 import Third from '@enable3d/phaser-extension/dist/third'
-import { Camera, PerspectiveCamera } from 'three'
 import { ExtendedGroup } from 'enable3d'
 
 export enum WheelPosition {
@@ -31,7 +30,7 @@ export default class Car {
 
       this.tower.add(this.canon)
       this.chassis.add(this.tower)
-    third.physics.add.existing(this.chassis, { shape: 'concave', mass: 1000 })
+    third.physics.add.existing(this.chassis, { shape: 'convex', mass: 1500 })
     this.wheelMeshes = [
       model.getObjectByName('TankFree_Wheel_f_right') as ExtendedObject3D,
       model.getObjectByName('TankFree_Wheel_b_right') as ExtendedObject3D,
@@ -50,15 +49,15 @@ export default class Car {
     this.vehicle.setCoordinateSystem(0, 1, 2)
     third.physics.physicsWorld.addAction(this.vehicle)
 
-    const wheelAxisPositionBack = -1
-    const wheelRadiusBack = 0.4
-    const wheelHalfTrackBack = 1.1
-    const wheelAxisHeightBack = 0
+    const wheelAxisPositionBack = -0.4
+    const wheelRadiusBack = 0.25
+    const wheelHalfTrackBack = 0.55
+    const wheelAxisHeightBack = -0.3
 
-    const wheelAxisFrontPosition = 1
-    const wheelRadiusFront = 0.4
-    const wheelHalfTrackFront = 1.1
-    const wheelAxisHeightFront = 0
+    const wheelAxisFrontPosition = 0.4
+    const wheelRadiusFront = 0.25
+    const wheelHalfTrackFront = 0.55
+    const wheelAxisHeightFront = -0.3
 
     this.addWheel(
       true,

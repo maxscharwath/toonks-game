@@ -1,4 +1,4 @@
-import { ExtendedObject3D, Scene3D, THREE } from '@enable3d/phaser-extension'
+import { Scene3D, THREE } from '@enable3d/phaser-extension'
 import Tank, { WheelPosition } from '../models/Tank'
 import { ExtendedGroup } from 'enable3d'
 
@@ -71,7 +71,7 @@ export default class MainScene extends Scene3D {
     let engineForce = 0
     let breakingForce = 0
     const steeringIncrement = 0.04
-    const steeringClamp = 0.3
+    const steeringClamp = 0.5
     const maxEngineForce = 5000
     const maxBreakingForce = 100
 
