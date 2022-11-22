@@ -1,14 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { SetStateAction, useState } from 'react'
 import { Peer } from 'peerjs'
 import './index.css'
 
-export default function Index() {
+export default function Index () {
    const [gameId, setGameId] = useState('')
 
    let peer = new Peer()
 
-   const handleInputChange = (e) => {
+   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
       setGameId(e.target.value)
    }
 
