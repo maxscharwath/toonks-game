@@ -9,6 +9,10 @@ export default class MainScene extends Scene3D {
     a: false,
     s: false,
     d: false,
+    up: false,
+    down: false,
+    left: false,
+    right: false,
     space: false
   }
   private vehicleSteering = 0
@@ -38,6 +42,18 @@ export default class MainScene extends Scene3D {
           break
         case 'Space':
           this.keys.space = down
+          break
+        case 'ArrowUp':
+          this.keys.up = down
+          break
+        case 'ArrowDown':
+          this.keys.down = down
+          break
+        case 'ArrowLeft':
+          this.keys.left = down
+          break
+        case 'ArrowRight':
+          this.keys.right = down
           break
       }
     }
@@ -105,7 +121,7 @@ export default class MainScene extends Scene3D {
     // break
     if (this.keys.space) {
       breakingForce = maxBreakingForce
-      this.tank.jump()
+      this.tank.shoot()
     }
 
     this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft)
@@ -118,6 +134,17 @@ export default class MainScene extends Scene3D {
     this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight)
     this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearLeft)
     this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearRight)
+
+
+    this.tank.canonMotor.enableAngularMotor(true,
+      this.keys.up ? -1 : this.keys.down ? 1 : 0,
+      10)
+
+    this.tank.towerMotor.enableAngularMotor(true,
+      this.keys.right ? 1 : this.keys.left ? -1 : 0,
+      10)
+
+
 
     this.tank.update()
   }

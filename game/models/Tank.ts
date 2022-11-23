@@ -1,6 +1,7 @@
 import { ExtendedObject3D } from '@enable3d/phaser-extension'
 import Third from '@enable3d/phaser-extension/dist/third'
 import { ExtendedGroup } from 'enable3d'
+import { Vector3 } from 'three'
 
 export enum WheelPosition {
   FrontLeft = 0,
@@ -112,6 +113,21 @@ export default class Tank extends ExtendedObject3D {
     //destroy constraint
     this.third.physics.physicsWorld.removeConstraint(this.towerMotor)
     this.third.physics.physicsWorld.removeConstraint(this.canonMotor)
+  }
+
+  public shoot() {
+    //get canon position
+    const pos = this.canon.getWorldPosition(new Vector3())
+    //translate the position to the front of the canon
+    pos.add(this.canon.getWorldDirection(new Vector3()).multiplyScalar(0.2))
+    const sphere = this.third.physics.add.sphere(
+      { radius: 0.03, x: pos.x, y: pos.y, z: pos.z, mass: 5},
+      { phong: { color: 0x202020 } }
+    )
+    const force = this.canon.getWorldDirection(new Vector3()).multiplyScalar(50)
+    const recoil = force.clone().multiplyScalar(-1)
+    this.canon.body.applyForce(recoil.x, recoil.y, recoil.z)
+    sphere.body.applyForce(force.x, force.y, force.z)
   }
 
     private addWheel(isFront: boolean, pos: Ammo.btVector3, radius: number, index: number) {
