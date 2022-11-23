@@ -1,5 +1,5 @@
-import Index from ".";
+import Index from '.';
 
 export default function Home() {
-  return (<Index />);
+	return (<Index />);
 }

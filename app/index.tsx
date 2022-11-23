@@ -1,45 +1,46 @@
-'use client'
-import { SetStateAction, useState } from 'react'
-import './index.css'
+'use client';
+import React, {type SetStateAction, useState} from 'react';
+import './index.css';
 
-export default function Index () {
-   const [gameId, setGameId] = useState('')
+export default function Index() {
+	const [gameId, setGameId] = useState('');
 
-   const handleInputChange = (e: { target: { value: SetStateAction<string> } }) => {
-      setGameId(e.target.value)
-   }
+	const handleInputChange = (e: {target: {value: SetStateAction<string>}}) => {
+		setGameId(e.target.value);
+	};
 
-   const createGame = () => {
-      console.log('creating')
-   }
+	const createGame = () => {
+		console.log('creating');
+	};
 
-   const connectToGame = () => {
-      if (!gameId) return
+	const connectToGame = () => {
+		if (!gameId) {
+			return;
+		}
 
-      console.log('joining')
+		console.log('joining');
+	};
 
-   }
+	return (
+		<>
+			<div className='menu'>
+				<p className='menu-title'>LOGO</p>
 
-   return (
-      <>
-         <div className='menu'>
-            <p className='menu-title'>LOGO</p>
-
-            <div className='menu-actions'>
-               <div>
-                  <input type='text' placeholder='Enter game ID' value={gameId} onChange={handleInputChange} />
-                  <button className='menu-buttons' onClick={connectToGame}>
+				<div className='menu-actions'>
+					<div>
+						<input type='text' placeholder='Enter game ID' value={gameId} onChange={handleInputChange} />
+						<button className='menu-buttons' onClick={connectToGame}>
                      Join
-                  </button>
-               </div>
+						</button>
+					</div>
 
-               <div>
-                  <button className='menu-buttons' onClick={createGame}>
+					<div>
+						<button className='menu-buttons' onClick={createGame}>
                      Create
-                  </button>
-               </div>
-            </div>
-         </div>
-      </>
-   )
+						</button>
+					</div>
+				</div>
+			</div>
+		</>
+	);
 }
