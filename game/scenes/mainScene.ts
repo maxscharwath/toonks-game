@@ -92,6 +92,16 @@ export default class MainScene extends Scene3D {
     if (this.keys.w) engineForce = maxEngineForce
     else if (this.keys.s) engineForce = -maxEngineForce
 
+    if (this.keys.a) {
+      if (this.vehicleSteering < steeringClamp) this.vehicleSteering += steeringIncrement
+    } else if (this.keys.d) {
+      if (this.vehicleSteering > -steeringClamp) this.vehicleSteering -= steeringIncrement
+    } else {
+      if (this.vehicleSteering > 0) this.vehicleSteering -= steeringIncrement / 2
+      if (this.vehicleSteering < 0) this.vehicleSteering += steeringIncrement / 2
+      if (Math.abs(this.vehicleSteering) <= steeringIncrement) this.vehicleSteering = 0
+    }
+
     // break
     if (this.keys.space) {
       breakingForce = maxBreakingForce
