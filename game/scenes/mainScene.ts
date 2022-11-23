@@ -1,4 +1,4 @@
-import { Scene3D, THREE } from '@enable3d/phaser-extension'
+import { JoyStick, PointerDrag, Scene3D, THREE } from '@enable3d/phaser-extension'
 import Tank, { WheelPosition } from '../models/Tank'
 import { ExtendedGroup } from 'enable3d'
 
@@ -63,6 +63,18 @@ export default class MainScene extends Scene3D {
     //use the car camera
     //this.third.camera = this.car.camera
 
+    const joystick = new JoyStick()
+    const axis = joystick.add.axis({
+      styles: { left: 35, bottom: 35, size: 100 }
+    })
+    axis.onMove((delta) => {
+      const d = delta as never as {right:number;top:number};
+      this.vehicleSteering = d.right * 0.5
+
+      this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearLeft)
+      this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearRight)
+    })
+
   }
 
 
@@ -79,17 +91,6 @@ export default class MainScene extends Scene3D {
     // front/back
     if (this.keys.w) engineForce = maxEngineForce
     else if (this.keys.s) engineForce = -maxEngineForce
-
-    // left/right
-    if (this.keys.a) {
-      if (this.vehicleSteering < steeringClamp) this.vehicleSteering += steeringIncrement
-    } else if (this.keys.d) {
-      if (this.vehicleSteering > -steeringClamp) this.vehicleSteering -= steeringIncrement
-    } else {
-      if (this.vehicleSteering > 0) this.vehicleSteering -= steeringIncrement / 2
-      if (this.vehicleSteering < 0) this.vehicleSteering += steeringIncrement / 2
-      if (Math.abs(this.vehicleSteering) <= steeringIncrement) this.vehicleSteering = 0
-    }
 
     // break
     if (this.keys.space) {

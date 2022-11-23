@@ -142,6 +142,7 @@ export default class Tank extends ExtendedObject3D {
 
       wheelInfo.set_m_frictionSlip(friction)
       wheelInfo.set_m_rollInfluence(rollInfluence)
+
       this.wheelMeshes[index].geometry.center()
       this.add(this.wheelMeshes[index])
     }
