@@ -114,7 +114,7 @@ export default class MainScene extends Scene3D {
 		let breakingForce = 0;
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
-		const maxEngineForce = 5000;
+		const maxEngineForce = 2000;
 		const maxBreakingForce = 100;
 
 		// Front/back
