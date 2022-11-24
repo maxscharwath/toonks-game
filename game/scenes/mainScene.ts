@@ -114,7 +114,7 @@ export default class MainScene extends Scene3D {
 		let breakingForce = 0;
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
-		const maxEngineForce = 5000;
+		const maxEngineForce = 2000;
 		const maxBreakingForce = 100;
 
 		// Front/back
@@ -167,11 +167,11 @@ export default class MainScene extends Scene3D {
 		this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
 		this.tank.canonMotor.enableAngularMotor(true,
-			this.keys.up ? -1 : this.keys.down ? 1 : 0,
+			this.keys.up ? -2 : this.keys.down ? 2 : 0,
 			10);
 
 		this.tank.towerMotor.enableAngularMotor(true,
-			this.keys.right ? 1 : this.keys.left ? -1 : 0,
+			this.keys.right ? 2 : this.keys.left ? -2 : 0,
 			10);
 
 		this.tank.update();
