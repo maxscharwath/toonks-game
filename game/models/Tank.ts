@@ -1,6 +1,5 @@
-import {ExtendedObject3D} from '@enable3d/phaser-extension';
+import { ExtendedObject3D, THREE } from '@enable3d/phaser-extension'
 import {type ExtendedGroup} from 'enable3d';
-import {Mesh, Vector3} from 'three';
 import type Third from '@enable3d/phaser-extension/dist/third';
 
 export enum WheelPosition {
@@ -10,15 +9,26 @@ export enum WheelPosition {
 	RearRight = 3,
 }
 
+function MeshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
+	const obj = new ExtendedObject3D();
+	obj.position.copy(mesh.position);
+	obj.rotation.copy(mesh.rotation);
+	mesh.geometry.center();
+	mesh.position.set(0, 0, 0);
+	mesh.rotation.set(0, 0, 0);
+	obj.add(mesh);
+	return obj;
+}
+
 export default class Tank extends ExtendedObject3D {
 	public vehicle: Ammo.btRaycastVehicle;
 	public canonMotor: Ammo.btHingeConstraint;
 	public towerMotor: Ammo.btHingeConstraint;
-	private readonly tuning: Ammo.btVehicleTuning;
-	private readonly wheelMeshes: ExtendedObject3D[] = [];
-	private readonly chassis: ExtendedObject3D;
-	private readonly tower: ExtendedObject3D;
-	private readonly canon: ExtendedObject3D;
+	public readonly tuning: Ammo.btVehicleTuning;
+	public readonly wheelMeshes: ExtendedObject3D[] = [];
+	public readonly chassis: ExtendedObject3D;
+	public readonly tower: ExtendedObject3D;
+	public readonly canon: ExtendedObject3D;
 	private lastShot = 0;
 
 	constructor(private readonly third: Third, model: ExtendedGroup) {
@@ -26,22 +36,19 @@ export default class Tank extends ExtendedObject3D {
 		model = model.clone(true);
 
 		model.traverse(child => {
-			if (child instanceof Mesh) {
+			if (child instanceof THREE.Mesh) {
 				child.receiveShadow = child.castShadow = true;
 			}
 		});
 
-		this.chassis = model.getObjectByName('TankFree_Body') as ExtendedObject3D;
-		this.tower = model.getObjectByName('TankFree_Tower') as ExtendedObject3D;
-		this.canon = model.getObjectByName('TankFree_Canon') as ExtendedObject3D;
+		this.chassis = MeshToExtendedObject3D(model.getObjectByName('TankFree_Body') as THREE.Mesh);
+		this.tower = MeshToExtendedObject3D(model.getObjectByName('TankFree_Tower') as THREE.Mesh);
+		this.canon = MeshToExtendedObject3D(model.getObjectByName('TankFree_Canon') as THREE.Mesh);
 
-		this.add(this.chassis);
-		this.add(this.tower);
-		this.add(this.canon);
-
-		third.physics.add.existing(this.chassis, {shape: 'convex', mass: 1500, autoCenter: true});
-		third.physics.add.existing(this.tower, {shape: 'convex', mass: 200, autoCenter: true});
-		third.physics.add.existing(this.canon, {shape: 'convex', mass: 50, autoCenter: true});
+		third.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
+		third.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
+		third.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
+		this.add(this.chassis.add(this.tower.add(this.canon)));
 
 		// Attach the tower to the chassis
 		this.towerMotor = third.physics.add.constraints.hinge(this.chassis.body, this.tower.body, {
@@ -58,6 +65,8 @@ export default class Tank extends ExtendedObject3D {
 			axisA: {x: 1},
 			axisB: {x: 1},
 		});
+		// Set the limits of the canon
+		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
 
 		this.wheelMeshes = [
 			model.getObjectByName('TankFree_Wheel_f_right') as ExtendedObject3D,
@@ -124,9 +133,9 @@ export default class Tank extends ExtendedObject3D {
 
 		this.lastShot = Date.now();
 		// Get canon position
-		const pos = this.canon.getWorldPosition(new Vector3());
+		const pos = this.canon.getWorldPosition(new THREE.Vector3());
 		// Translate the position to the front of the canon
-		pos.add(this.canon.getWorldDirection(new Vector3()).multiplyScalar(0.2));
+		pos.add(this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.2));
 		const sphere = this.third.physics.add.sphere(
 			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 10},
 			{phong: {color: 0x202020}},
@@ -137,15 +146,13 @@ export default class Tank extends ExtendedObject3D {
 			sphere.removeFromParent();
 		}, 5000);
 
-		const force = this.canon.getWorldDirection(new Vector3()).multiplyScalar(400);
+		const force = this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(400);
 		const recoil = force.clone().multiplyScalar(-1);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		sphere.body.applyForce(force.x, force.y, force.z);
 	}
 
 	public update() {
-		// This.third.physics.debug?.enable();
-		// this.third.physics.debug?.mode(1 + 2048 + 4096);
 		let tm;
 		let p;
 		let q;

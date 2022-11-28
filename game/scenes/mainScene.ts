@@ -1,6 +1,7 @@
 import {JoyStick, Scene3D, THREE} from '@enable3d/phaser-extension';
 import Tank, {WheelPosition} from '../models/Tank';
 import {type ExtendedGroup} from 'enable3d';
+import {GUI} from 'lil-gui';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
@@ -97,11 +98,27 @@ export default class MainScene extends Scene3D {
 			styles: {left: 35, bottom: 35, size: 100},
 		});
 		axis.onMove(delta => {
-			const d = delta as never as {right: number;top: number};
+			const d = delta as never as {right: number; top: number};
 			this.vehicleSteering = d.right * 0.5;
 
 			this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearLeft);
 			this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearRight);
+		});
+
+		const panel = new GUI();
+		const params = {
+			debug: false,
+			mode: 2049,
+		};
+		panel.add(params, 'debug').onChange((value: boolean) => {
+			if (value) {
+				this.third.physics.debug?.enable();
+			} else {
+				this.third.physics.debug?.disable();
+			}
+		});
+		panel.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096]).onChange((value: number) => {
+			this.third.physics.debug?.mode(value);
 		});
 	}
 

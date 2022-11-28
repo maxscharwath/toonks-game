@@ -18,6 +18,7 @@
     "enable3d": "^0.25.3",
     "eslint": ">=8.0.0",
     "eslint-config-next": "13.0.5",
+    "lil-gui": "^0.17.0",
     "matter-js": "0.18.0",
     "next": "13.0.5",
     "peerjs": "^1.4.7",
@@ -29,8 +30,8 @@
     "typescript": ">=4.4"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": ">=5.43.0",
-    "@typescript-eslint/parser": ">=5.43.0",
+    "@typescript-eslint/eslint-plugin": ">=5.45.0",
+    "@typescript-eslint/parser": ">=5.45.0",
     "eslint-config-xo": "^0.43.1",
     "eslint-config-xo-typescript": "^0.55.0",
     "eslint-plugin-react": "^7.31.11"
