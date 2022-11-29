@@ -14,7 +14,7 @@ export default function Root() {
 
 	const createGame = () => {
 		const id = `toonks-${nanoid()}`;
-		navigate(`/room/${id}`, {
+		navigate(`/game/${id}`, {
 			state: {
 				host: true,
 			},
@@ -26,7 +26,7 @@ export default function Root() {
 			return;
 		}
 
-		navigate(`/room/${gameId}`, {
+		navigate(`/game/${gameId}`, {
 			state: {
 				host: false,
 			},
