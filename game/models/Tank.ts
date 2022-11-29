@@ -1,6 +1,4 @@
-import { ExtendedObject3D, THREE } from '@enable3d/phaser-extension'
-import {type ExtendedGroup} from 'enable3d';
-import type Third from '@enable3d/phaser-extension/dist/third';
+import {ExtendedObject3D, THREE, type ExtendedGroup, type Scene3D} from '@enable3d/phaser-extension';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -9,7 +7,7 @@ export enum WheelPosition {
 	RearRight = 3,
 }
 
-function MeshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
+function meshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
 	const obj = new ExtendedObject3D();
 	obj.position.copy(mesh.position);
 	obj.rotation.copy(mesh.rotation);
@@ -31,40 +29,58 @@ export default class Tank extends ExtendedObject3D {
 	public readonly canon: ExtendedObject3D;
 	private lastShot = 0;
 
-	constructor(private readonly third: Third, model: ExtendedGroup) {
+	constructor(private readonly scene: Scene3D, model: ExtendedGroup) {
 		super();
 		model = model.clone(true);
 
 		model.traverse(child => {
 			if (child instanceof THREE.Mesh) {
-				child.receiveShadow = child.castShadow = true;
+				child.receiveShadow = true;
+				child.castShadow = true;
 			}
 		});
 
-		this.chassis = MeshToExtendedObject3D(model.getObjectByName('TankFree_Body') as THREE.Mesh);
-		this.tower = MeshToExtendedObject3D(model.getObjectByName('TankFree_Tower') as THREE.Mesh);
-		this.canon = MeshToExtendedObject3D(model.getObjectByName('TankFree_Canon') as THREE.Mesh);
+		this.chassis = meshToExtendedObject3D(
+			model.getObjectByName('TankFree_Body') as THREE.Mesh,
+		);
+		this.tower = meshToExtendedObject3D(
+			model.getObjectByName('TankFree_Tower') as THREE.Mesh,
+		);
+		this.canon = meshToExtendedObject3D(
+			model.getObjectByName('TankFree_Canon') as THREE.Mesh,
+		);
 
-		third.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
-		third.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
-		third.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
+		scene.third.physics.add.existing(this.chassis, {
+			shape: 'convexMesh',
+			mass: 1500,
+		});
+		scene.third.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
+		scene.third.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 		this.add(this.chassis.add(this.tower.add(this.canon)));
 
 		// Attach the tower to the chassis
-		this.towerMotor = third.physics.add.constraints.hinge(this.chassis.body, this.tower.body, {
-			pivotA: {y: 0.3},
-			pivotB: {y: -0.22},
-			axisA: {y: 1},
-			axisB: {y: 1},
-		});
+		this.towerMotor = scene.third.physics.add.constraints.hinge(
+			this.chassis.body,
+			this.tower.body,
+			{
+				pivotA: {y: 0.3},
+				pivotB: {y: -0.22},
+				axisA: {y: 1},
+				axisB: {y: 1},
+			},
+		);
 
 		// Attach the canon to the tower
-		this.canonMotor = third.physics.add.constraints.hinge(this.tower.body, this.canon.body, {
-			pivotA: {y: -0.05, z: 0.4},
-			pivotB: {y: 0, z: -0.3},
-			axisA: {x: 1},
-			axisB: {x: 1},
-		});
+		this.canonMotor = scene.third.physics.add.constraints.hinge(
+			this.tower.body,
+			this.canon.body,
+			{
+				pivotA: {y: -0.05, z: 0.4},
+				pivotB: {y: 0, z: -0.3},
+				axisA: {x: 1},
+				axisB: {x: 1},
+			},
+		);
 		// Set the limits of the canon
 		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
 
@@ -76,12 +92,18 @@ export default class Tank extends ExtendedObject3D {
 		];
 
 		this.tuning = new Ammo.btVehicleTuning();
-		const rayCaster = new Ammo.btDefaultVehicleRaycaster(third.physics.physicsWorld);
-		this.vehicle = new Ammo.btRaycastVehicle(this.tuning, this.chassis.body.ammo, rayCaster);
+		const rayCaster = new Ammo.btDefaultVehicleRaycaster(
+			scene.third.physics.physicsWorld,
+		);
+		this.vehicle = new Ammo.btRaycastVehicle(
+			this.tuning,
+			this.chassis.body.ammo,
+			rayCaster,
+		);
 		this.chassis.body.skipUpdate = true;
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
-		third.physics.physicsWorld.addAction(this.vehicle);
+		scene.third.physics.physicsWorld.addAction(this.vehicle);
 
 		const wheelAxisPositionBack = -0.4;
 		const wheelRadiusBack = 0.25;
@@ -95,35 +117,53 @@ export default class Tank extends ExtendedObject3D {
 
 		this.addWheel(
 			true,
-			new Ammo.btVector3(wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition),
+			new Ammo.btVector3(
+				wheelHalfTrackFront,
+				wheelAxisHeightFront,
+				wheelAxisFrontPosition,
+			),
 			wheelRadiusFront,
 			WheelPosition.FrontLeft,
 		);
 		this.addWheel(
 			true,
-			new Ammo.btVector3(-wheelHalfTrackFront, wheelAxisHeightFront, wheelAxisFrontPosition),
+			new Ammo.btVector3(
+				-wheelHalfTrackFront,
+				wheelAxisHeightFront,
+				wheelAxisFrontPosition,
+			),
 			wheelRadiusFront,
 			WheelPosition.FrontRight,
 		);
 		this.addWheel(
 			false,
-			new Ammo.btVector3(-wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack),
+			new Ammo.btVector3(
+				-wheelHalfTrackBack,
+				wheelAxisHeightBack,
+				wheelAxisPositionBack,
+			),
 			wheelRadiusBack,
 			WheelPosition.RearLeft,
 		);
 		this.addWheel(
 			false,
-			new Ammo.btVector3(wheelHalfTrackBack, wheelAxisHeightBack, wheelAxisPositionBack),
+			new Ammo.btVector3(
+				wheelHalfTrackBack,
+				wheelAxisHeightBack,
+				wheelAxisPositionBack,
+			),
 			wheelRadiusBack,
 			WheelPosition.RearRight,
 		);
 	}
 
 	public jump() {
-		this.vehicle.getRigidBody().applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
+		this.vehicle
+			.getRigidBody()
+			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
 		// Destroy constraint
-		this.third.physics.physicsWorld.removeConstraint(this.towerMotor);
-		this.third.physics.physicsWorld.removeConstraint(this.canonMotor);
+		this.scene.third.physics.physicsWorld.removeConstraint(this.towerMotor);
+		this.scene.third.physics.physicsWorld.removeConstraint(this.canonMotor);
 	}
 
 	public shoot() {
@@ -135,18 +175,22 @@ export default class Tank extends ExtendedObject3D {
 		// Get canon position
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
 		// Translate the position to the front of the canon
-		pos.add(this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.2));
-		const sphere = this.third.physics.add.sphere(
+		pos.add(
+			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.2),
+		);
+		const sphere = this.scene.third.physics.add.sphere(
 			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 10},
 			{phong: {color: 0x202020}},
 		);
 		sphere.receiveShadow = sphere.castShadow = true;
 		setTimeout(() => {
-			this.third.physics.destroy(sphere);
+			this.scene.third.physics.destroy(sphere);
 			sphere.removeFromParent();
 		}, 5000);
 
-		const force = this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(400);
+		const force = this.canon
+			.getWorldDirection(new THREE.Vector3())
+			.multiplyScalar(400);
 		const recoil = force.clone().multiplyScalar(-1);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		sphere.body.applyForce(force.x, force.y, force.z);
@@ -176,7 +220,12 @@ export default class Tank extends ExtendedObject3D {
 		this.chassis.quaternion.set(q.x(), q.y(), q.z(), q.w());
 	}
 
-	private addWheel(isFront: boolean, pos: Ammo.btVector3, radius: number, index: number) {
+	private addWheel(
+		isFront: boolean,
+		pos: Ammo.btVector3,
+		radius: number,
+		index: number,
+	) {
 		const suspensionStiffness = 60.0;
 		const suspensionDamping = 6;
 		const suspensionCompression = 10;
@@ -209,4 +258,3 @@ export default class Tank extends ExtendedObject3D {
 		this.add(this.wheelMeshes[index]);
 	}
 }
-

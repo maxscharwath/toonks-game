@@ -1,10 +1,14 @@
 module.exports = {
+	settings: {
+		react: {
+			version: 'detect',
+		}
+	},
 	env: {
 		browser: true,
 		es2021: true,
 	},
 	extends: [
-		'next/core-web-vitals',
 		'plugin:react/recommended',
 		'xo',
 	],
@@ -27,11 +31,10 @@ module.exports = {
 		'react',
 	],
 	rules: {
-		'react/react-in-jsx-scope': 'off',
 		'@typescript-eslint/keyword-spacing': 'off',
-		'no-multi-assign': 'off',
 		'@typescript-eslint/no-unsafe-call': 'off',
-		'new-cap': 'off',
+		'@typescript-eslint/no-unsafe-assigment': 'off',
 		'@typescript-eslint/naming-convention': 'off',
+		'new-cap': 'off',
 	},
 };

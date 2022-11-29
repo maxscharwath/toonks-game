@@ -1,11 +1,10 @@
-import {JoyStick, Scene3D, THREE} from '@enable3d/phaser-extension';
-import Tank, {WheelPosition} from '../models/Tank';
-import {type ExtendedGroup} from 'enable3d';
+import {JoyStick, Scene3D, THREE, type ExtendedGroup} from '@enable3d/phaser-extension';
+import Tank, {WheelPosition} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
-	private keys = {
+	private readonly keys = {
 		w: false,
 		a: false,
 		s: false,
@@ -31,36 +30,56 @@ export default class MainScene extends Scene3D {
 
 		const keyEvent = (e: KeyboardEvent, down: boolean) => {
 			switch (e.code) {
-				case 'KeyW':
+				case 'KeyW': {
 					this.keys.w = down;
 					break;
-				case 'KeyA':
+				}
+
+				case 'KeyA': {
 					this.keys.a = down;
 					break;
-				case 'KeyS':
+				}
+
+				case 'KeyS': {
 					this.keys.s = down;
 					break;
-				case 'KeyD':
+				}
+
+				case 'KeyD': {
 					this.keys.d = down;
 					break;
-				case 'Space':
+				}
+
+				case 'Space': {
 					this.keys.space = down;
 					break;
-				case 'ArrowUp':
+				}
+
+				case 'ArrowUp': {
 					this.keys.up = down;
 					break;
-				case 'ArrowDown':
+				}
+
+				case 'ArrowDown': {
 					this.keys.down = down;
 					break;
-				case 'ArrowLeft':
+				}
+
+				case 'ArrowLeft': {
 					this.keys.left = down;
 					break;
-				case 'ArrowRight':
+				}
+
+				case 'ArrowRight': {
 					this.keys.right = down;
 					break;
-				case 'AltLeft':
+				}
+
+				case 'AltLeft': {
 					this.keys.alt = down;
 					break;
+				}
+
 				default:
 			}
 		};
@@ -87,7 +106,7 @@ export default class MainScene extends Scene3D {
 		const tankGlb = await this.third.load.gltf('/glb/tank.glb');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
 
-		this.tank = new Tank(this.third, tankModel);
+		this.tank = new Tank(this, tankModel);
 		this.third.add.existing(this.tank);
 
 		// Use the car camera
@@ -102,7 +121,10 @@ export default class MainScene extends Scene3D {
 			this.vehicleSteering = d.right * 0.5;
 
 			this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearLeft);
-			this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearRight);
+			this.tank?.vehicle.applyEngineForce(
+				d.top * 5000,
+				WheelPosition.RearRight,
+			);
 		});
 
 		const panel = new GUI();
@@ -117,9 +139,11 @@ export default class MainScene extends Scene3D {
 				this.third.physics.debug?.disable();
 			}
 		});
-		panel.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096]).onChange((value: number) => {
-			this.third.physics.debug?.mode(value);
-		});
+		panel
+			.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096])
+			.onChange((value: number) => {
+				this.third.physics.debug?.mode(value);
+			});
 	}
 
 	update() {
@@ -175,21 +199,31 @@ export default class MainScene extends Scene3D {
 		this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
 		this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
 
-		this.tank.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontLeft);
-		this.tank.vehicle.setSteeringValue(this.vehicleSteering, WheelPosition.FrontRight);
+		this.tank.vehicle.setSteeringValue(
+			this.vehicleSteering,
+			WheelPosition.FrontLeft,
+		);
+		this.tank.vehicle.setSteeringValue(
+			this.vehicleSteering,
+			WheelPosition.FrontRight,
+		);
 
 		this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
 		this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
 		this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
 		this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
-		this.tank.canonMotor.enableAngularMotor(true,
+		this.tank.canonMotor.enableAngularMotor(
+			true,
 			this.keys.up ? -2 : this.keys.down ? 2 : 0,
-			10);
+			10,
+		);
 
-		this.tank.towerMotor.enableAngularMotor(true,
+		this.tank.towerMotor.enableAngularMotor(
+			true,
 			this.keys.right ? 2 : this.keys.left ? -2 : 0,
-			10);
+			10,
+		);
 
 		this.tank.update();
 	}
