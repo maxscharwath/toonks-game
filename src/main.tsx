@@ -4,6 +4,8 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import Root from '@/routes/root';
 import Game from '@/routes/game';
 import '@/global.css';
+import ChatRoom from '@/routes/chat/chatRoom';
+import ChatLoby from '@/routes/chat/chatLoby';
 
 const router = createBrowserRouter([
 	{
@@ -13,6 +15,14 @@ const router = createBrowserRouter([
 	{
 		path: '/game/:gameId',
 		element: <Game />,
+	},
+	{
+		path: '/chat/',
+		element: <ChatLoby />,
+	},
+	{
+		path: '/chat/:roomId',
+		element: <ChatRoom />,
 	},
 ]);
 

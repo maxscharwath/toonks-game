@@ -16,22 +16,30 @@ export default class Network extends EventEmitter {
 
 	private constructor() {
 		super();
+		this.on('connection', (connection: DataConnection) => {
+			connection.on('data', data => {
+				console.log('Received', data, 'from', connection.peer);
+				this.emit('data', data);
+			});
+		});
 	}
 
 	public async joinRoom(roomId: string): Promise<void> {
 		return new Promise((resolve, reject) => {
 			console.log(`Try to join room ${roomId}`);
 			this.peer = new Peer();
-			const connection: DataConnection = this.peer.connect(roomId);
-			connection.once('open', () => {
-				this.emit('connected');
-				console.log('connected');
-				this.connections.push(connection);
-				resolve();
-			});
-			connection.once('error', err => {
-				console.log(err);
-				reject(err);
+			this.peer.on('open', id => {
+				console.log(`My peer ID is: ${id}`);
+				const connection: DataConnection = this.peer!.connect(roomId, {reliable: true});
+				connection.on('open', () => {
+					this.emit('connection', connection);
+					this.connections.push(connection);
+					resolve();
+				});
+				connection.on('error', err => {
+					console.log(err);
+					reject(err);
+				});
 			});
 		});
 	}
@@ -40,12 +48,11 @@ export default class Network extends EventEmitter {
 		return new Promise(resolve => {
 			this.peer = new Peer(roomId);
 			this.peer.on('connection', connection => {
-				console.log('connected');
+				this.emit('connection', connection);
 				this.connections.push(connection);
 			});
-			this.peer.once('open', id => {
+			this.peer.on('open', id => {
 				console.log(`My peer ID is: ${id}`);
-				this.emit('connected');
 				resolve(id);
 			});
 		});
@@ -54,14 +61,6 @@ export default class Network extends EventEmitter {
 	public send(data: any): void {
 		this.connections.forEach(connection => {
 			connection.send(data);
-		});
-	}
-
-	public onReceive(callback: (data: any) => void): void {
-		this.peer?.on('connection', connection => {
-			connection.on('data', data => {
-				callback(data);
-			});
 		});
 	}
 }

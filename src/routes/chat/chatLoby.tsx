@@ -2,31 +2,31 @@ import React, {type DetailedHTMLProps, type InputHTMLAttributes, type SetStateAc
 import {useNavigate} from 'react-router-dom';
 import {nanoid} from 'nanoid';
 import appLogo from '@/assets/logo.svg';
-export default function Root() {
-	const [gameId, setGameId] = useState('');
+export default function ChatLoby() {
+	const [roomId, setRoomId] = useState('');
 	const navigate = useNavigate();
 
 	const handleInputChange = (e: {
 		target: {value: SetStateAction<string>};
 	}) => {
-		setGameId(e.target.value);
+		setRoomId(e.target.value);
 	};
 
-	const createGame = () => {
-		const id = `toonks-${nanoid()}`;
-		navigate(`/room/${id}`, {
+	const createRoom = () => {
+		const id = `${nanoid()}`;
+		navigate(`/chat/${id}`, {
 			state: {
 				host: true,
 			},
 		});
 	};
 
-	const connectToGame = () => {
-		if (!gameId) {
+	const connectToRoom = () => {
+		if (!roomId) {
 			return;
 		}
 
-		navigate(`/room/${gameId}`, {
+		navigate(`/chat/${roomId}`, {
 			state: {
 				host: false,
 			},
@@ -35,7 +35,7 @@ export default function Root() {
 
 	const handleKeyPressEnter = (event: DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>) => {
 		if (event.key === 'Enter') {
-			connectToGame();
+			connectToRoom();
 		}
 	};
 
@@ -54,28 +54,25 @@ export default function Root() {
 					<div className='w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700 divide-y-2 dark:divide-gray-500'>
 						<div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
 							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white'>
-								Join game
+								Join Chat Room
 							</h1>
 							<div>
 								<label
-									htmlFor='email'
 									className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
 								>
-									Game ID
+									Room ID
+									<input
+										type='text'
+										className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mb-4'
+										placeholder='xxxxxx'
+										value={roomId}
+										onChange={handleInputChange}
+										onKeyDown={handleKeyPressEnter}
+									/>
 								</label>
-								<input
-									type='text'
-									name='gameId'
-									id='gameId'
-									className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mb-4'
-									placeholder='toonks-xxxxxx'
-									value={gameId}
-									onChange={handleInputChange}
-									onKeyDown={handleKeyPressEnter}
-								/>
 								<button
 									className='w-full bottom-0 mt-auto text-white bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-4 focus:ring-toonks-orangeLight font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 hover:scale-105'
-									onClick={connectToGame}
+									onClick={connectToRoom}
 								>
 									Join
 								</button>
@@ -83,12 +80,12 @@ export default function Root() {
 						</div>
 						<div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
 							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white'>
-								Create game
+								Create Chat Room
 							</h1>
 							<div>
 								<button
 									className='w-full bottom-0 mt-auto text-white bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-4 focus:ring-toonks-orangeLight font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 hover:scale-105'
-									onClick={createGame}
+									onClick={createRoom}
 								>
 									Create
 								</button>
