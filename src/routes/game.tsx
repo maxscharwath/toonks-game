@@ -10,7 +10,7 @@ export default function Game() {
 	const {gameId} = useParams();
 	const {state} = useLocation() as {state: LocationState};
 	useEffect(() => {
-		console.log(gameId, state);
+		console.log(`Game ${gameId!} is ${state?.host ? 'hosting' : 'joining'}`);
 		createGame(gameId!, state?.host ?? false);
 	}, []);
 	return <></>;
