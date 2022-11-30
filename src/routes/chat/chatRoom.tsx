@@ -1,5 +1,4 @@
 import React, {useEffect} from 'react';
-import {createGame} from '@game/game';
 import {useLocation, useParams} from 'react-router-dom';
 import Network from '@game/network/Network';
 
@@ -27,8 +26,14 @@ export default function ChatRoom() {
 	useEffect(() => {
 		connectToRoom(roomId!, state?.host ?? false).then(network => {
 			setConnected(true);
-			network.on('data', (message: string) => {
-				setMessages(messages => [...messages, message]);
+			network.on('newConnection', connection => {
+				setMessages(messages => [...messages, `New connection: ${connection.peer}`]);
+			});
+			network.on('removeConnection', connection => {
+				setMessages(messages => [...messages, `Remove connection: ${connection.peer}`]);
+			});
+			network.on('data', ({data}) => {
+				setMessages(messages => [...messages, data as string]);
 			});
 		}).catch(console.error);
 	}, []);
