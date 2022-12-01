@@ -27,6 +27,26 @@ export default class Network extends Emittery<NetworkEvents> {
 		return Network.instance;
 	}
 
+	public static generateRoomId(options: Partial<{length: number; prefix: string; value: string}>): string {
+		const {length = 6, prefix = '', value} = options;
+		const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		const id = value ?? Array.from({length}, () => alphabet.at(Math.floor(Math.random() * alphabet.length))).join('');
+		return [Network.UNIQUE_PREFIX, prefix, id].filter(Boolean).join('-');
+	}
+
+	public static parseRoomId(roomId: string): string | undefined {
+		const parts = roomId.split('-');
+		if (parts[0] !== Network.UNIQUE_PREFIX) {
+			return;
+		}
+
+		return parts.at(-1);
+	}
+
+	private static get UNIQUE_PREFIX() {
+		return 'SWNpT25Fc3REZXNDcmFja3M';
+	}
+
 	private static instance: Network;
 	private readonly connections: DataConnection[] = [];
 	private peer?: Peer;
@@ -58,6 +78,7 @@ export default class Network extends Emittery<NetworkEvents> {
 				});
 				connection.once('error', reject);
 			});
+			this.peer.once('error', reject);
 
 			this.peer.once('disconnected', async () => {
 				this.status = NetworkState.Disconnected;
