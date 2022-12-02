@@ -12,6 +12,7 @@
   "dependencies": {
     "@enable3d/phaser-extension": "^0.25.3",
     "emittery": "^1.0.1",
+    "framer-motion": "^7.6.17",
     "lil-gui": "^0.17.0",
     "matter-js": "^0.18.0",
     "nanoid": "^4.0.0",
