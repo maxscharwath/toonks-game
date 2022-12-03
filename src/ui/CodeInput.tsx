@@ -3,11 +3,12 @@ import React, {useState, Fragment, useEffect} from 'react';
 type Modify<T, R> = Omit<T, keyof R> & R;
 
 type Props = Modify<React.HTMLAttributes<HTMLDivElement>, {
-	value: string;
-	onChange: (value: string) => void;
+	length: number;
+	value?: string;
+	onChange?: (value: string) => void;
 }>;
-export default function IdInput({value, onChange, ...props}: Partial<Props> = {}) {
-	const [otp, setOtp] = useState<string[]>(Array.from({length: 6}, (_, i) => value?.[i] ?? ''));
+export default function CodeInput({length, value, onChange, ...props}: Props) {
+	const [otp, setOtp] = useState<string[]>(Array.from({length}, (_, i) => value?.[i] ?? ''));
 	const [focus, setFocus] = useState(0);
 
 	function editOtp(index: number, value?: string) {
