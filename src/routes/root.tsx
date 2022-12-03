@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Network from '@game/network/Network';
 import IdInput from '@/ui/IdInput';
@@ -21,9 +21,8 @@ function useToggleTimeout(initial: boolean, timeout: number) {
 }
 
 export default function Root() {
-	const [gameId, setGameId] = useState('');
 	const [connected, toggleConnected] = useToggleTimeout(false, 2000);
-	const navigate = useNavigate();
+	const gameCode = useRef('');
 
 	const createGame = () => {
 		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS'});
@@ -38,11 +37,11 @@ export default function Root() {
 	};
 
 	const connectToGame = () => {
-		if (!gameId) {
+		if (!gameCode) {
 			return;
 		}
 
-		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS', value: gameId});
+		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS', value: gameCode.current});
 		console.log('try to connect to game', id);
 		Network.getInstance().joinRoom(id)
 			.then(() => {
@@ -53,6 +52,10 @@ export default function Root() {
 				console.log('Error joining room', error);
 			});
 	};
+
+	function handleIdChange(id: string) {
+		gameCode.current = id;
+	}
 
 	const tabs = [
 		{
@@ -78,7 +81,7 @@ export default function Root() {
 					<h2 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center'>
 						Enter Game ID
 					</h2>
-					<IdInput onChange={setGameId} className='mb-5' />
+					<IdInput onChange={handleIdChange} className='mb-5' />
 					<button
 						className='w-full bottom-0 mt-auto text-white bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-4 focus:ring-toonks-orangeLight font-bold uppercase rounded-lg text-xl px-5 py-2.5 mr-2 mb-2 hover:scale-105 transition duration-100 ease-in-out'
 						onClick={connectToGame}
