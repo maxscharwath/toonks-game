@@ -1,33 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import {BrowserRouter, createBrowserRouter, Route, RouterProvider, Routes} from 'react-router-dom';
 import Root from '@/routes/root';
 import Game from '@/routes/game';
 import '@/global.css';
 import ChatRoom from '@/routes/chat/chatRoom';
-import ChatLoby from '@/routes/chat/chatLoby';
-
-const router = createBrowserRouter([
-	{
-		path: '/',
-		element: <Root />,
-	},
-	{
-		path: '/game/:gameId',
-		element: <Game />,
-	},
-	{
-		path: '/chat/',
-		element: <ChatLoby />,
-	},
-	{
-		path: '/chat/:roomId',
-		element: <ChatRoom />,
-	},
-]);
+import ChatLobby from '@/routes/chat/chatLobby';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-	<React.StrictMode>
-		<RouterProvider router={router} />
-	</React.StrictMode>,
+	<BrowserRouter>
+		<Routes>
+			<Route path='/' element={<Root />} />
+			<Route path='/game/:gameId' element={<Game />} />
+			<Route path='/chat/' element={<ChatLobby />} />
+			<Route path='/chat/:roomId' element={<ChatRoom />} />
+		</Routes>
+	</BrowserRouter>,
 );

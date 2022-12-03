@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@enable3d/phaser-extension": "^0.25.3",
+    "clsx": "^1.2.1",
     "emittery": "^1.0.1",
     "framer-motion": "^7.6.17",
     "lil-gui": "^0.17.0",
@@ -19,6 +20,7 @@
     "peerjs": "^1.4.7",
     "phaser": "^3.55.2",
     "react": "^18.2.0",
+    "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.4.3",
     "three": "^0.146.0"

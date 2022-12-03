@@ -1,12 +1,13 @@
 import React, {useState, Fragment, useEffect} from 'react';
 
-type Props = {
-	value?: string;
-	onChange?: (value: string) => void;
-	className?: string;
-};
-export default function IdInput(props: Props) {
-	const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
+type Modify<T, R> = Omit<T, keyof R> & R;
+
+type Props = Modify<React.HTMLAttributes<HTMLDivElement>, {
+	value: string;
+	onChange: (value: string) => void;
+}>;
+export default function IdInput({value, onChange, ...props}: Partial<Props> = {}) {
+	const [otp, setOtp] = useState<string[]>(Array.from({length: 6}, (_, i) => value?.[i] ?? ''));
 	const [focus, setFocus] = useState(0);
 
 	function editOtp(index: number, value?: string) {
@@ -23,7 +24,7 @@ export default function IdInput(props: Props) {
 		}
 
 		setOtp(newOtp);
-		props.onChange?.(newOtp.join(''));
+		onChange?.(newOtp.join(''));
 	}
 
 	const inputRef = React.useRef<HTMLInputElement>(null);
@@ -36,10 +37,6 @@ export default function IdInput(props: Props) {
 			editOtp(focus);
 		}
 	}
-
-	useEffect(() => {
-		editOtp(0, props.value);
-	}, []);
 
 	useEffect(() => {
 		inputRef.current?.focus();

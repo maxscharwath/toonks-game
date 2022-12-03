@@ -2,7 +2,7 @@ import React, {type DetailedHTMLProps, type InputHTMLAttributes, type SetStateAc
 import {useNavigate} from 'react-router-dom';
 import {nanoid} from 'nanoid';
 import appLogo from '@/assets/logo.svg';
-export default function ChatLoby() {
+export default function ChatLobby() {
 	const [roomId, setRoomId] = useState('');
 	const navigate = useNavigate();
 
