@@ -8,6 +8,7 @@ type Store = {
 export const useNetwork = create<Store>((set, get) => {
 	const network = Network.getInstance();
 	network.on('status', status => {
+		console.log('status', status);
 		set({status});
 	});
 

@@ -49,7 +49,7 @@ export default class Network extends Emittery<NetworkEvents> {
 	}
 
 	private static instance: Network;
-	private readonly connections: DataConnection[] = [];
+	private connections: DataConnection[] = [];
 	private peer?: Peer;
 	private host = false;
 	private status = NetworkStatus.Disconnected;
@@ -64,27 +64,31 @@ export default class Network extends Emittery<NetworkEvents> {
 	 */
 	public async joinRoom(roomId: string): Promise<void> {
 		this.host = false;
+		this.disconnect();
 		return new Promise((resolve, reject) => {
-			this.setStatus(NetworkStatus.Connecting);
-
 			this.peer = new Peer();
-
-			this.peer.once('open', id => {
-				const connection: DataConnection = this.peer!.connect(roomId, {reliable: true});
-				connection.once('open', async () => {
-					this.setStatus(NetworkStatus.Connected);
-					await this.emit('connected', id);
-					await this.addConnection(connection);
-					resolve();
+			console.log('Joining room', roomId);
+			this.peer
+				.once('open', id => {
+					console.log('Joined room', roomId, 'as', id);
+					this.setStatus(NetworkStatus.Connecting);
+					const connection: DataConnection = this.peer!.connect(roomId, {reliable: true, metadata: {username: 'test'}});
+					connection
+						.once('open', () => {
+							this.setStatus(NetworkStatus.Connected);
+							void this.emit('connected', id);
+							this.addConnection(connection);
+							resolve();
+						});
+				})
+				.once('error', error => {
+					this.setStatus(NetworkStatus.Disconnected);
+					reject(error);
+				})
+				.once('disconnected', () => {
+					this.setStatus(NetworkStatus.Disconnected);
+					void this.emit('disconnected');
 				});
-				connection.once('error', reject);
-			});
-			this.peer.once('error', reject);
-
-			this.peer.once('disconnected', async () => {
-				this.setStatus(NetworkStatus.Disconnected);
-				await this.emit('disconnected');
-			});
 		});
 	}
 
@@ -94,25 +98,25 @@ export default class Network extends Emittery<NetworkEvents> {
 	 */
 	public async createRoom(roomId: string): Promise<string> {
 		this.host = true;
+		this.disconnect();
 		return new Promise(resolve => {
 			this.setStatus(NetworkStatus.Connecting);
 
 			this.peer = new Peer(roomId);
 
-			this.peer.on('connection', async connection => {
-				await this.addConnection(connection);
-			});
-
-			this.peer.once('open', async id => {
-				this.setStatus(NetworkStatus.Connected);
-				await this.emit('connected', id);
-				resolve(id);
-			});
-
-			this.peer.once('disconnected', async () => {
-				this.setStatus(NetworkStatus.Disconnected);
-				await this.emit('disconnected');
-			});
+			this.peer
+				.on('connection', connection => {
+					this.addConnection(connection);
+				})
+				.once('open', id => {
+					this.setStatus(NetworkStatus.Connected);
+					void this.emit('connected', id);
+					resolve(id);
+				})
+				.once('disconnected', () => {
+					this.setStatus(NetworkStatus.Disconnected);
+					void this.emit('disconnected');
+				});
 		});
 	}
 
@@ -138,10 +142,10 @@ export default class Network extends Emittery<NetworkEvents> {
 	 * @param connection
 	 * @private
 	 */
-	private async removeConnection(connection: DataConnection): Promise<void> {
+	private removeConnection(connection: DataConnection): void {
 		connection.removeAllListeners();
-		this.connections.splice(this.connections.indexOf(connection), 1);
-		await this.emit('removeConnection', connection);
+		this.connections = this.connections.filter(c => c !== connection);
+		void this.emit('removeConnection', connection);
 	}
 
 	/**
@@ -163,16 +167,17 @@ export default class Network extends Emittery<NetworkEvents> {
 	 * @param connection - The connection to add.
 	 * @private
 	 */
-	private async addConnection(connection: DataConnection): Promise<void> {
+	private addConnection(connection: DataConnection): void {
+		console.log('New connection', connection.metadata);
 		this.connections.push(connection);
-		await this.emit('newConnection', connection);
+		void this.emit('newConnection', connection);
 
-		connection.once('close', async () => {
-			await this.removeConnection(connection);
+		connection.once('close', () => {
+			this.removeConnection(connection);
 		});
 
 		// Handle incoming data
-		connection.on('data', async data => {
+		connection.on('data', data => {
 			console.log('Received', data, 'from', connection.peer);
 
 			// If we are the host, we need to broadcast the data to all other clients
@@ -180,7 +185,7 @@ export default class Network extends Emittery<NetworkEvents> {
 				this.broadcast(data, connection);
 			}
 
-			await this.emit('data', {
+			void this.emit('data', {
 				connection,
 				data,
 			});
@@ -189,6 +194,6 @@ export default class Network extends Emittery<NetworkEvents> {
 
 	private setStatus(status: NetworkStatus): void {
 		this.status = status;
-		this.emit('status', status);
+		void this.emit('status', status);
 	}
 }

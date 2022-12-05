@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
-import Root from '@/routes/root';
+import Root from '@/routes/root/root';
 import Game from '@/routes/game';
 import '@/global.css';
 import ChatRoom from '@/routes/chat/chatRoom';
