@@ -1,6 +1,6 @@
 import appLogo from '@/assets/logo.svg';
 import React from 'react';
-import {motion, useMotionValue, useSpring, useTransform} from 'framer-motion';
+import {motion, useMotionValue, useTransform} from 'framer-motion';
 
 export default function Logo(props: {style?: any}) {
 	const x = useMotionValue(0);
@@ -33,7 +33,7 @@ export default function Logo(props: {style?: any}) {
 					rotateX,
 					rotateY,
 				}}
-				className='filter drop-shadow-lg'
+				className='drop-shadow-lg'
 				alt='Toonks logo'
 			/>
 		</div>

@@ -8,7 +8,12 @@ module.exports = {
     browser: true,
     es2021: true
   },
-  extends: ['plugin:react/recommended', 'xo', 'plugin:storybook/recommended'],
+  extends: [
+    'plugin:react/recommended',
+    'xo',
+    'plugin:storybook/recommended',
+    'plugin:tailwindcss/recommended'
+  ],
   overrides: [{
     extends: ['xo-typescript'],
     files: ['*.ts', '*.tsx']
@@ -17,12 +22,13 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module'
   },
-  plugins: ['react'],
+  plugins: ['react','tailwindcss'],
   rules: {
     '@typescript-eslint/keyword-spacing': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/no-unsafe-assigment': 'off',
     '@typescript-eslint/naming-convention': 'off',
+    '@typescript-eslint/no-floating-promises': 'off',
     'new-cap': 'off'
   }
 };

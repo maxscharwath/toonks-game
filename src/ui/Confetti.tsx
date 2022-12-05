@@ -28,7 +28,7 @@ export default function Confetti({active, quantity}: Props) {
 				width={width}
 				height={height}
 				numberOfPieces={active ? quantity ?? 200 : 0}
-				className='w-full h-full fixed top-0 left-0'
+				className='fixed top-0 left-0 h-full w-full'
 				onConfettiComplete={handleConfettiComplete}
 			/>}
 		</>

@@ -6,13 +6,14 @@ type NetworkEvents = {
 	disconnected: never;
 	newConnection: DataConnection;
 	removeConnection: DataConnection;
+	status: NetworkStatus;
 	data: {connection: DataConnection; data: any};
 };
 
-enum NetworkState {
-	Disconnected,
-	Connecting,
-	Connected,
+export enum NetworkStatus {
+	Disconnected = 'disconnected',
+	Connecting = 'connecting',
+	Connected = 'connected',
 }
 
 /**
@@ -51,7 +52,7 @@ export default class Network extends Emittery<NetworkEvents> {
 	private readonly connections: DataConnection[] = [];
 	private peer?: Peer;
 	private host = false;
-	private status = NetworkState.Disconnected;
+	private status = NetworkStatus.Disconnected;
 
 	private constructor() {
 		super();
@@ -64,14 +65,14 @@ export default class Network extends Emittery<NetworkEvents> {
 	public async joinRoom(roomId: string): Promise<void> {
 		this.host = false;
 		return new Promise((resolve, reject) => {
-			this.status = NetworkState.Connecting;
+			this.setStatus(NetworkStatus.Connecting);
 
 			this.peer = new Peer();
 
 			this.peer.once('open', id => {
 				const connection: DataConnection = this.peer!.connect(roomId, {reliable: true});
 				connection.once('open', async () => {
-					this.status = NetworkState.Connected;
+					this.setStatus(NetworkStatus.Connected);
 					await this.emit('connected', id);
 					await this.addConnection(connection);
 					resolve();
@@ -81,7 +82,7 @@ export default class Network extends Emittery<NetworkEvents> {
 			this.peer.once('error', reject);
 
 			this.peer.once('disconnected', async () => {
-				this.status = NetworkState.Disconnected;
+				this.setStatus(NetworkStatus.Disconnected);
 				await this.emit('disconnected');
 			});
 		});
@@ -94,7 +95,7 @@ export default class Network extends Emittery<NetworkEvents> {
 	public async createRoom(roomId: string): Promise<string> {
 		this.host = true;
 		return new Promise(resolve => {
-			this.status = NetworkState.Connecting;
+			this.setStatus(NetworkStatus.Connecting);
 
 			this.peer = new Peer(roomId);
 
@@ -103,13 +104,13 @@ export default class Network extends Emittery<NetworkEvents> {
 			});
 
 			this.peer.once('open', async id => {
-				this.status = NetworkState.Connected;
+				this.setStatus(NetworkStatus.Connected);
 				await this.emit('connected', id);
 				resolve(id);
 			});
 
 			this.peer.once('disconnected', async () => {
-				this.status = NetworkState.Disconnected;
+				this.setStatus(NetworkStatus.Disconnected);
 				await this.emit('disconnected');
 			});
 		});
@@ -184,5 +185,10 @@ export default class Network extends Emittery<NetworkEvents> {
 				data,
 			});
 		});
+	}
+
+	private setStatus(status: NetworkStatus): void {
+		this.status = status;
+		this.emit('status', status);
 	}
 }

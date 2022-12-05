@@ -1,0 +1,26 @@
+import { Canvas, Meta, Story } from '@storybook/addon-docs';
+import CodeInput from './CodeInput';
+
+
+<Meta
+  title="UI/CodeInput"
+  component={CodeInput}
+  args={{
+    length: 6,
+  }}
+  argTypes={{
+    onChange: {action: 'changed'},
+  }}
+/>
+
+# CodeInput
+
+CodeInput is a component that allows users to enter a code.
+
+export const Template = (args) => <CodeInput {...args} />;
+
+<Canvas>
+  <Story name="Default" args={{length: 6}}>
+    {Template.bind({})}
+  </Story>
+</Canvas>

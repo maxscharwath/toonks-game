@@ -1,4 +1,4 @@
-import React, {useState, Fragment, useEffect} from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 
 type Modify<T, R> = Omit<T, keyof R> & R;
 
@@ -29,6 +29,7 @@ export default function CodeInput({length, value, onChange, ...props}: Props) {
 	}
 
 	const inputRef = React.useRef<HTMLInputElement>(null);
+
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>, index: number) {
 		editOtp(index, e.target.value);
 	}
@@ -44,13 +45,13 @@ export default function CodeInput({length, value, onChange, ...props}: Props) {
 	}, [focus]);
 
 	return (
-		<div className={`flex flex-row justify-center items-center space-x-2 ${props.className ?? ''}`}>
+		<div className={`flex flex-row items-center justify-center space-x-2 ${props.className ?? ''}`}>
 			{otp.map((_, index) => (
 				<Fragment key={index}>
 					<input
 						type='text'
 						ref={index === focus ? inputRef : null}
-						className='w-12 h-12 border-2 border-gray-300 rounded-lg text-center text-2xl focus:outline-none focus:border-blue-400'
+						className='h-12 w-12 rounded-lg border-2 border-gray-300 text-center text-2xl focus:border-blue-400 focus:outline-none'
 						onChange={e => {
 							handleChange(e, index);
 						}}

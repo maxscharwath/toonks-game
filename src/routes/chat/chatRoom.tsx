@@ -63,7 +63,7 @@ export default function ChatRoom() {
 
 	return (
 		<>
-			<section className='bg-gray-50 dark:bg-gray-900 h-screen text-gray-900 dark:text-white'>
+			<section className='h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white'>
 				<div>
 					{connected ? (
 						<h1>Connected</h1>
@@ -74,7 +74,7 @@ export default function ChatRoom() {
 						type='text'
 						value={username}
 						placeholder='Username'
-						className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mb-4'
+						className='focus:ring-primary-600 focus:border-primary-600 mb-4 rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm'
 						onChange={e => {
 							setUsername(e.target.value);
 						}}/>
@@ -87,14 +87,15 @@ export default function ChatRoom() {
 						</p>
 					))}
 				</div>
-				<form onSubmit={sendMessage} className='fixed w-full left-0 bottom-0 m-y-4 flex justify-center'>
-					<input className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-1/2 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mb-4'
+				<form onSubmit={sendMessage} className='fixed left-0 bottom-0 my-4 flex w-full justify-center'>
+					<input
+						className='focus:ring-primary-600 focus:border-primary-600 mb-4 block w-1/2 rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm'
 						type='text'
 						value={message}
 						placeholder='Type a message...'
 						onChange={e => {
 							setMessage(e.target.value);
-						}} />
+						}}/>
 				</form>
 			</section>
 		</>

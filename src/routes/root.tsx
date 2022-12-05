@@ -1,11 +1,12 @@
-import React, {createContext, useRef, useState} from 'react';
-import Network from '@game/network/Network';
+import React, {useRef, useState} from 'react';
+import Network, {NetworkStatus} from '@game/network/Network';
 import CodeInput from '@/ui/CodeInput';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import Logo from '@/ui/logo';
 import Button from '@/ui/button';
 import Confetti from '@/ui/Confetti';
+import {useNetwork} from '@/store/store';
 
 function useToggleTimeout(initial: boolean, timeout: number) {
 	const [value, setValue] = useState(initial);
@@ -20,30 +21,24 @@ function useToggleTimeout(initial: boolean, timeout: number) {
 	return [value, toggle] as const;
 }
 
-const RootContext = createContext<{connecting: boolean}>({connecting: false});
-
 export default function Root() {
 	const [confetti, toggleConfetti] = useToggleTimeout(false, 2000);
-	const [connecting, setConnecting] = useState(false);
+	const {network, status} = useNetwork();
 	const gameCode = useRef('');
 
 	const createGame = () => {
-		setConnecting(true);
 		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS'});
-		Network.getInstance().createRoom(id)
+		network.createRoom(id)
 			.then(id => {
 				toggleConfetti();
 				console.log('createGame', id);
 			})
 			.catch(error => {
 				console.error('Error creating room', error);
-			}).finally(() => {
-				setConnecting(false);
 			});
 	};
 
 	const connectToGame = () => {
-		setConnecting(true);
 		if (!gameCode.current) {
 			return;
 		}
@@ -56,9 +51,6 @@ export default function Root() {
 			})
 			.catch(error => {
 				console.log('Error joining room', error);
-			})
-			.finally(() => {
-				setConnecting(false);
 			});
 	};
 
@@ -70,13 +62,14 @@ export default function Root() {
 		{
 			label: 'Host Game',
 			content() {
-				const {connecting} = React.useContext(RootContext);
-				return <div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
-					<h2 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center'>
-						Ready to host a game?
+				const {status} = useNetwork();
+				return <div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
+					<h2
+						className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
+            Ready to host a game?
 					</h2>
-					<Button onClick={createGame} loading={connecting} fullWidth size='large'>
-						Create
+					<Button onClick={createGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
+            Create
 					</Button>
 				</div>;
 			},
@@ -84,14 +77,15 @@ export default function Root() {
 		{
 			label: 'Join Game',
 			content() {
-				const {connecting} = React.useContext(RootContext);
-				return <div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
-					<h2 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center'>
-						Enter Game ID
+				const {status} = useNetwork();
+				return <div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
+					<h2
+						className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
+            Enter Game ID
 					</h2>
 					<CodeInput onChange={handleIdChange} length={6} className='mb-5'/>
-					<Button onClick={connectToGame} loading={connecting} fullWidth size='large'>
-						Join
+					<Button onClick={connectToGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
+            Join
 					</Button>
 				</div>;
 			},
@@ -102,11 +96,12 @@ export default function Root() {
 	return (
 		<>
 			<Confetti active={confetti}/>
-			<div className='flex flex-col items-center px-6 py-8 mx-auto md:h-screen lg:py-0'>
+			<div className='mx-auto flex flex-col items-center px-6 py-8 md:h-screen lg:py-0'>
 				<div className='my-6'>
-					<Logo />
+					<Logo/>
 				</div>
-				<div className='w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700'>
+				<div
+					className='w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md md:mt-0 xl:p-0'>
 					<nav className='p-2'>
 						<ul className='flex flex-row border-b-4 border-gray-200 dark:border-gray-700'>
 							{tabs.map(item => {
@@ -114,7 +109,7 @@ export default function Root() {
 								return (
 									<li
 										key={item.label}
-										className={clsx(isSelected && 'bg-gray-700', 'relative flex flex-col items-center justify-center flex-1 text-xl font-bold text-gray-900 md:text-2xl dark:text-white cursor-pointer py-4 rounded-t hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200')}
+										className={clsx(isSelected && 'bg-gray-700', 'relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-t py-4 text-xl font-bold text-gray-900 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700/50 md:text-2xl')}
 										onClick={() => {
 											setSelectedTab(item);
 										}}
@@ -122,7 +117,7 @@ export default function Root() {
 										{`${item.label}`}
 										{isSelected && (
 											<motion.div
-												className='absolute h-1 bg-toonks-orange -bottom-1 left-0 right-0 rounded-full'
+												className='bg-toonks-orange absolute inset-x-0 -bottom-1 h-1 rounded-full'
 												layoutId='underline'/>
 										)}
 									</li>
@@ -139,9 +134,7 @@ export default function Root() {
 								exit={{opacity: 0, y: 10}}
 								transition={{duration: 0.2}}
 							>
-								<RootContext.Provider value={{connecting}}>
-									<selectedTab.content />
-								</RootContext.Provider>
+								<selectedTab.content/>
 							</motion.div>
 						</AnimatePresence>
 					</main>

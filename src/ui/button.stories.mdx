@@ -1,0 +1,43 @@
+import { Canvas, Meta, Story } from '@storybook/addon-docs';
+import Button from './button';
+
+
+<Meta
+  title="UI/Button"
+  component={Button}
+  args={{
+    children: 'Default',
+    loading: false,
+    disabled: false,
+    fullWidth: false,
+  }}
+  argTypes={{
+    size: {
+      control: 'radio',
+      options: ['small', 'medium', 'large'],
+      defaultValue: 'medium',
+    },
+    modifier: {
+      control: 'radio',
+      options: ['outline', 'plain',false],
+      defaultValue: false,
+    },
+  }}
+/>
+
+# Button
+
+A button component.
+
+export const ButtonStory = (args) => (
+  <Button {...args} />
+);
+
+<Canvas>
+  <Story name="Default" args={{variant:"default"}}>
+    {ButtonStory.bind({})}
+  </Story>
+  <Story name="Primary" args={{variant:"primary"}}>
+    {ButtonStory.bind({})}
+  </Story>
+</Canvas>

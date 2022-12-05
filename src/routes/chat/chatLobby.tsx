@@ -2,6 +2,7 @@ import React, {type DetailedHTMLProps, type InputHTMLAttributes, type SetStateAc
 import {useNavigate} from 'react-router-dom';
 import {nanoid} from 'nanoid';
 import appLogo from '@/assets/logo.svg';
+
 export default function ChatLobby() {
 	const [roomId, setRoomId] = useState('');
 	const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function ChatLobby() {
 	return (
 		<>
 			<section className='bg-gray-50 dark:bg-gray-900'>
-				<div className='flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0'>
+				<div className='mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0'>
 					<div className='mb-6'>
 						<img
 							src={appLogo}
@@ -51,19 +52,20 @@ export default function ChatLobby() {
 							height='300'
 						/>
 					</div>
-					<div className='w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700 divide-y-2 dark:divide-gray-500'>
-						<div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
-							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white'>
-								Join Chat Room
+					<div
+						className='w-full divide-y-2 rounded-lg bg-white shadow dark:divide-gray-500 dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md md:mt-0 xl:p-0'>
+						<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
+							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
+                Join Chat Room
 							</h1>
 							<div>
 								<label
-									className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+									className='mb-2 block text-sm font-medium text-gray-900 dark:text-white'
 								>
-									Room ID
+                  Room ID
 									<input
 										type='text'
-										className='bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mb-4'
+										className='focus:ring-primary-600 focus:border-primary-600 mb-4 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm'
 										placeholder='xxxxxx'
 										value={roomId}
 										onChange={handleInputChange}
@@ -71,23 +73,23 @@ export default function ChatLobby() {
 									/>
 								</label>
 								<button
-									className='w-full bottom-0 mt-auto text-white bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-4 focus:ring-toonks-orangeLight font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 hover:scale-105'
+									className='bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-toonks-orangeLight bottom-0 mt-auto mr-2 mb-2 w-full rounded-lg px-5 py-2.5 text-sm font-medium text-white hover:scale-105 focus:ring-4'
 									onClick={connectToRoom}
 								>
-									Join
+                  Join
 								</button>
 							</div>
 						</div>
-						<div className='p-6 space-y-4 md:space-y-6 sm:p-8'>
-							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white'>
-								Create Chat Room
+						<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
+							<h1 className='text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
+                Create Chat Room
 							</h1>
 							<div>
 								<button
-									className='w-full bottom-0 mt-auto text-white bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-4 focus:ring-toonks-orangeLight font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 hover:scale-105'
+									className='bg-toonks-orange hover:bg-toonks-orangeLight focus:ring-toonks-orangeLight bottom-0 mt-auto mr-2 mb-2 w-full rounded-lg px-5 py-2.5 text-sm font-medium text-white hover:scale-105 focus:ring-4'
 									onClick={createRoom}
 								>
-									Create
+                  Create
 								</button>
 							</div>
 						</div>
