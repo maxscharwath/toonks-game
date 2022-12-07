@@ -1,47 +1,23 @@
 import React, {useState} from 'react';
-import Network, {NetworkStatus} from '@game/network/Network';
 import CodeInput from '@/ui/CodeInput';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
 import Button from '@/ui/Button';
 import {useNetwork} from '@/store/store';
+import {NetworkStatus} from '@game/network/Network';
 
 export default function Register() {
-	const {network} = useNetwork();
-
-	const createGame = () => {
-		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS'});
-		network.createRoom(id)
-			.then(id => {
-				console.log('createGame', id);
-			})
-			.catch(error => {
-				console.error('Error creating room', error);
-			});
-	};
-
-	const connectToGame = (gameCode: string) => {
-		const id = Network.generateRoomId({length: 6, prefix: 'TOONKS', value: gameCode});
-		network.joinRoom(id)
-			.then(() => {
-				console.log('connectToGame', id);
-			})
-			.catch(error => {
-				console.log('Error joining room', error);
-			});
-	};
-
 	const tabs = [
 		{
 			label: 'Host Game',
 			content() {
-				const {status} = useNetwork();
+				const {status, hostGame} = useNetwork();
 				return <div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
 					<h2
 						className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
                         Ready to host a game?
 					</h2>
-					<Button onClick={createGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
+					<Button onClick={hostGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
                         Create
 					</Button>
 				</div>;
@@ -50,7 +26,7 @@ export default function Register() {
 		{
 			label: 'Join Game',
 			content() {
-				const {status} = useNetwork();
+				const {status, joinGame} = useNetwork();
 				const [code, setCode] = useState('');
 				return <div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
 					<h2
@@ -62,7 +38,7 @@ export default function Register() {
 					}} length={6} className='mb-5'/>
 					<Button
 						onClick={() => {
-							connectToGame(code);
+							void joinGame(code);
 						}}
 						loading={status === NetworkStatus.Connecting}
 						disabled={code.length !== 6}

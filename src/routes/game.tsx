@@ -6,7 +6,7 @@ export default function Game() {
 	const {network} = useNetwork();
 	const canvasRef = React.useRef<HTMLCanvasElement>(null);
 	useEffect(() => {
-		const game = startGame(canvasRef.current!, network);
+		const game = startGame(canvasRef.current!, network!);
 		return () => {
 			void game.then((project => {
 				project.renderer.dispose();

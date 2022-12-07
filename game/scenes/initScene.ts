@@ -1,5 +1,5 @@
 import {Scene3D, type THREE} from 'enable3d';
-import type Network from '@game/network/Network';
+import {type Network} from '@game/network/Network';
 
 export type GameConfig = {
 	network: Network;

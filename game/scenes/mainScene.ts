@@ -1,27 +1,31 @@
 import Tank, {WheelPosition} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
-import {type ExtendedGroup, FLAT, Scene3D} from 'enable3d';
+import {type ExtendedGroup, type ExtendedObject3D, FLAT, Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
 import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
+import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
+import {Keyboard} from '@game/utils/keyboard';
+import chroma from 'chroma-js';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
-	private readonly keys = {
-		w: false,
-		a: false,
-		s: false,
-		d: false,
-		up: false,
-		down: false,
-		left: false,
-		right: false,
-		space: false,
-		alt: false,
-	};
+
+	private readonly keyboard = new Keyboard()
+		.addAction('turnRight', ['KeyD'])
+		.addAction('turnLeft', ['KeyA'])
+		.addAction('moveForward', ['KeyW'])
+		.addAction('moveBackward', ['KeyS'])
+		.addAction('turretUp', ['ArrowUp'])
+		.addAction('turretDown', ['ArrowDown'])
+		.addAction('turretRight', ['ArrowRight'])
+		.addAction('turretLeft', ['ArrowLeft'])
+		.addAction('shoot', ['Space'])
+		.addAction('break', ['AltLeft']);
 
 	private vehicleSteering = 0;
 	private data!: GameConfig;
-	private ui!: FlatArea;
+	private readonly ui!: FlatArea;
+	private control!: AdvancedThirdPersonControls;
 
 	constructor() {
 		super({key: 'MainScene'});
@@ -29,87 +33,49 @@ export default class MainScene extends Scene3D {
 
 	init(data: GameConfig) {
 		this.data = data;
-		const keyEvent = (e: KeyboardEvent, down: boolean) => {
-			switch (e.code) {
-				case 'KeyW': {
-					this.keys.w = down;
-					break;
-				}
-
-				case 'KeyA': {
-					this.keys.a = down;
-					break;
-				}
-
-				case 'KeyS': {
-					this.keys.s = down;
-					break;
-				}
-
-				case 'KeyD': {
-					this.keys.d = down;
-					break;
-				}
-
-				case 'Space': {
-					this.keys.space = down;
-					break;
-				}
-
-				case 'ArrowUp': {
-					this.keys.up = down;
-					break;
-				}
-
-				case 'ArrowDown': {
-					this.keys.down = down;
-					break;
-				}
-
-				case 'ArrowLeft': {
-					this.keys.left = down;
-					break;
-				}
-
-				case 'ArrowRight': {
-					this.keys.right = down;
-					break;
-				}
-
-				case 'AltLeft': {
-					this.keys.alt = down;
-					break;
-				}
-
-				default:
-			}
-		};
-
-		document.addEventListener('keydown', e => {
-			e.preventDefault();
-			keyEvent(e, true);
-		});
-		document.addEventListener('keyup', e => {
-			e.preventDefault();
-			keyEvent(e, false);
-		});
+		this.keyboard.start();
 	}
 
 	async create() {
-		const {lights} = await this.warpSpeed();
-		this.ui = FLAT.init(this.renderer);
+		const {lights} = await this.warpSpeed('light');
 		if (lights) {
 			const intensity = 0.4;
 			lights.hemisphereLight.intensity = intensity;
 			lights.ambientLight.intensity = intensity;
 			lights.directionalLight.intensity = intensity;
+			lights.directionalLight.target = this.camera;
+			lights.directionalLight.shadow.bias = -0.0001;
 		}
+
+		// Fog
+		const fogColor = chroma('#63a7ff').num();
+		this.scene.fog = new THREE.Fog(fogColor, 0, 100);
+		this.scene.background = new THREE.Color(fogColor);
+
+		const heightmap = await this.load.texture('/images/heightmap2.png');
+		const colorScale = chroma
+			.scale(['#003eb2', '#0952c6', '#a49463', '#867645', '#3c6114', '#5a7f32', '#8c8e7b', '#a0a28f', '#ebebeb'])
+			.domain([0, 0.025, 0.1, 0.2, 0.25, 0.8, 1.3, 1.45, 1.6]);
+		const mesh = this.heightMap.add(heightmap, {colorScale})!;
+		mesh.castShadow = true;
+		mesh.receiveShadow = true;
+		mesh.scale.set(20, 20, 20);
+		mesh.position.set(0, -10, 0);
+		this.physics.add.existing(mesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
+		mesh.body.ammo.setFriction(0.5);
+		mesh.body.ammo.setRollingFriction(0);
+		mesh.body.ammo.setRestitution(1);
 
 		const tankGlb = await this.load.gltf('tank');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
 
 		this.tank = new Tank(this, tankModel);
-		this.add.existing(this.tank);
+		this.tank.addToScene();
+
+		this.control = new AdvancedThirdPersonControls(this.camera, this.tank.chassis, this.renderer.domElement, {
+			offset: new THREE.Vector3(0, 0, 0),
+			targetRadius: 10,
+		});
 
 		const panel = new GUI();
 		const params = {
@@ -135,6 +101,8 @@ export default class MainScene extends Scene3D {
 			return;
 		}
 
+		this.control.update();
+
 		let engineForce = 0;
 		let breakingForce = 0;
 		const steeringIncrement = 0.04;
@@ -143,17 +111,17 @@ export default class MainScene extends Scene3D {
 		const maxBreakingForce = 100;
 
 		// Front/back
-		if (this.keys.w) {
+		if (this.keyboard.getAction('moveForward')) {
 			engineForce = maxEngineForce;
-		} else if (this.keys.s) {
+		} else if (this.keyboard.getAction('moveBackward')) {
 			engineForce = -maxEngineForce;
 		}
 
-		if (this.keys.a) {
+		if (this.keyboard.getAction('turnLeft')) {
 			if (this.vehicleSteering < steeringClamp) {
 				this.vehicleSteering += steeringIncrement;
 			}
-		} else if (this.keys.d) {
+		} else if (this.keyboard.getAction('turnRight')) {
 			if (this.vehicleSteering > -steeringClamp) {
 				this.vehicleSteering -= steeringIncrement;
 			}
@@ -172,11 +140,11 @@ export default class MainScene extends Scene3D {
 		}
 
 		// Break
-		if (this.keys.alt) {
+		if (this.keyboard.getAction('break')) {
 			breakingForce = maxBreakingForce;
 		}
 
-		if (this.keys.space) {
+		if (this.keyboard.getAction('shoot')) {
 			this.tank.shoot();
 		}
 
@@ -199,24 +167,16 @@ export default class MainScene extends Scene3D {
 
 		this.tank.canonMotor.enableAngularMotor(
 			true,
-			this.keys.up ? -2 : this.keys.down ? 2 : 0,
+			this.keyboard.getAction('turretUp') ? -2 : this.keyboard.getAction('turretDown') ? 2 : 0,
 			10,
 		);
 
 		this.tank.towerMotor.enableAngularMotor(
 			true,
-			this.keys.right ? 2 : this.keys.left ? -2 : 0,
+			this.keyboard.getAction('turretRight') ? -2 : this.keyboard.getAction('turretLeft') ? 2 : 0,
 			10,
 		);
 
 		this.tank.update();
-	}
-
-	preRender() {
-		FLAT.preRender(this.renderer);
-	}
-
-	postRender() {
-		FLAT.postRender(this.renderer, this.ui);
 	}
 }
