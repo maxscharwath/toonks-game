@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import {BrowserRouter, Route, Routes} from 'react-router-dom';
-import Root from '@/routes/root/root';
 import Game from '@/routes/game';
 import '@/global.css';
 import ChatRoom from '@/routes/chat/chatRoom';
 import ChatLobby from '@/routes/chat/chatLobby';
+import Root from '@/routes/root/root';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
