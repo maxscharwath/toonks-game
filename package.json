@@ -2,6 +2,12 @@
   "name": "toonks-game",
   "private": true,
   "version": "0.0.0",
+  "description": "A multiplayer React & Three.js game",
+  "contributors": [
+    "Maxime Scharwath",
+    "Nicolas Crausaz",
+    "Lazar Pavicevic"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -21,7 +27,6 @@
     "matter-js": "^0.18.0",
     "nanoid": "^4.0.0",
     "peerjs": "^1.4.7",
-    "phaser": "^3.55.2",
     "react": "^18.2.0",
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",

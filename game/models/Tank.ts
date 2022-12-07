@@ -58,7 +58,7 @@ export default class Tank extends ExtendedObject3D {
 		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 		this.add(this.chassis.add(this.tower.add(this.canon)));
 
-		const texture = new FLAT.TextTexture('THOONKER #1', {
+		const texture = new FLAT.TextTexture('TOONKER #1', {
 			background: 'rgba(0, 0, 0, 0.5)',
 			fillStyle: 'white',
 			padding: {
