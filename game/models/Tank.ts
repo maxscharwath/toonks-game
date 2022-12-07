@@ -1,4 +1,4 @@
-import {ExtendedObject3D, THREE, type ExtendedGroup, type Scene3D} from '@enable3d/phaser-extension';
+import {type ExtendedGroup, ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -50,16 +50,30 @@ export default class Tank extends ExtendedObject3D {
 			model.getObjectByName('TankFree_Canon') as THREE.Mesh,
 		);
 
-		scene.third.physics.add.existing(this.chassis, {
+		scene.physics.add.existing(this.chassis, {
 			shape: 'convexMesh',
 			mass: 1500,
 		});
-		scene.third.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
-		scene.third.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
+		scene.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
+		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 		this.add(this.chassis.add(this.tower.add(this.canon)));
 
+		const texture = new FLAT.TextTexture('THOONKER #1', {
+			background: 'rgba(0, 0, 0, 0.5)',
+			fillStyle: 'white',
+			padding: {
+				x: 10,
+				y: 15,
+			},
+			borderRadius: 10,
+		});
+		const sprite3d = new FLAT.TextSprite(texture);
+		sprite3d.setScale(0.005);
+		sprite3d.position.set(0, 1, 0);
+		this.chassis.add(sprite3d);
+
 		// Attach the tower to the chassis
-		this.towerMotor = scene.third.physics.add.constraints.hinge(
+		this.towerMotor = scene.physics.add.constraints.hinge(
 			this.chassis.body,
 			this.tower.body,
 			{
@@ -71,7 +85,7 @@ export default class Tank extends ExtendedObject3D {
 		);
 
 		// Attach the canon to the tower
-		this.canonMotor = scene.third.physics.add.constraints.hinge(
+		this.canonMotor = scene.physics.add.constraints.hinge(
 			this.tower.body,
 			this.canon.body,
 			{
@@ -93,7 +107,7 @@ export default class Tank extends ExtendedObject3D {
 
 		this.tuning = new Ammo.btVehicleTuning();
 		const rayCaster = new Ammo.btDefaultVehicleRaycaster(
-			scene.third.physics.physicsWorld,
+			scene.physics.physicsWorld,
 		);
 		this.vehicle = new Ammo.btRaycastVehicle(
 			this.tuning,
@@ -103,7 +117,7 @@ export default class Tank extends ExtendedObject3D {
 		this.chassis.body.skipUpdate = true;
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
-		scene.third.physics.physicsWorld.addAction(this.vehicle);
+		scene.physics.physicsWorld.addAction(this.vehicle);
 
 		const wheelAxisPositionBack = -0.4;
 		const wheelRadiusBack = 0.25;
@@ -162,8 +176,8 @@ export default class Tank extends ExtendedObject3D {
 			.getRigidBody()
 			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
 		// Destroy constraint
-		this.scene.third.physics.physicsWorld.removeConstraint(this.towerMotor);
-		this.scene.third.physics.physicsWorld.removeConstraint(this.canonMotor);
+		this.scene.physics.physicsWorld.removeConstraint(this.towerMotor);
+		this.scene.physics.physicsWorld.removeConstraint(this.canonMotor);
 	}
 
 	public shoot() {
@@ -178,13 +192,13 @@ export default class Tank extends ExtendedObject3D {
 		pos.add(
 			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.2),
 		);
-		const sphere = this.scene.third.physics.add.sphere(
+		const sphere = this.scene.physics.add.sphere(
 			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 10},
 			{phong: {color: 0x202020}},
 		);
 		sphere.receiveShadow = sphere.castShadow = true;
 		setTimeout(() => {
-			this.scene.third.physics.destroy(sphere);
+			this.scene.physics.destroy(sphere);
 			sphere.removeFromParent();
 		}, 5000);
 

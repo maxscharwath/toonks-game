@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import Network, {NetworkStatus} from '@game/network/Network';
 import CodeInput from '@/ui/CodeInput';
 import clsx from 'clsx';

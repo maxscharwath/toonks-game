@@ -1,17 +1,18 @@
 import React, {useEffect} from 'react';
-import {createGame} from '@game/game';
-import {useLocation, useParams} from 'react-router-dom';
-
-type LocationState = {
-	host: boolean;
-};
+import {startGame} from '@game/game';
+import {useNetwork} from '@/store/store';
 
 export default function Game() {
-	const {gameId} = useParams();
-	const {state} = useLocation() as {state: LocationState};
+	const {network} = useNetwork();
+	const canvasRef = React.useRef<HTMLCanvasElement>(null);
 	useEffect(() => {
-		console.log(`Game ${gameId!} is ${state?.host ? 'hosting' : 'joining'}`);
-		createGame(gameId!, state?.host ?? false);
+		const game = startGame(canvasRef.current!, network);
+		return () => {
+			void game.then((project => {
+				project.renderer.dispose();
+			}));
+		};
 	}, []);
-	return <></>;
+
+	return <canvas ref={canvasRef}/>;
 }

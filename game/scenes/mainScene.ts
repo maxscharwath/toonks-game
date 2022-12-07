@@ -1,6 +1,8 @@
-import {JoyStick, Scene3D, THREE, type ExtendedGroup} from '@enable3d/phaser-extension';
 import Tank, {WheelPosition} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
+import {type ExtendedGroup, FLAT, Scene3D} from 'enable3d';
+import {type GameConfig} from '@game/scenes/initScene';
+import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
@@ -18,16 +20,15 @@ export default class MainScene extends Scene3D {
 	};
 
 	private vehicleSteering = 0;
+	private data!: GameConfig;
+	private ui!: FlatArea;
 
 	constructor() {
 		super({key: 'MainScene'});
 	}
 
-	init() {
-		console.log('init');
-		this.accessThirdDimension();
-		this.third.renderer.outputEncoding = THREE.LinearEncoding;
-
+	init(data: GameConfig) {
+		this.data = data;
 		const keyEvent = (e: KeyboardEvent, down: boolean) => {
 			switch (e.code) {
 				case 'KeyW': {
@@ -95,7 +96,8 @@ export default class MainScene extends Scene3D {
 	}
 
 	async create() {
-		const {lights} = await this.third.warpSpeed();
+		const {lights} = await this.warpSpeed();
+		this.ui = FLAT.init(this.renderer);
 		if (lights) {
 			const intensity = 0.4;
 			lights.hemisphereLight.intensity = intensity;
@@ -103,29 +105,11 @@ export default class MainScene extends Scene3D {
 			lights.directionalLight.intensity = intensity;
 		}
 
-		const tankGlb = await this.third.load.gltf('/glb/tank.glb');
+		const tankGlb = await this.load.gltf('tank');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
 
 		this.tank = new Tank(this, tankModel);
-		this.third.add.existing(this.tank);
-
-		// Use the car camera
-		// this.third.camera = this.car.camera
-
-		const joystick = new JoyStick();
-		const axis = joystick.add.axis({
-			styles: {left: 35, bottom: 35, size: 100},
-		});
-		axis.onMove(delta => {
-			const d = delta as never as {right: number; top: number};
-			this.vehicleSteering = d.right * 0.5;
-
-			this.tank?.vehicle.applyEngineForce(d.top * 5000, WheelPosition.RearLeft);
-			this.tank?.vehicle.applyEngineForce(
-				d.top * 5000,
-				WheelPosition.RearRight,
-			);
-		});
+		this.add.existing(this.tank);
 
 		const panel = new GUI();
 		const params = {
@@ -134,15 +118,15 @@ export default class MainScene extends Scene3D {
 		};
 		panel.add(params, 'debug').onChange((value: boolean) => {
 			if (value) {
-				this.third.physics.debug?.enable();
+				this.physics.debug?.enable();
 			} else {
-				this.third.physics.debug?.disable();
+				this.physics.debug?.disable();
 			}
 		});
 		panel
 			.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096])
 			.onChange((value: number) => {
-				this.third.physics.debug?.mode(value);
+				this.physics.debug?.mode(value);
 			});
 	}
 
@@ -226,5 +210,13 @@ export default class MainScene extends Scene3D {
 		);
 
 		this.tank.update();
+	}
+
+	preRender() {
+		FLAT.preRender(this.renderer);
+	}
+
+	postRender() {
+		FLAT.postRender(this.renderer, this.ui);
 	}
 }
