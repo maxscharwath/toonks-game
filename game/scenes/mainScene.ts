@@ -6,6 +6,8 @@ import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
 import {Keyboard} from '@game/utils/keyboard';
 import chroma from 'chroma-js';
+import {ChunkLoader} from '@game/world/ChunkLoader';
+import {World} from '@game/world/World';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
@@ -52,26 +54,38 @@ export default class MainScene extends Scene3D {
 		this.scene.fog = new THREE.Fog(fogColor, 0, 100);
 		this.scene.background = new THREE.Color(fogColor);
 
-		const heightmap = await this.load.texture('/images/heightmap2.png');
-		const colorScale = chroma
-			.scale(['#003eb2', '#0952c6', '#a49463', '#867645', '#3c6114', '#5a7f32', '#8c8e7b', '#a0a28f', '#ebebeb'])
-			.domain([0, 0.025, 0.1, 0.2, 0.25, 0.8, 1.3, 1.45, 1.6]);
-		const mesh = this.heightMap.add(heightmap, {colorScale})!;
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
-		mesh.scale.set(20, 20, 20);
-		mesh.position.set(0, -10, 0);
-		this.physics.add.existing(mesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
-		mesh.body.ammo.setFriction(0.5);
-		mesh.body.ammo.setRollingFriction(0);
-		mesh.body.ammo.setRestitution(1);
+		const chunkLoader = new ChunkLoader({
+			worldHeightMapUrl: '/images/heightmap.png',
+			chunkSize: 64,
+		});
+
+		const world = new World(chunkLoader);
+
+		const chunk = await world.getChunk(10, 10);
+		chunk.addTo(this, true);
+
+		// Generate radius terrain
+		for (let x = 0; x < 20; x++) {
+			for (let y = 0; y < 20; y++) {
+				if (x === 10 && y === 10) {
+					continue;
+				}
+
+				// Center to edge
+				setTimeout(async () => {
+					const chunk = await world.getChunk(x, y);
+					chunk.addTo(this, false);
+				}, 1000 * Math.sqrt((x - 10) ** 2 + (y - 10) ** 2));
+			}
+		}
 
 		const tankGlb = await this.load.gltf('tank');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
 
-		this.tank = new Tank(this, tankModel);
+		const position = chunk.getCenterPosition();
+		position.y += 1;
+		this.tank = new Tank(this, tankModel, position);
 		this.tank.addToScene();
-
 		this.control = new AdvancedThirdPersonControls(this.camera, this.tank.chassis, this.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
 			targetRadius: 10,

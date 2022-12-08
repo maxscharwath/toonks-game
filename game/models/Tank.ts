@@ -30,7 +30,7 @@ export default class Tank {
 	private lastShot = 0;
 	private readonly group = new ExtendedGroup();
 
-	constructor(private readonly scene: Scene3D, model: ExtendedGroup) {
+	constructor(private readonly scene: Scene3D, model: ExtendedGroup, position = new THREE.Vector3()) {
 		model = model.clone(true);
 
 		model.traverse(child => {
@@ -50,11 +50,14 @@ export default class Tank {
 			model.getObjectByName('TankFree_Canon') as THREE.Mesh,
 		);
 
+		this.group.add(this.chassis, this.tower, this.canon);
+		this.chassis.position.copy(position);
+		this.tower.position.copy(position);
+		this.canon.position.copy(position);
+
 		scene.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
 		scene.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
 		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
-
-		this.group.add(this.chassis, this.tower, this.canon);
 
 		const texture = new FLAT.TextTexture('TOONKER #1', {
 			background: 'rgba(0, 0, 0, 0.5)',
