@@ -8,6 +8,7 @@ import {Keyboard} from '@game/utils/keyboard';
 import chroma from 'chroma-js';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
+import {fadeBorder} from '@game/world/Chunk';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
@@ -51,33 +52,40 @@ export default class MainScene extends Scene3D {
 
 		// Fog
 		const fogColor = chroma('#63a7ff').num();
-		this.scene.fog = new THREE.Fog(fogColor, 0, 100);
+		this.scene.fog = new THREE.Fog(fogColor, 0, 200);
 		this.scene.background = new THREE.Color(fogColor);
 
 		const chunkLoader = new ChunkLoader({
 			worldHeightMapUrl: '/images/heightmap.png',
-			chunkSize: 64,
+			chunkSize: 128,
+			scale: 0.5,
 		});
 
 		const world = new World(chunkLoader);
 
-		const chunk = await world.getChunk(10, 10);
+		const cx = 10;
+		const cy = 10;
+		const r = 3;
+		const chunk = await world.getChunk(cx, cy);
+		const chunk2 = await world.getChunk(cx + 1, cy);
+		fadeBorder(chunk, chunk2);
 		chunk.addTo(this, true);
+		chunk2.addTo(this, true);
 
-		// Generate radius terrain
-		for (let x = 0; x < 20; x++) {
-			for (let y = 0; y < 20; y++) {
-				if (x === 10 && y === 10) {
+		/*
+		For (let x = cx - r; x < cx + r; x++) {
+			for (let y = cy - r; y < cy + r; y++) {
+				if (x === cx && y === cy) {
 					continue;
 				}
 
-				// Center to edge
 				setTimeout(async () => {
 					const chunk = await world.getChunk(x, y);
 					chunk.addTo(this, false);
-				}, 1000 * Math.sqrt((x - 10) ** 2 + (y - 10) ** 2));
+				}, 1000 * Math.sqrt((x - cx) ** 2 + (y - cy) ** 2));
 			}
 		}
+		*/
 
 		const tankGlb = await this.load.gltf('tank');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
