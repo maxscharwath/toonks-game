@@ -1,20 +1,19 @@
-import {ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE} from 'enable3d';
-import chroma from 'chroma-js';
-import {type BufferGeometry, Mesh, type Object3D} from 'three';
+import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE} from 'enable3d';
+import {type Object3D} from 'three';
 import {SimplifyModifier} from 'three/examples/jsm/modifiers/SimplifyModifier';
-import {Geometry} from 'three/examples/jsm/deprecated/Geometry';
+import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
+import {WaterMaterial} from '@game/world/WaterMaterial';
 
-export class Chunk {
-	private _mesh?: ExtendedMesh;
+export class Chunk extends ExtendedGroup {
 	private scene?: Scene3D;
 
-	get chunkSize() {
-		return 64;
+	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
+		super();
+		this.add(this.mesh);
+		this.add(this.makeWater());
 	}
 
-	private get heightScale() {
-		return 4;
-	}
+	private _mesh?: ExtendedMesh;
 
 	public get mesh() {
 		if (!this._mesh) {
@@ -24,28 +23,26 @@ export class Chunk {
 		return this._mesh;
 	}
 
-	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
+	get chunkSize() {
+		return 64;
 	}
 
-	public addTo(scene: Scene3D, physics = false) {
+	private get heightScale() {
+		return 4;
+	}
+
+	public addPhysics(scene: Scene3D) {
 		this.scene = scene;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		this.scene.add.existing(this.mesh);
-		if (physics) {
-			this.addPhysics();
-		}
-
-		return this;
-	}
-
-	public removeFrom() {
-		this.scene?.destroy(this.mesh);
-		this.removePhysics();
-		return this;
-	}
-
-	public addPhysics() {
-		this.scene?.physics.add.existing(this.mesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
+		const {geometry} = this.mesh;
+		const modifier = new SimplifyModifier();
+		// eslint-disable-next-line no-bitwise
+		const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.5) | 0);
+		simplified.computeVertexNormals();
+		const mesh = new ExtendedMesh(simplified);
+		mesh.position.copy(this.mesh.position);
+		mesh.rotateX(-Math.PI / 2);
+		mesh.shape = 'concave';
+		this.scene?.physics.add.existing(mesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
 		return this;
 	}
 
@@ -65,22 +62,26 @@ export class Chunk {
 
 	private make() {
 		const {width, height} = this.pixels;
-
 		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, width - 1, height - 1);
 
-		const colorScale = chroma
-			.scale(['#003eb2', '#0952c6', '#a49463', '#867645', '#3c6114', '#5a7f32', '#8c8e7b', '#a0a28f', '#ebebeb'])
-			.domain([0, 0.025, 0.1, 0.2, 0.25, 0.8, 1.3, 1.45, 1.6]);
+		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.png');
+		oceanTexture.wrapS = oceanTexture.wrapT = THREE.RepeatWrapping;
+		const sandTexture = new THREE.TextureLoader().load('/images/sand.png');
+		sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
+		const grassTexture = new THREE.TextureLoader().load('/images/grass.png');
+		grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+		const rockTexture = new THREE.TextureLoader().load('/images/rock.png');
+		rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
+		const snowTexture = new THREE.TextureLoader().load('/images/snow.png');
+		snowTexture.wrapS = snowTexture.wrapT = THREE.RepeatWrapping;
 
-		// Material
-
-		const material = new THREE.MeshPhongMaterial({color: 0xcccccc, side: THREE.DoubleSide, vertexColors: true});
-
-		const mesh = new ExtendedMesh(geometry, material);
-		mesh.receiveShadow = true;
-		mesh.castShadow = true;
-		mesh.shape = 'concave';
-		mesh.position.set(this.x * this.chunkSize, 0, this.y * this.chunkSize);
+		const heightMapMaterial = new HeightMapMaterial({
+			oceanTexture,
+			sandTexture,
+			grassTexture,
+			rockTexture,
+			snowTexture,
+		});
 
 		const vertices = geometry.attributes.position.array;
 		for (let i = 0; i < vertices.length; i++) {
@@ -88,30 +89,30 @@ export class Chunk {
 			vertices[(i * 3) + 2] = (this.pixels.data[i * 4] - 15) / this.heightScale;
 		}
 
-		const modifier = new SimplifyModifier();
-		const count = Math.floor(geometry.attributes.position.count * 0.5); // Number of vertices to remove
-		geometry.copy(modifier.modify(geometry, count));
-		{// Colors
-			const {count} = geometry.attributes.position;
-			geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
-			const color = new THREE.Color();
-			const positions = geometry.attributes.position;
-			const colors = geometry.attributes.color;
-			for (let i = 0; i < count; i++) {
-				const z = positions.getZ(i);
-				const hsl = colorScale(z).hsl();
-				color.setHSL(hsl[0] / 360, hsl[1], hsl[2]);
-				colors.setXYZ(i, color.r, color.g, color.b);
-			}
-		}
-
-		mesh.rotateX(-Math.PI / 2);
-		mesh.updateMatrix();
-
 		geometry.computeVertexNormals();
+
+		const mesh = new ExtendedMesh(geometry, heightMapMaterial);
+		mesh.receiveShadow = true;
+		mesh.castShadow = true;
+
+		mesh.position.set(this.x * this.chunkSize, 0, this.y * this.chunkSize);
+		mesh.rotateX(-Math.PI / 2);
 
 		mesh.name = 'heightmap';
 
+		return mesh;
+	}
+
+	private makeWater() {
+		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, 100, 100);
+		const texture = new THREE.TextureLoader().load('/images/water.png');
+		texture.repeat.set(10, 10);
+		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		const material = new WaterMaterial(texture);
+		const mesh = new ExtendedMesh(geometry, material);
+		mesh.position.set(this.x * this.chunkSize, 2.1, this.y * this.chunkSize);
+		mesh.rotateX(-Math.PI / 2);
+		mesh.name = 'water';
 		return mesh;
 	}
 }

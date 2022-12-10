@@ -10,12 +10,16 @@ export enum NetworkStatus {
 type Awaitable<T> = T | Promise<T>;
 type HandleConnection = (connection: DataConnection) => Awaitable<boolean>;
 
-export abstract class Network<T=Record<string, unknown>> extends Emittery<T & {
+export abstract class Network<T = Record<string, unknown>> extends Emittery<T & {
 	connected: string;
 	disconnected: never;
 	status: NetworkStatus;
 	data: {connection: DataConnection; data: any};
 }> {
+	private static get uniquePrefix() {
+		return 'SWNpT25Fc3REZXNDcmFja3M';
+	}
+
 	public static createRoomId(options: Partial<{length: number; prefix: string; value: string}>): {full: string; code: string} {
 		const {length = 6, prefix = '', value} = options;
 		const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -35,15 +39,14 @@ export abstract class Network<T=Record<string, unknown>> extends Emittery<T & {
 		return parts.at(-1);
 	}
 
-	private static get uniquePrefix() {
-		return 'SWNpT25Fc3REZXNDcmFja3M';
-	}
-
 	abstract connect(id?: string): Awaitable<void>;
+
 	abstract disconnect(): void;
+
 	abstract send(data: any): void;
 
 	protected abstract addConnection(connection: DataConnection): void;
+
 	protected abstract removeConnection(connection: DataConnection): void;
 }
 

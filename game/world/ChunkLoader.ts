@@ -8,6 +8,7 @@ type ChunkLoaderOptions = {
 
 export class ChunkLoader {
 	private readonly image: Promise<HTMLImageElement>;
+
 	constructor(private readonly options: ChunkLoaderOptions) {
 		this.image = new Promise<HTMLImageElement>((resolve, reject) => {
 			const image = new Image();

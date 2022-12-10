@@ -24,6 +24,7 @@ module.exports = {
   },
   plugins: ['react','tailwindcss'],
   rules: {
+    'no-multi-assign': 'off',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/keyword-spacing': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',

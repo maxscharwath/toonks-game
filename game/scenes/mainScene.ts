@@ -1,6 +1,6 @@
 import Tank, {WheelPosition} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
-import {type ExtendedGroup, type ExtendedObject3D, FLAT, Scene3D, THREE} from 'enable3d';
+import {type ExtendedGroup, Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
 import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
@@ -8,7 +8,6 @@ import {Keyboard} from '@game/utils/keyboard';
 import chroma from 'chroma-js';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
-import {fadeBorder} from '@game/world/Chunk';
 
 export default class MainScene extends Scene3D {
 	private tank?: Tank;
@@ -45,14 +44,13 @@ export default class MainScene extends Scene3D {
 			const intensity = 0.4;
 			lights.hemisphereLight.intensity = intensity;
 			lights.ambientLight.intensity = intensity;
-			lights.directionalLight.intensity = intensity;
+			lights.directionalLight.intensity = 0.8;
 			lights.directionalLight.target = this.camera;
-			lights.directionalLight.shadow.bias = -0.0001;
 		}
 
 		// Fog
 		const fogColor = chroma('#63a7ff').num();
-		this.scene.fog = new THREE.Fog(fogColor, 0, 200);
+		this.scene.fog = new THREE.Fog(fogColor, 0, 100);
 		this.scene.background = new THREE.Color(fogColor);
 
 		const chunkLoader = new ChunkLoader({
@@ -63,40 +61,23 @@ export default class MainScene extends Scene3D {
 
 		const world = new World(chunkLoader);
 
-		const cx = 10;
-		const cy = 10;
-		const r = 3;
-		const chunk = await world.getChunk(cx, cy);
-		const chunk2 = await world.getChunk(cx + 1, cy);
-		fadeBorder(chunk, chunk2);
-		chunk.addTo(this, true);
-		chunk2.addTo(this, true);
-
-		/*
-		For (let x = cx - r; x < cx + r; x++) {
-			for (let y = cy - r; y < cy + r; y++) {
-				if (x === cx && y === cy) {
-					continue;
-				}
-
-				setTimeout(async () => {
-					const chunk = await world.getChunk(x, y);
-					chunk.addTo(this, false);
-				}, 1000 * Math.sqrt((x - cx) ** 2 + (y - cy) ** 2));
-			}
-		}
-		*/
+		// Generate a 5x5 chunk area
+		const chunks = await world.generateArea(4, 8, 2);
+		chunks.forEach(chunk => {
+			this.add.existing(chunk);
+			chunk.addPhysics(this);
+		});
 
 		const tankGlb = await this.load.gltf('tank');
 		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
 
-		const position = chunk.getCenterPosition();
+		const position = chunks[0].getCenterPosition();
 		position.y += 1;
 		this.tank = new Tank(this, tankModel, position);
 		this.tank.addToScene();
 		this.control = new AdvancedThirdPersonControls(this.camera, this.tank.chassis, this.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
-			targetRadius: 10,
+			targetRadius: 5,
 		});
 
 		const panel = new GUI();
