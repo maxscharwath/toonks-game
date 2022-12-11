@@ -8,8 +8,18 @@ type ChunkLoaderOptions = {
 
 export class ChunkLoader {
 	private readonly image: Promise<HTMLImageElement>;
+	private readonly context: CanvasRenderingContext2D;
+	private readonly options: Required<ChunkLoaderOptions>;
 
-	constructor(private readonly options: ChunkLoaderOptions) {
+	constructor(options: ChunkLoaderOptions) {
+		const {chunkSize, scale} = this.options = {scale: 1, ...options};
+		const context = document.createElement('canvas').getContext('2d', {willReadFrequently: true});
+		if (!context) {
+			throw new Error('Could not get canvas context');
+		}
+
+		context.canvas.width = context.canvas.height = chunkSize * scale;
+		this.context = context;
 		this.image = new Promise<HTMLImageElement>((resolve, reject) => {
 			const image = new Image();
 			image.onload = () => {
@@ -23,18 +33,8 @@ export class ChunkLoader {
 
 	public async loadChunk(x: number, y: number): Promise<Chunk> {
 		const fullImage = await this.image;
-		const {chunkSize, scale} = {
-			scale: 1,
-			...this.options,
-		};
-		const context = document.createElement('canvas').getContext('2d');
-		if (!context) {
-			throw new Error('Could not get canvas context');
-		}
-
-		context.canvas.width = chunkSize * scale;
-		context.canvas.height = chunkSize * scale;
-		context.drawImage(
+		const {chunkSize, scale} = this.options;
+		this.context.drawImage(
 			fullImage,
 			x * chunkSize,
 			y * chunkSize,
@@ -46,7 +46,7 @@ export class ChunkLoader {
 			chunkSize * scale,
 		);
 
-		const pixels = context.getImageData(0, 0, chunkSize * scale, chunkSize * scale);
+		const pixels = this.context.getImageData(0, 0, chunkSize * scale, chunkSize * scale);
 		return new Chunk(x, y, pixels);
 	}
 }

@@ -5,15 +5,41 @@ import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
 import {WaterMaterial} from '@game/world/WaterMaterial';
 
 export class Chunk extends ExtendedGroup {
+	private static waterMaterial: WaterMaterial;
+	private static heightmapMaterial: HeightMapMaterial;
+
+	static {
+		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.png');
+		oceanTexture.wrapS = oceanTexture.wrapT = THREE.RepeatWrapping;
+		const sandTexture = new THREE.TextureLoader().load('/images/sand.png');
+		sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
+		const grassTexture = new THREE.TextureLoader().load('/images/grass.png');
+		grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+		const rockTexture = new THREE.TextureLoader().load('/images/rock.png');
+		rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
+		const snowTexture = new THREE.TextureLoader().load('/images/snow.png');
+		snowTexture.wrapS = snowTexture.wrapT = THREE.RepeatWrapping;
+		const texture = new THREE.TextureLoader().load('/images/water.png');
+		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		this.waterMaterial = new WaterMaterial(texture);
+
+		this.heightmapMaterial = new HeightMapMaterial({
+			oceanTexture,
+			sandTexture,
+			grassTexture,
+			rockTexture,
+			snowTexture,
+		});
+	}
+
 	private scene?: Scene3D;
+	private _mesh?: ExtendedMesh;
 
 	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
 		super();
 		this.add(this.mesh);
 		this.add(this.makeWater());
 	}
-
-	private _mesh?: ExtendedMesh;
 
 	public get mesh() {
 		if (!this._mesh) {
@@ -36,7 +62,7 @@ export class Chunk extends ExtendedGroup {
 		const {geometry} = this.mesh;
 		const modifier = new SimplifyModifier();
 		// eslint-disable-next-line no-bitwise
-		const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.5) | 0);
+		const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.3) | 0);
 		simplified.computeVertexNormals();
 		const mesh = new ExtendedMesh(simplified);
 		mesh.position.copy(this.mesh.position);
@@ -64,25 +90,6 @@ export class Chunk extends ExtendedGroup {
 		const {width, height} = this.pixels;
 		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, width - 1, height - 1);
 
-		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.png');
-		oceanTexture.wrapS = oceanTexture.wrapT = THREE.RepeatWrapping;
-		const sandTexture = new THREE.TextureLoader().load('/images/sand.png');
-		sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-		const grassTexture = new THREE.TextureLoader().load('/images/grass.png');
-		grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
-		const rockTexture = new THREE.TextureLoader().load('/images/rock.png');
-		rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
-		const snowTexture = new THREE.TextureLoader().load('/images/snow.png');
-		snowTexture.wrapS = snowTexture.wrapT = THREE.RepeatWrapping;
-
-		const heightMapMaterial = new HeightMapMaterial({
-			oceanTexture,
-			sandTexture,
-			grassTexture,
-			rockTexture,
-			snowTexture,
-		});
-
 		const vertices = geometry.attributes.position.array;
 		for (let i = 0; i < vertices.length; i++) {
 			// @ts-expect-error - TS doesn't know that we're only using the first 2 channels
@@ -91,7 +98,7 @@ export class Chunk extends ExtendedGroup {
 
 		geometry.computeVertexNormals();
 
-		const mesh = new ExtendedMesh(geometry, heightMapMaterial);
+		const mesh = new ExtendedMesh(geometry, Chunk.heightmapMaterial);
 		mesh.receiveShadow = true;
 		mesh.castShadow = true;
 
@@ -105,11 +112,7 @@ export class Chunk extends ExtendedGroup {
 
 	private makeWater() {
 		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, 100, 100);
-		const texture = new THREE.TextureLoader().load('/images/water.png');
-		texture.repeat.set(10, 10);
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-		const material = new WaterMaterial(texture);
-		const mesh = new ExtendedMesh(geometry, material);
+		const mesh = new ExtendedMesh(geometry, Chunk.waterMaterial);
 		mesh.position.set(this.x * this.chunkSize, 2.1, this.y * this.chunkSize);
 		mesh.rotateX(-Math.PI / 2);
 		mesh.name = 'water';
@@ -132,7 +135,7 @@ function getSideIndices(chunk: Chunk, side: Side) {
 	for (let i = 0; i < geometry.attributes.position.count; i++) {
 		const x = geometry.attributes.position.getX(i);
 		const y = geometry.attributes.position.getY(i);
-		if ((side === 'left' && x === -half) || (side === 'right' && x === half) || (side === 'top' && y === half) || (side === 'bottom' && y === -half)) {
+		if ((side === 'left' && x === -half) || (side === 'right' && x === half) || (side === 'top' && y === -half) || (side === 'bottom' && y === half)) {
 			indices.push(i);
 		}
 	}
@@ -140,7 +143,7 @@ function getSideIndices(chunk: Chunk, side: Side) {
 	return indices;
 }
 
-export function fadeBorder(chunkA: Chunk, chunkB: Chunk) {
+export function mergeChunkMesh(chunkA: Chunk, chunkB: Chunk) {
 	const [sideA, sideB] = determineSide(chunkA, chunkB);
 	const indicesA = getSideIndices(chunkA, sideA);
 	const indicesB = getSideIndices(chunkB, sideB);
@@ -153,4 +156,7 @@ export function fadeBorder(chunkA: Chunk, chunkB: Chunk) {
 		chunkA.mesh.geometry.attributes.position.setZ(indexA, z);
 		chunkB.mesh.geometry.attributes.position.setZ(indexB, z);
 	}
+
+	chunkA.mesh.geometry.computeVertexNormals();
+	chunkB.mesh.geometry.computeVertexNormals();
 }
