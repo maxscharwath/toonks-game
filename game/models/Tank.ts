@@ -9,7 +9,6 @@ export enum WheelPosition {
 
 function meshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
 	const obj = new ExtendedObject3D();
-	obj.position.copy(mesh.position);
 	obj.rotation.copy(mesh.rotation);
 	mesh.geometry.center();
 	mesh.position.set(0, 0, 0);
@@ -242,8 +241,8 @@ export default class Tank {
 		const suspensionCompression = 10;
 		const suspensionRestLength = 0.01;
 
-		const friction = 50;
-		const rollInfluence = 0.01;
+		const friction = 100;
+		const rollInfluence = 0.1;
 
 		const wheelDirection = new Ammo.btVector3(0, -1, 0);
 		const wheelAxle = new Ammo.btVector3(-1, 0, 0);
@@ -261,6 +260,7 @@ export default class Tank {
 		wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
 		wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
 		wheelInfo.set_m_wheelsDampingCompression(suspensionCompression);
+		wheelInfo.set_m_maxSuspensionForce(10000);
 
 		wheelInfo.set_m_frictionSlip(friction);
 		wheelInfo.set_m_rollInfluence(rollInfluence);

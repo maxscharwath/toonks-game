@@ -77,13 +77,22 @@ export class Chunk extends ExtendedGroup {
 		return this;
 	}
 
-	public getCenterPosition(): THREE.Vector3 {
+	public getPosAt(x: number, y: number): THREE.Vector3 {
+		const {position} = this.mesh;
+		const size = this.chunkSize / 2;
 		const raycaster = new THREE.Raycaster();
-		const {x} = this.mesh.position;
-		const {z} = this.mesh.position;
-		raycaster.set(new THREE.Vector3(x, 1000, z), new THREE.Vector3(0, -1, 0));
+		const pos = position.clone().add(new THREE.Vector3(x - size, 1000, y - size));
+		raycaster.set(
+			pos,
+			new THREE.Vector3(0, -1, 0),
+		);
 		const intersects = raycaster.intersectObject(this.mesh as Object3D);
-		return intersects[0]?.point ?? new THREE.Vector3(x, 0, z);
+		return pos.setY(intersects[0]?.point.y ?? 0);
+	}
+
+	public getCenterPos(): THREE.Vector3 {
+		const size = this.chunkSize / 2;
+		return this.getPosAt(size, size);
 	}
 
 	private make() {
