@@ -22,7 +22,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@game/*": ["./game/*"]
-    }
+    },
   },
   "include": ["src","game"],
   "references": [{ "path": "./tsconfig.node.json" }]

@@ -191,17 +191,14 @@ export default class MainScene extends Scene3D {
 			this.tank.vehicle.applyEngineForce(-this.tank.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearLeft);
 			this.tank.vehicle.applyEngineForce(-this.tank.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearRight);
 
-			this.tank.canonMotor.enableAngularMotor(
-				true,
-				this.keyboard.getAction('turretUp') ? -2 : this.keyboard.getAction('turretDown') ? 2 : 0,
-				10,
-			);
-
-			this.tank.towerMotor.enableAngularMotor(
-				true,
-				this.keyboard.getAction('turretRight') ? -2 : this.keyboard.getAction('turretLeft') ? 2 : 0,
-				10,
-			);
+			const rotation = this.camera.getWorldDirection(new THREE.Vector3());
+			const rotation2 = this.tank.chassis.getWorldDirection(new THREE.Vector3());
+			this.tank.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
+			if (this.keyboard.getAction('turretUp')) {
+				this.tank.canonAngle -= 0.1;
+			} else if (this.keyboard.getAction('turretDown')) {
+				this.tank.canonAngle += 0.1;
+			}
 
 			this.tank.update();
 		}

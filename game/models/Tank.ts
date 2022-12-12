@@ -19,15 +19,15 @@ function meshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
 
 export default class Tank {
 	public vehicle: Ammo.btRaycastVehicle;
-	public canonMotor: Ammo.btHingeConstraint;
-	public towerMotor: Ammo.btHingeConstraint;
-	public readonly tuning: Ammo.btVehicleTuning;
 	public readonly wheelMeshes: ExtendedObject3D[] = [];
 	public readonly chassis: ExtendedObject3D;
-	public readonly tower: ExtendedObject3D;
+	public readonly turret: ExtendedObject3D;
 	public readonly canon: ExtendedObject3D;
-	private lastShot = 0;
 	private readonly group = new ExtendedGroup();
+	private lastShot = 0;
+	private readonly canonMotor: Ammo.btHingeConstraint;
+	private readonly turretMotor: Ammo.btHingeConstraint;
+	private readonly tuning: Ammo.btVehicleTuning;
 
 	constructor(private readonly scene: Scene3D, model: ExtendedGroup, position = new THREE.Vector3()) {
 		model = model.clone(true);
@@ -42,20 +42,20 @@ export default class Tank {
 		this.chassis = meshToExtendedObject3D(
 			model.getObjectByName('TankFree_Body') as THREE.Mesh,
 		);
-		this.tower = meshToExtendedObject3D(
+		this.turret = meshToExtendedObject3D(
 			model.getObjectByName('TankFree_Tower') as THREE.Mesh,
 		);
 		this.canon = meshToExtendedObject3D(
 			model.getObjectByName('TankFree_Canon') as THREE.Mesh,
 		);
 
-		this.group.add(this.chassis, this.tower, this.canon);
+		this.group.add(this.chassis, this.turret, this.canon);
 		this.chassis.position.copy(position);
-		this.tower.position.copy(position);
+		this.turret.position.copy(position);
 		this.canon.position.copy(position);
 
 		scene.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
-		scene.physics.add.existing(this.tower, {shape: 'convexMesh', mass: 200});
+		scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
 		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 
 		const texture = new FLAT.TextTexture('TOONKER #1', {
@@ -73,9 +73,9 @@ export default class Tank {
 		this.chassis.add(sprite3d);
 
 		// Attach the tower to the chassis
-		this.towerMotor = scene.physics.add.constraints.hinge(
+		this.turretMotor = scene.physics.add.constraints.hinge(
 			this.chassis.body,
-			this.tower.body,
+			this.turret.body,
 			{
 				pivotA: {y: 0.3},
 				pivotB: {y: -0.22},
@@ -86,7 +86,7 @@ export default class Tank {
 
 		// Attach the canon to the tower
 		this.canonMotor = scene.physics.add.constraints.hinge(
-			this.tower.body,
+			this.turret.body,
 			this.canon.body,
 			{
 				pivotA: {y: -0.05, z: 0.4},
@@ -95,6 +95,7 @@ export default class Tank {
 				axisB: {x: 1},
 			},
 		);
+
 		// Set the limits of the canon
 		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
 
@@ -175,8 +176,26 @@ export default class Tank {
 			.getRigidBody()
 			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
 		// Destroy constraint
-		this.scene.physics.physicsWorld.removeConstraint(this.towerMotor);
+		this.scene.physics.physicsWorld.removeConstraint(this.turretMotor);
 		this.scene.physics.physicsWorld.removeConstraint(this.canonMotor);
+	}
+
+	public get turretAngle() {
+		return this.turretMotor.getHingeAngle();
+	}
+
+	public set turretAngle(angle: number) {
+		this.turretMotor.setLimit(angle, angle, 0.9, 1);
+	}
+
+	public get canonAngle() {
+		return this.canonMotor.getHingeAngle();
+	}
+
+	public set canonAngle(angle: number) {
+		// Limit the canon angle to -45° and 45°
+		angle = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, angle));
+		this.canonMotor.setLimit(angle, angle, 0.9, 1);
 	}
 
 	public shoot() {
@@ -246,7 +265,6 @@ export default class Tank {
 
 		const wheelDirection = new Ammo.btVector3(0, -1, 0);
 		const wheelAxle = new Ammo.btVector3(-1, 0, 0);
-
 		const wheelInfo = this.vehicle.addWheel(
 			pos,
 			wheelDirection,
