@@ -5,32 +5,21 @@ import {Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
 import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
-import {Keyboard} from '@game/utils/keyboard';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
+import PlayerController from '@game/utils/PlayerController';
 
 export default class MainScene extends Scene3D {
 	private readonly tanks: Tank[] = [];
 	private readonly stats = new Stats();
 
-	private readonly keyboard = new Keyboard()
-		.addAction('turnRight', ['KeyD'])
-		.addAction('turnLeft', ['KeyA'])
-		.addAction('moveForward', ['KeyW'])
-		.addAction('moveBackward', ['KeyS'])
-		.addAction('turretUp', ['ArrowUp'])
-		.addAction('turretDown', ['ArrowDown'])
-		.addAction('turretRight', ['ArrowRight'])
-		.addAction('turretLeft', ['ArrowLeft'])
-		.addAction('shoot', ['Space'])
-		.addAction('break', ['AltLeft']);
-
 	private data!: GameConfig;
 	private readonly ui!: FlatArea;
 	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
+	private readonly playerController = new PlayerController(this);
 
 	constructor() {
 		super({key: 'MainScene'});
@@ -38,7 +27,7 @@ export default class MainScene extends Scene3D {
 
 	init(data: GameConfig) {
 		this.data = data;
-		this.keyboard.start();
+		this.playerController.init();
 	}
 
 	async create() {
@@ -90,6 +79,8 @@ export default class MainScene extends Scene3D {
 			this.tanks.push(tank);
 		}
 
+		this.playerController.setTank(this.tanks[0]);
+
 		this.control = new AdvancedThirdPersonControls(this.camera, this.tanks[0].object3d, this.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
 			targetRadius: 5,
@@ -128,62 +119,7 @@ export default class MainScene extends Scene3D {
 		this.stats.begin();
 		this.control.update();
 		this.sun.update();
-		const player = this.tanks[0];
-		if (player) {
-			const steeringIncrement = 0.04;
-			const steeringClamp = 0.5;
-			const maxEngineForce = 5000;
-			const maxBreakingForce = 100;
-
-			// Front/back
-			if (this.keyboard.getAction('moveForward')) {
-				player.engineForce = maxEngineForce;
-			} else if (this.keyboard.getAction('moveBackward')) {
-				player.engineForce = -maxEngineForce;
-			} else {
-				player.engineForce = 0;
-			}
-
-			if (this.keyboard.getAction('turnLeft')) {
-				if (player.steering < steeringClamp) {
-					player.steering += steeringIncrement;
-				}
-			} else if (this.keyboard.getAction('turnRight')) {
-				if (player.steering > -steeringClamp) {
-					player.steering -= steeringIncrement;
-				}
-			} else {
-				if (player.steering > 0) {
-					player.steering -= steeringIncrement / 2;
-				}
-
-				if (player.steering < 0) {
-					player.steering += steeringIncrement / 2;
-				}
-
-				if (Math.abs(player.steering) <= steeringIncrement) {
-					player.steering = 0;
-				}
-			}
-
-			// Break
-			if (this.keyboard.getAction('break')) {
-				player.breakingForce = maxBreakingForce;
-			}
-
-			if (this.keyboard.getAction('shoot')) {
-				player.shoot();
-			}
-
-			const rotation = this.camera.getWorldDirection(new THREE.Vector3());
-			const rotation2 = player.object3d.getWorldDirection(new THREE.Vector3());
-			player.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
-			if (this.keyboard.getAction('turretUp')) {
-				player.canonAngle -= 0.1;
-			} else if (this.keyboard.getAction('turretDown')) {
-				player.canonAngle += 0.1;
-			}
-		}
+		this.playerController.update();
 
 		this.tanks.forEach(tank => {
 			tank.update();

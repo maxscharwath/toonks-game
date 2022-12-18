@@ -1,7 +1,9 @@
+import Emittery from 'emittery';
+
 type KeyMap<Action extends string = never> = Record<Action, string[]>;
 type Events = typeof Keyboard.events[number];
 
-export class Keyboard<T extends KeyMap> {
+export class Keyboard<T extends KeyMap> extends Emittery {
 	static readonly events = ['keydown', 'keyup'] as const;
 	private readonly actions = new Map<string, readonly string[]>();
 	private readonly keys = new Map<string, Events | false>();
@@ -11,9 +13,16 @@ export class Keyboard<T extends KeyMap> {
 			document.addEventListener(event, e => {
 				if (!e.repeat && this.keys.has(e.code)) {
 					e.preventDefault();
+					void this.emit(e.code, event);
 					this.keys.set(e.code, event);
 				}
 			});
+		});
+
+		// Wheel event
+		document.addEventListener('wheel', e => {
+			e.preventDefault();
+			void this.emit('wheel', e);
 		});
 	}
 
