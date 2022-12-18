@@ -2,7 +2,7 @@ import {DirectionalLight, HemisphereLight} from 'three';
 import {type Scene3D, THREE} from 'enable3d';
 
 export class Sun extends DirectionalLight {
-	public angle = Math.PI / 2;
+	public angle = 0;
 
 	constructor(private readonly scene: Scene3D) {
 		super(0xffffff, 1);

@@ -1,4 +1,7 @@
 import {ExtendedGroup, ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
+import Entity from '@game/models/Entity';
+import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
+import {type Group} from 'three';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -7,49 +10,87 @@ export enum WheelPosition {
 	RearRight = 3,
 }
 
-function meshToExtendedObject3D(mesh: THREE.Mesh): ExtendedObject3D {
+function meshToExtendedObject3D(o?: THREE.Object3D): ExtendedObject3D {
 	const obj = new ExtendedObject3D();
-	obj.rotation.copy(mesh.rotation);
-	mesh.geometry.center();
-	mesh.position.set(0, 0, 0);
-	mesh.rotation.set(0, 0, 0);
-	obj.add(mesh);
+	if (o) {
+		obj.rotation.copy(o.rotation);
+		if (o instanceof THREE.Mesh) {
+			o.geometry.center();
+		}
+
+		o.position.set(0, 0, 0);
+		o.rotation.set(0, 0, 0);
+		obj.add(o);
+	}
+
 	return obj;
 }
 
-export default class Tank {
-	public vehicle: Ammo.btRaycastVehicle;
-	public readonly wheelMeshes: ExtendedObject3D[] = [];
-	public readonly chassis: ExtendedObject3D;
-	public readonly turret: ExtendedObject3D;
-	public readonly canon: ExtendedObject3D;
+type TankState = {
+	pseudo: string;
+	turretAngle: number;
+	canonAngle: number;
+	steering: number;
+	engineForce: number;
+	breakingForce: number;
+};
+
+export default class Tank extends Entity<TankState> {
+	static async loadModel(loader: Plugins.Loaders, url: string) {
+		const tankGlb = await loader.gltf(url);
+		this.model = tankGlb.scenes[0];
+		this.model.traverse(child => {
+			if (child instanceof THREE.Mesh) {
+				child.castShadow = true;
+				child.receiveShadow = true;
+			}
+		});
+	}
+
+	private static model: Group;
+
+	readonly vehicle: Ammo.btRaycastVehicle;
+	private readonly wheelMeshes: ExtendedObject3D[] = [];
+	private readonly chassis: ExtendedObject3D;
+	private readonly turret: ExtendedObject3D;
+	private readonly canon: ExtendedObject3D;
 	private readonly group = new ExtendedGroup();
 	private lastShot = 0;
 	private readonly canonMotor: Ammo.btHingeConstraint;
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
 
-	constructor(private readonly scene: Scene3D, model: ExtendedGroup, position = new THREE.Vector3()) {
-		model = model.clone(true);
-
-		model.traverse(child => {
-			if (child instanceof THREE.Mesh) {
-				child.receiveShadow = true;
-				child.castShadow = true;
-			}
+	constructor(scene: Scene3D, position: THREE.Vector3) {
+		super(scene, 'tank', {
+			pseudo: 'TOONKER',
+			turretAngle: 0,
+			canonAngle: 0,
+			steering: 0,
+			engineForce: 0,
+			breakingForce: 0,
 		});
 
+		const model = Tank.model.clone();
+
 		this.chassis = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Body') as THREE.Mesh,
+			model.getObjectByName('TankFree_Body'),
 		);
 		this.turret = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Tower') as THREE.Mesh,
+			model.getObjectByName('TankFree_Tower'),
 		);
 		this.canon = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Canon') as THREE.Mesh,
+			model.getObjectByName('TankFree_Canon'),
 		);
 
 		this.group.add(this.chassis, this.turret, this.canon);
+
+		// Add lights to chassis
+		const headlight = new THREE.SpotLight(0xffffff, 1, 100, Math.PI / 4, 0.5);
+		headlight.position.set(0, 0, 0.5);
+		headlight.target.position.set(0, 0, 1);
+		headlight.castShadow = true;
+		this.chassis.add(headlight, headlight.target);
+
 		this.chassis.position.copy(position);
 		this.turret.position.copy(position);
 		this.canon.position.copy(position);
@@ -58,7 +99,7 @@ export default class Tank {
 		scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
 		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 
-		const texture = new FLAT.TextTexture('TOONKER #1', {
+		const texture = new FLAT.TextTexture(this.states.pseudo, {
 			background: 'rgba(0, 0, 0, 0.5)',
 			fillStyle: 'white',
 			padding: {
@@ -70,6 +111,7 @@ export default class Tank {
 		const sprite3d = new FLAT.TextSprite(texture);
 		sprite3d.setScale(0.005);
 		sprite3d.position.set(0, 1, 0);
+
 		this.chassis.add(sprite3d);
 
 		// Attach the tower to the chassis
@@ -169,15 +211,22 @@ export default class Tank {
 			wheelRadiusBack,
 			WheelPosition.RearRight,
 		);
+
+		this.onStates.on('pseudo', pseudo => {
+			sprite3d.setText(pseudo);
+		});
+
+		this.onStates.on('turretAngle', angle => {
+			this.turretMotor.setLimit(angle, angle, 0.9, 1);
+		});
+
+		this.onStates.on('canonAngle', angle => {
+			this.canonMotor.setLimit(angle, angle, 0.9, 1);
+		});
 	}
 
-	public jump() {
-		this.vehicle
-			.getRigidBody()
-			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
-		// Destroy constraint
-		this.scene.physics.physicsWorld.removeConstraint(this.turretMotor);
-		this.scene.physics.physicsWorld.removeConstraint(this.canonMotor);
+	public get object3d(): THREE.Object3D {
+		return this.chassis;
 	}
 
 	public get turretAngle() {
@@ -185,7 +234,7 @@ export default class Tank {
 	}
 
 	public set turretAngle(angle: number) {
-		this.turretMotor.setLimit(angle, angle, 0.9, 1);
+		this.states.turretAngle = angle;
 	}
 
 	public get canonAngle() {
@@ -195,7 +244,44 @@ export default class Tank {
 	public set canonAngle(angle: number) {
 		// Limit the canon angle to -45° and 45°
 		angle = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, angle));
-		this.canonMotor.setLimit(angle, angle, 0.9, 1);
+		this.states.canonAngle = angle;
+	}
+
+	public get pseudo() {
+		return this.states.pseudo;
+	}
+
+	public get engineForce() {
+		return this.states.engineForce;
+	}
+
+	public set engineForce(force: number) {
+		this.states.engineForce = force;
+	}
+
+	public get breakingForce() {
+		return this.states.breakingForce;
+	}
+
+	public set breakingForce(force: number) {
+		this.states.breakingForce = force;
+	}
+
+	public get steering() {
+		return this.states.steering;
+	}
+
+	public set steering(value: number) {
+		this.states.steering = value;
+	}
+
+	public jump() {
+		this.vehicle
+			.getRigidBody()
+			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
+		// Destroy constraint
+		this.scene.physics.physicsWorld.removeConstraint(this.turretMotor);
+		this.scene.physics.physicsWorld.removeConstraint(this.canonMotor);
 	}
 
 	public shoot() {
@@ -238,6 +324,27 @@ export default class Tank {
 			this.wheelMeshes[i].position.set(p.x(), p.y(), p.z());
 			this.wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
 		}
+
+		this.vehicle.setSteeringValue(
+			this.states.steering,
+			WheelPosition.FrontLeft,
+		);
+		this.vehicle.setSteeringValue(
+			this.states.steering,
+			WheelPosition.FrontRight,
+		);
+
+		this.vehicle.applyEngineForce(this.states.engineForce, WheelPosition.FrontLeft);
+		this.vehicle.applyEngineForce(this.states.engineForce, WheelPosition.FrontRight);
+
+		this.vehicle.setBrake(this.states.breakingForce / 2, WheelPosition.FrontLeft);
+		this.vehicle.setBrake(this.states.breakingForce / 2, WheelPosition.FrontRight);
+		this.vehicle.setBrake(this.states.breakingForce, WheelPosition.RearLeft);
+		this.vehicle.setBrake(this.states.breakingForce, WheelPosition.RearRight);
+
+		// Friction
+		this.vehicle.applyEngineForce(-this.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearLeft);
+		this.vehicle.applyEngineForce(-this.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearRight);
 	}
 
 	public addToScene() {
@@ -247,6 +354,10 @@ export default class Tank {
 
 	public removeFromScene() {
 		this.group.removeFromParent();
+	}
+
+	public destroy(): void {
+		throw new Error('Method not implemented.');
 	}
 
 	private addWheel(

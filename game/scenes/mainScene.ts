@@ -1,7 +1,7 @@
-import Tank, {WheelPosition} from '@game/models/Tank';
+import Tank from '@game/models/Tank';
 import {GUI} from 'lil-gui';
 import Stats from 'stats.js';
-import {type ExtendedGroup, Scene3D, THREE} from 'enable3d';
+import {Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
 import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
@@ -12,7 +12,7 @@ import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 
 export default class MainScene extends Scene3D {
-	private tank?: Tank;
+	private readonly tanks: Tank[] = [];
 	private readonly stats = new Stats();
 
 	private readonly keyboard = new Keyboard()
@@ -27,7 +27,6 @@ export default class MainScene extends Scene3D {
 		.addAction('shoot', ['Space'])
 		.addAction('break', ['AltLeft']);
 
-	private vehicleSteering = 0;
 	private data!: GameConfig;
 	private readonly ui!: FlatArea;
 	private control!: AdvancedThirdPersonControls;
@@ -79,14 +78,19 @@ export default class MainScene extends Scene3D {
 		});
 		const chunk = await world.getChunk(8, 8);
 
-		const tankGlb = await this.load.gltf('tank');
-		const tankModel = tankGlb.scenes[0] as ExtendedGroup;
-
 		const position = chunk.getCenterPos();
-		position.y += 1;
-		this.tank = new Tank(this, tankModel, position);
-		this.tank.addToScene();
-		this.control = new AdvancedThirdPersonControls(this.camera, this.tank.chassis, this.renderer.domElement, {
+		position.y += 5;
+
+		for (let i = 1; i <= 3; i++) {
+			const tank = new Tank(this, new THREE.Vector3(position.x + (i * 5), position.y, position.z));
+			tank.import({
+				pseudo: `Toonker #${i}`,
+			});
+			tank.addToScene();
+			this.tanks.push(tank);
+		}
+
+		this.control = new AdvancedThirdPersonControls(this.camera, this.tanks[0].object3d, this.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
 			targetRadius: 5,
 		});
@@ -124,9 +128,8 @@ export default class MainScene extends Scene3D {
 		this.stats.begin();
 		this.control.update();
 		this.sun.update();
-		if (this.tank) {
-			let engineForce = 0;
-			let breakingForce = 0;
+		const player = this.tanks[0];
+		if (player) {
 			const steeringIncrement = 0.04;
 			const steeringClamp = 0.5;
 			const maxEngineForce = 5000;
@@ -134,74 +137,57 @@ export default class MainScene extends Scene3D {
 
 			// Front/back
 			if (this.keyboard.getAction('moveForward')) {
-				engineForce = maxEngineForce;
+				player.engineForce = maxEngineForce;
 			} else if (this.keyboard.getAction('moveBackward')) {
-				engineForce = -maxEngineForce;
+				player.engineForce = -maxEngineForce;
+			} else {
+				player.engineForce = 0;
 			}
 
 			if (this.keyboard.getAction('turnLeft')) {
-				if (this.vehicleSteering < steeringClamp) {
-					this.vehicleSteering += steeringIncrement;
+				if (player.steering < steeringClamp) {
+					player.steering += steeringIncrement;
 				}
 			} else if (this.keyboard.getAction('turnRight')) {
-				if (this.vehicleSteering > -steeringClamp) {
-					this.vehicleSteering -= steeringIncrement;
+				if (player.steering > -steeringClamp) {
+					player.steering -= steeringIncrement;
 				}
 			} else {
-				if (this.vehicleSteering > 0) {
-					this.vehicleSteering -= steeringIncrement / 2;
+				if (player.steering > 0) {
+					player.steering -= steeringIncrement / 2;
 				}
 
-				if (this.vehicleSteering < 0) {
-					this.vehicleSteering += steeringIncrement / 2;
+				if (player.steering < 0) {
+					player.steering += steeringIncrement / 2;
 				}
 
-				if (Math.abs(this.vehicleSteering) <= steeringIncrement) {
-					this.vehicleSteering = 0;
+				if (Math.abs(player.steering) <= steeringIncrement) {
+					player.steering = 0;
 				}
 			}
 
 			// Break
 			if (this.keyboard.getAction('break')) {
-				breakingForce = maxBreakingForce;
+				player.breakingForce = maxBreakingForce;
 			}
 
 			if (this.keyboard.getAction('shoot')) {
-				this.tank.shoot();
+				player.shoot();
 			}
-
-			this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
-			this.tank.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
-
-			this.tank.vehicle.setSteeringValue(
-				this.vehicleSteering,
-				WheelPosition.FrontLeft,
-			);
-			this.tank.vehicle.setSteeringValue(
-				this.vehicleSteering,
-				WheelPosition.FrontRight,
-			);
-
-			this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
-			this.tank.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
-			this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
-			this.tank.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
-
-			// Friction
-			this.tank.vehicle.applyEngineForce(-this.tank.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearLeft);
-			this.tank.vehicle.applyEngineForce(-this.tank.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearRight);
 
 			const rotation = this.camera.getWorldDirection(new THREE.Vector3());
-			const rotation2 = this.tank.chassis.getWorldDirection(new THREE.Vector3());
-			this.tank.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
+			const rotation2 = player.object3d.getWorldDirection(new THREE.Vector3());
+			player.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
 			if (this.keyboard.getAction('turretUp')) {
-				this.tank.canonAngle -= 0.1;
+				player.canonAngle -= 0.1;
 			} else if (this.keyboard.getAction('turretDown')) {
-				this.tank.canonAngle += 0.1;
+				player.canonAngle += 0.1;
 			}
-
-			this.tank.update();
 		}
+
+		this.tanks.forEach(tank => {
+			tank.update();
+		});
 
 		this.stats.end();
 	}
