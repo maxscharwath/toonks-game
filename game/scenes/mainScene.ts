@@ -53,8 +53,19 @@ export default class MainScene extends Scene3D {
 			}
 		});
 		treeModel.scale.set(0.5, 0.5, 0.5);
+
+		const rockModel = (await this.load.gltf('rock')).scenes[0];
+		rockModel.traverse(child => {
+			if (child instanceof THREE.Mesh) {
+				child.receiveShadow = true;
+				child.castShadow = true;
+			}
+		});
+		rockModel.scale.set(0.5, 0.5, 0.5);
+
 		const chunkPopulator = new ChunkPopulator()
-			.addElement(treeModel);
+			.addElement(treeModel)
+			.addElement(rockModel);
 
 		const world = new World(chunkLoader, chunkPopulator);
 
@@ -68,7 +79,7 @@ export default class MainScene extends Scene3D {
 		const chunk = await world.getChunk(8, 8);
 
 		const position = chunk.getCenterPos();
-		position.y += 5;
+		position.y += 0.5;
 
 		for (let i = 1; i <= 3; i++) {
 			const tank = new Tank(this, new THREE.Vector3(position.x + (i * 5), position.y, position.z));

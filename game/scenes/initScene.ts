@@ -9,6 +9,7 @@ export type GameConfig = {
 export default (config: GameConfig) => class extends Scene3D {
 	async preload() {
 		await this.load.preload('tree', '/glb/tree.glb');
+		await this.load.preload('rock', '/glb/rock.glb');
 		await Tank.loadModel(this.load, '/glb/tank.glb');
 	}
 

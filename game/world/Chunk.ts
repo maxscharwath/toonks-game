@@ -1,5 +1,4 @@
 import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE} from 'enable3d';
-import {type Object3D} from 'three';
 import {SimplifyModifier} from 'three/examples/jsm/modifiers/SimplifyModifier';
 import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
 import {WaterMaterial} from '@game/world/WaterMaterial';
@@ -32,11 +31,13 @@ export class Chunk extends ExtendedGroup {
 		});
 	}
 
+	readonly chunkId: number;
 	private scene?: Scene3D;
 	private _mesh?: ExtendedMesh;
 
 	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
 		super();
+		this.chunkId = (x << 16) | y;
 		this.add(this.mesh);
 		this.add(this.makeWater());
 	}
@@ -80,19 +81,21 @@ export class Chunk extends ExtendedGroup {
 	public getPosAt(x: number, y: number): THREE.Vector3 {
 		const {position} = this.mesh;
 		const size = this.chunkSize / 2;
-		const raycaster = new THREE.Raycaster();
-		const pos = position.clone().add(new THREE.Vector3(x - size, 1000, y - size));
-		raycaster.set(
-			pos,
-			new THREE.Vector3(0, -1, 0),
-		);
-		const intersects = raycaster.intersectObject(this.mesh as Object3D);
-		return pos.setY(intersects[0]?.point.y ?? 0);
+		const h = this.getHeightAt(x, y);
+		const pos = position.clone().add(new THREE.Vector3(x - size, h, y - size));
+		return pos;
 	}
 
 	public getCenterPos(): THREE.Vector3 {
 		const size = this.chunkSize / 2;
 		return this.getPosAt(size, size);
+	}
+
+	private getHeightAt(x: number, y: number): number {
+		const x1 = Math.round((x / this.chunkSize) * this.pixels.width);
+		const y1 = Math.round((y / this.chunkSize) * this.pixels.height);
+		const h = this.pixels.data[((y1 * this.pixels.width) + x1) * 4];
+		return (h - 15) / this.heightScale;
 	}
 
 	private make() {
