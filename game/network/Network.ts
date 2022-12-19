@@ -16,6 +16,7 @@ export abstract class Network<T = Record<string, unknown>> extends Emittery<T & 
 	status: NetworkStatus;
 	data: {connection: DataConnection; data: any};
 }> {
+	abstract isHost: boolean;
 	private static get uniquePrefix() {
 		return 'SWNpT25Fc3REZXNDcmFja3M';
 	}
@@ -54,6 +55,10 @@ export class ServerNetwork extends Network {
 	private peer?: Peer;
 	private readonly connections = new Set<DataConnection>();
 	private handleConnection?: HandleConnection;
+
+	public get isHost() {
+		return true;
+	}
 
 	public constructor(private readonly id: string) {
 		super();
@@ -144,6 +149,10 @@ export class ServerNetwork extends Network {
 export class ClientNetwork extends Network {
 	private peer?: Peer;
 	private connection?: DataConnection;
+
+	public get isHost() {
+		return false;
+	}
 
 	public constructor(private readonly metadata: unknown) {
 		super();

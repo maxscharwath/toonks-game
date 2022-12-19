@@ -3,6 +3,7 @@ import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Group} from 'three';
 import Explosion from '@game/models/Explosion';
+import shortUuid from 'short-uuid';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -27,7 +28,7 @@ function meshToExtendedObject3D(o?: THREE.Object3D): ExtendedObject3D {
 	return obj;
 }
 
-type TankState = {
+export type TankState = {
 	pseudo: string;
 	turretAngle: number;
 	canonAngle: number;
@@ -35,6 +36,8 @@ type TankState = {
 	engineForce: number;
 	breakingForce: number;
 };
+
+export type TankExport = TankState & {uuid: string};
 
 export default class Tank extends Entity<TankState> {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
@@ -61,8 +64,8 @@ export default class Tank extends Entity<TankState> {
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
 
-	constructor(scene: Scene3D, position: THREE.Vector3) {
-		super(scene, 'tank', {
+	constructor(scene: Scene3D, position: THREE.Vector3, uuid:string = shortUuid.uuid()) {
+		super(scene, uuid, {
 			pseudo: 'TOONKER',
 			turretAngle: 0,
 			canonAngle: 0,

@@ -33,6 +33,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.5.0",
     "react-use": "^17.4.0",
+    "short-uuid": "^4.2.2",
     "stats.js": "^0.17.0",
     "three": "^0.147.0",
     "zustand": "^4.1.5"

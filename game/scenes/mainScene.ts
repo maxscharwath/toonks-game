@@ -1,4 +1,4 @@
-import Tank from '@game/models/Tank';
+import Tank, {type TankExport, TankState} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
 import Stats from 'stats.js';
 import {Scene3D, THREE} from 'enable3d';
@@ -10,9 +10,11 @@ import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
+import Entity from '@game/models/Entity';
 
 export default class MainScene extends Scene3D {
-	private readonly tanks: Tank[] = [];
+	private readonly entities = new Map<string, Tank>();
+	private player!: Tank;
 	private readonly stats = new Stats();
 
 	private data!: GameConfig;
@@ -31,7 +33,7 @@ export default class MainScene extends Scene3D {
 
 	async create() {
 		const listener = new THREE.AudioListener();
-		this.camera.add( listener );
+		this.camera.add(listener);
 
 		this.sun = new Sun(this);
 		this.scene.add(this.sun);
@@ -83,18 +85,13 @@ export default class MainScene extends Scene3D {
 		const position = chunk.getCenterPos();
 		position.y += 0.5;
 
-		for (let i = 1; i <= 3; i++) {
-			const tank = new Tank(this, new THREE.Vector3(position.x + (i * 5), position.y, position.z));
-			tank.import({
-				pseudo: `Toonker #${i}`,
-			});
-			tank.addToScene();
-			this.tanks.push(tank);
-		}
+		this.player = new Tank(this, new THREE.Vector3(position.x, position.y, position.z));
+		this.player.addToScene();
+		this.entities.set(this.player.uuid, this.player);
 
-		this.playerController.setTank(this.tanks[0]);
+		this.playerController.setTank(this.player);
 
-		this.control = new AdvancedThirdPersonControls(this.camera, this.tanks[0].object3d, this.renderer.domElement, {
+		this.control = new AdvancedThirdPersonControls(this.camera, this.player.object3d, this.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
 			targetRadius: 5,
 		});
@@ -126,6 +123,20 @@ export default class MainScene extends Scene3D {
 				this.physics.debug?.mode(value);
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
+		this.data.network.on('data', ({data}) => {
+			const entity = this.entities.get(data.uuid);
+			if (entity) {
+				entity.import(data);
+			} else {
+				const tank = new Tank(this, position);
+				tank.addToScene();
+				tank.import(data);
+				this.entities.set(data.uuid, tank);
+			}
+		});
+		setInterval(() => {
+			this.data.network.send(this.player.export());
+		}, 100);
 	}
 
 	update() {
@@ -134,8 +145,8 @@ export default class MainScene extends Scene3D {
 		this.sun.update();
 		this.playerController.update();
 
-		this.tanks.forEach(tank => {
-			tank.update();
+		this.entities.forEach(entity => {
+			entity.update();
 		});
 
 		this.stats.end();
