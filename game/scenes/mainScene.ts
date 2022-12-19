@@ -30,6 +30,9 @@ export default class MainScene extends Scene3D {
 	}
 
 	async create() {
+		const listener = new THREE.AudioListener();
+		this.camera.add( listener );
+
 		this.sun = new Sun(this);
 		this.scene.add(this.sun);
 

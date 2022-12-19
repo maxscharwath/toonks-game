@@ -19,7 +19,8 @@ export default class Explosion extends Entity {
 		this.object3d = new ExtendedObject3D();
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(this.scale, this.scale, this.scale);
-		const light = new THREE.PointLight(0xffdf5e, 10, 100);
+		const light = new THREE.PointLight(0xffdf5e, 10, 80);
+		light.castShadow = true;
 		this.object3d.add(light);
 		scene.animationMixers.add(this.object3d.anims.mixer);
 		Explosion.model.animations.forEach(animation => {
@@ -27,7 +28,10 @@ export default class Explosion extends Entity {
 				this.object3d.anims.add(animation.name, animation);
 			}
 		});
-		this.object3d.anims.mixer.timeScale = 10;
+		this.object3d.anims.mixer.timeScale = (1 / this.scale);
+		this.object3d.anims.mixer.addEventListener('finished', () => {
+
+		});
 		this.object3d.anims.mixer.addEventListener('finished', () => {
 			this.destroy();
 		});

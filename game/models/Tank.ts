@@ -309,7 +309,7 @@ export default class Tank extends Entity<TankState> {
 			console.log('hit', other);
 			this.scene.physics.destroy(sphere);
 			sphere.removeFromParent();
-			const pos = other.getWorldPosition(new THREE.Vector3());
+			const pos = sphere.getWorldPosition(new THREE.Vector3());
 			new Explosion(this.scene, pos, 0.5).addToScene();
 		});
 
