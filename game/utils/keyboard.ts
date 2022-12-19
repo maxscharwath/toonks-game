@@ -21,7 +21,6 @@ export class Keyboard<T extends KeyMap> extends Emittery {
 
 		// Wheel event
 		document.addEventListener('wheel', e => {
-			e.preventDefault();
 			void this.emit('wheel', e);
 		});
 	}

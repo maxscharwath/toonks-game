@@ -16,7 +16,6 @@ export default class MainScene extends Scene3D {
 	private readonly stats = new Stats();
 
 	private data!: GameConfig;
-	private readonly ui!: FlatArea;
 	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
 	private readonly playerController = new PlayerController(this);

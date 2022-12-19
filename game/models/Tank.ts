@@ -2,6 +2,7 @@ import {ExtendedGroup, ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Group} from 'three';
+import Explosion from '@game/models/Explosion';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -294,12 +295,24 @@ export default class Tank extends Entity<TankState> {
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
 		// Translate the position to the front of the canon
 		pos.add(
-			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.2),
+			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(1),
 		);
+
+		new Explosion(this.scene, pos).addToScene();
+
 		const sphere = this.scene.physics.add.sphere(
-			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 10},
+			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 100},
 			{phong: {color: 0x202020}},
 		);
+		// Event when bullet hit something
+		sphere.body.on.collision(other => {
+			console.log('hit', other);
+			this.scene.physics.destroy(sphere);
+			sphere.removeFromParent();
+			const pos = other.getWorldPosition(new THREE.Vector3());
+			new Explosion(this.scene, pos, 0.5).addToScene();
+		});
+
 		sphere.receiveShadow = sphere.castShadow = true;
 		setTimeout(() => {
 			this.scene.physics.destroy(sphere);
@@ -308,8 +321,8 @@ export default class Tank extends Entity<TankState> {
 
 		const force = this.canon
 			.getWorldDirection(new THREE.Vector3())
-			.multiplyScalar(400);
-		const recoil = force.clone().multiplyScalar(-1);
+			.multiplyScalar(10000);
+		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		sphere.body.applyForce(force.x, force.y, force.z);
 	}

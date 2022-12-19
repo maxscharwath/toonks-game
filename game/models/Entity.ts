@@ -1,7 +1,7 @@
 import {type Scene3D, type THREE} from 'enable3d';
 import Emittery from 'emittery';
 
-export default abstract class Entity<State extends Record<string, unknown>> {
+export default abstract class Entity<State extends Record<string, unknown> = Record<string, unknown>> {
 	abstract readonly object3d: THREE.Object3D;
 	protected onStates = new Emittery<State>();
 	protected states: State;

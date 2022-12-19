@@ -1,6 +1,7 @@
 import {Scene3D, type THREE} from 'enable3d';
 import {type Network} from '@game/network/Network';
 import Tank from '@game/models/Tank';
+import Explosion from '@game/models/Explosion';
 
 export type GameConfig = {
 	network: Network;
@@ -11,6 +12,7 @@ export default (config: GameConfig) => class extends Scene3D {
 		await this.load.preload('tree', '/glb/tree.glb');
 		await this.load.preload('rock', '/glb/rock.glb');
 		await Tank.loadModel(this.load, '/glb/tank.glb');
+		await Explosion.loadModel(this.load, '/glb/fireball.glb');
 	}
 
 	init() {
