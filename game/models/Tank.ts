@@ -1,7 +1,7 @@
 import {ExtendedGroup, ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
-import {type Group} from 'three';
+import {type Euler, type Group, type Vector3} from 'three';
 import Explosion from '@game/models/Explosion';
 import shortUuid from 'short-uuid';
 
@@ -64,7 +64,7 @@ export default class Tank extends Entity<TankState> {
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
 
-	constructor(scene: Scene3D, position: THREE.Vector3, uuid:string = shortUuid.uuid()) {
+	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(scene, uuid, {
 			pseudo: 'TOONKER',
 			turretAngle: 0,
@@ -374,6 +374,61 @@ export default class Tank extends Entity<TankState> {
 
 	public destroy(): void {
 		throw new Error('Method not implemented.');
+	}
+
+	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Euler}) {
+		(async () => {
+			this.chassis.body.setCollisionFlags(2);
+			this.turret.body.setCollisionFlags(2);
+			this.canon.body.setCollisionFlags(2);
+			if (pos) {
+				const transRelative = this.chassis.position.clone().sub(pos);
+				this.chassis.position.copy(pos);
+				this.turret.position.sub(transRelative);
+				this.canon.position.sub(transRelative);
+			}
+
+			if (rot) {
+				this.chassis.rotation.copy(rot);
+			}
+
+			await this.updatePhysics();
+
+			this.chassis.body.setCollisionFlags(0);
+			this.turret.body.setCollisionFlags(0);
+			this.canon.body.setCollisionFlags(0);
+
+			this.chassis.body.setVelocity(0, 0, 0);
+			this.turret.body.setVelocity(0, 0, 0);
+			this.canon.body.setVelocity(0, 0, 0);
+
+			this.chassis.body.setAngularVelocity(0, 0, 0);
+			this.turret.body.setAngularVelocity(0, 0, 0);
+			this.canon.body.setAngularVelocity(0, 0, 0);
+		})();
+	}
+
+	private async updatePhysics() {
+		this.chassis.body.needUpdate = true;
+		this.turret.body.needUpdate = true;
+		this.canon.body.needUpdate = true;
+		await Promise.all([
+			new Promise<void>(resolve => {
+				this.chassis.body.once.update(() => {
+					resolve();
+				});
+			}),
+			new Promise<void>(resolve => {
+				this.turret.body.once.update(() => {
+					resolve();
+				});
+			}),
+			new Promise<void>(resolve => {
+				this.canon.body.once.update(() => {
+					resolve();
+				});
+			}),
+		]);
 	}
 
 	private addWheel(

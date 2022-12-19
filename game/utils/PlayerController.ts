@@ -1,7 +1,7 @@
 import {type Scene3D} from 'enable3d/dist/scene3d';
 import type Tank from '@game/models/Tank';
 import {THREE} from 'enable3d';
-import {Keyboard} from '@game/utils/keyboard';
+import {Keyboard} from '@game/utils/Keyboard';
 
 export default class PlayerController {
 	private readonly keyboard = new Keyboard()

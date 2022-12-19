@@ -4,7 +4,7 @@ import Stats from 'stats.js';
 import {Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
 import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
-import {AdvancedThirdPersonControls} from '@game/utils/advancedThirdPersonControls';
+import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
@@ -123,7 +123,8 @@ export default class MainScene extends Scene3D {
 				this.physics.debug?.mode(value);
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
-		this.data.network.on('data', ({data}) => {
+
+		this.data.network?.on('data', ({data}) => {
 			const entity = this.entities.get(data.uuid);
 			if (entity) {
 				entity.import(data);
@@ -135,7 +136,7 @@ export default class MainScene extends Scene3D {
 			}
 		});
 		setInterval(() => {
-			this.data.network.send(this.player.export());
+			this.data.network?.send(this.player.export());
 		}, 100);
 	}
 

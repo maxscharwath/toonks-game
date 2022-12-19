@@ -1,15 +1,18 @@
-import {PointerDrag, PointerLock, ThirdPersonControls, type ThirdPersonControlsConfig} from 'enable3d';
+import {PointerDrag, ThirdPersonControls, type ThirdPersonControlsConfig} from 'enable3d';
 import {type Object3D, type OrthographicCamera, type PerspectiveCamera} from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
+import {PointerLock} from '@game/utils/PointerLock';
 
 export class AdvancedThirdPersonControls extends ThirdPersonControls {
 	private delta = {x: 0, y: 0};
-	private pointerLock?: PointerLock;
-	private pointerDrag?: PointerDrag;
+	private readonly pointerLock: PointerLock;
+	private readonly pointerDrag: PointerDrag;
 	private orbitControls?: OrbitControls;
 
 	constructor(private readonly cam: PerspectiveCamera | OrthographicCamera, private readonly trgt: Object3D, private readonly element: HTMLElement, config: ThirdPersonControlsConfig) {
 		super(cam, trgt, config);
+		this.pointerLock = new PointerLock(this.element);
+		this.pointerDrag = new PointerDrag(this.element);
 	}
 
 	public update() {
@@ -32,18 +35,16 @@ export class AdvancedThirdPersonControls extends ThirdPersonControls {
 
 	public useThirdPerson() {
 		this.dispose();
-		this.pointerLock = new PointerLock(this.element);
-		this.pointerDrag = new PointerDrag(this.element);
 		this.pointerDrag.onMove(delta => {
-			this.delta = delta;
+			if (this.pointerLock?.isLocked()) {
+				this.delta = delta;
+			}
 		});
 	}
 
 	public dispose() {
 		this.orbitControls?.dispose();
 		this.orbitControls = undefined;
-		this.pointerLock?.removeListeners();
-		this.pointerLock?.exit();
-		this.pointerDrag?.removeListeners();
+		this.pointerLock.unlock();
 	}
 }
