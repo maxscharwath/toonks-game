@@ -26,7 +26,7 @@ class Property<T> extends Emittery<{change: T}> {
 
 	public set value(value: T) {
 		this._value = this.options.set?.(value) ?? value;
-		void this.emit('change', this.value);
+		void this.emit('change', this._value);
 	}
 
 	public export(): unknown {

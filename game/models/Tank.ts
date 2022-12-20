@@ -22,7 +22,7 @@ export type TankState = {
 	engineForce: number;
 	breakingForce: number;
 	position: THREE.Vector3;
-	rotation: THREE.Euler;
+	rotation: THREE.Quaternion;
 };
 
 export default class Tank extends Entity {
@@ -229,12 +229,26 @@ export default class Tank extends Entity {
 				get: () => this.chassis.position,
 				export: data => data.toArray(),
 				import: data => new THREE.Vector3().fromArray(data),
+				onChange: value => {
+					if (this.object3d.position.distanceTo(value) > 0.2) {
+						this.teleport({
+							pos: value,
+						});
+					}
+				},
 			})
 			.addProperty('rotation', {
-				default: this.chassis.rotation,
-				get: () => this.chassis.rotation,
+				default: this.chassis.quaternion,
+				get: () => this.chassis.quaternion,
 				export: data => data.toArray(),
-				import: data => new THREE.Euler().fromArray(data),
+				import: data => new THREE.Quaternion().fromArray(data),
+				onChange: value => {
+					if (this.object3d.quaternion.angleTo(value) > 0.2) {
+						this.teleport({
+							rot: value,
+						});
+					}
+				},
 			});
 	}
 
@@ -406,7 +420,7 @@ export default class Tank extends Entity {
 		this.properties.import(state);
 	}
 
-	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Euler}) {
+	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Quaternion}) {
 		(async () => {
 			this.chassis.body.setCollisionFlags(2);
 			this.turret.body.setCollisionFlags(2);
@@ -419,7 +433,7 @@ export default class Tank extends Entity {
 			}
 
 			if (rot) {
-				this.chassis.rotation.copy(rot);
+				this.chassis.quaternion.copy(rot);
 			}
 
 			await this.updatePhysics();
