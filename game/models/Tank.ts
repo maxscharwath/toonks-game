@@ -421,10 +421,13 @@ export default class Tank extends Entity {
 	}
 
 	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Quaternion}) {
+		// Send Velocity through network
 		(async () => {
 			this.chassis.body.setCollisionFlags(2);
 			this.turret.body.setCollisionFlags(2);
 			this.canon.body.setCollisionFlags(2);
+			const {velocity} = this.chassis.body;
+			const {angularVelocity} = this.chassis.body;
 			if (pos) {
 				const transRelative = this.chassis.position.clone().sub(pos);
 				this.chassis.position.copy(pos);
@@ -442,13 +445,13 @@ export default class Tank extends Entity {
 			this.turret.body.setCollisionFlags(0);
 			this.canon.body.setCollisionFlags(0);
 
-			this.chassis.body.setVelocity(0, 0, 0);
-			this.turret.body.setVelocity(0, 0, 0);
-			this.canon.body.setVelocity(0, 0, 0);
+			this.chassis.body.setVelocity(velocity.x, velocity.y, velocity.z);
+			this.turret.body.setVelocity(velocity.x, velocity.y, velocity.z);
+			this.canon.body.setVelocity(velocity.x, velocity.y, velocity.z);
 
-			this.chassis.body.setAngularVelocity(0, 0, 0);
-			this.turret.body.setAngularVelocity(0, 0, 0);
-			this.canon.body.setAngularVelocity(0, 0, 0);
+			this.chassis.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
+			this.turret.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
+			this.canon.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
 		})();
 	}
 
