@@ -21,6 +21,8 @@ export type TankState = {
 	steering: number;
 	engineForce: number;
 	breakingForce: number;
+	position: THREE.Vector3;
+	rotation: THREE.Euler;
 };
 
 export default class Tank extends Entity {
@@ -221,6 +223,14 @@ export default class Tank extends Entity {
 			})
 			.addProperty('steering', {
 				default: 0,
+			})
+			.addProperty('position', {
+				default: new THREE.Vector3(),
+				get: () => this.chassis.position,
+			})
+			.addProperty('rotation', {
+				default: new THREE.Euler(),
+				get: () => this.chassis.rotation,
 			});
 	}
 
