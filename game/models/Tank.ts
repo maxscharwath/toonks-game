@@ -1,31 +1,17 @@
-import {ExtendedGroup, ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
+import {ExtendedGroup, type ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
-import {type Euler, type Group, type Vector3} from 'three';
+import {type Group} from 'three';
 import Explosion from '@game/models/Explosion';
 import shortUuid from 'short-uuid';
+import {meshToExtendedObject3D} from '@game/utils/MeshToExtendedObject3D';
+import {Properties} from '@game/utils/Properties';
 
 export enum WheelPosition {
 	FrontLeft = 0,
 	FrontRight = 1,
 	RearLeft = 2,
 	RearRight = 3,
-}
-
-function meshToExtendedObject3D(o?: THREE.Object3D): ExtendedObject3D {
-	const obj = new ExtendedObject3D();
-	if (o) {
-		obj.rotation.copy(o.rotation);
-		if (o instanceof THREE.Mesh) {
-			o.geometry.center();
-		}
-
-		o.position.set(0, 0, 0);
-		o.rotation.set(0, 0, 0);
-		obj.add(o);
-	}
-
-	return obj;
 }
 
 export type TankState = {
@@ -37,9 +23,7 @@ export type TankState = {
 	breakingForce: number;
 };
 
-export type TankExport = TankState & {uuid: string};
-
-export default class Tank extends Entity<TankState> {
+export default class Tank extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
 		const tankGlb = await loader.gltf(url);
 		this.model = tankGlb.scenes[0];
@@ -63,16 +47,10 @@ export default class Tank extends Entity<TankState> {
 	private readonly canonMotor: Ammo.btHingeConstraint;
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
+	private readonly properties = new Properties<TankState>();
 
 	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
-		super(scene, uuid, {
-			pseudo: 'TOONKER',
-			turretAngle: 0,
-			canonAngle: 0,
-			steering: 0,
-			engineForce: 0,
-			breakingForce: 0,
-		});
+		super(scene, uuid);
 
 		const model = Tank.model.clone();
 
@@ -103,7 +81,7 @@ export default class Tank extends Entity<TankState> {
 		scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
 		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 
-		const texture = new FLAT.TextTexture(this.states.pseudo, {
+		const texture = new FLAT.TextTexture('', {
 			background: 'rgba(0, 0, 0, 0.5)',
 			fillStyle: 'white',
 			padding: {
@@ -216,17 +194,34 @@ export default class Tank extends Entity<TankState> {
 			WheelPosition.RearRight,
 		);
 
-		this.onStates.on('pseudo', pseudo => {
-			sprite3d.setText(pseudo);
-		});
-
-		this.onStates.on('turretAngle', angle => {
-			this.turretMotor.setLimit(angle, angle, 0.9, 1);
-		});
-
-		this.onStates.on('canonAngle', angle => {
-			this.canonMotor.setLimit(angle, angle, 0.9, 1);
-		});
+		this.properties
+			.addProperty('turretAngle', {
+				default: 0,
+				onChange: value => {
+					this.turretMotor.setLimit(value, value, 0.9, 1);
+				},
+			})
+			.addProperty('canonAngle', {
+				default: 0,
+				onChange: value => {
+					this.canonMotor.setLimit(value, value, 0.9, 1);
+				},
+			})
+			.addProperty('pseudo', {
+				default: 'Player',
+				onChange(pseudo) {
+					sprite3d.setText(pseudo);
+				},
+			})
+			.addProperty('engineForce', {
+				default: 0,
+			})
+			.addProperty('breakingForce', {
+				default: 0,
+			})
+			.addProperty('steering', {
+				default: 0,
+			});
 	}
 
 	public get object3d(): THREE.Object3D {
@@ -238,7 +233,7 @@ export default class Tank extends Entity<TankState> {
 	}
 
 	public set turretAngle(angle: number) {
-		this.states.turretAngle = angle;
+		this.properties.getProperty('turretAngle').value = angle;
 	}
 
 	public get canonAngle() {
@@ -248,35 +243,43 @@ export default class Tank extends Entity<TankState> {
 	public set canonAngle(angle: number) {
 		// Limit the canon angle to -45° and 45°
 		angle = Math.max(-Math.PI / 4, Math.min(Math.PI / 4, angle));
-		this.states.canonAngle = angle;
+		this.properties.getProperty('canonAngle').value = angle;
 	}
 
 	public get pseudo() {
-		return this.states.pseudo;
+		return this.properties.getProperty('pseudo').value;
+	}
+
+	public set pseudo(pseudo: string) {
+		this.properties.getProperty('pseudo').value = pseudo;
 	}
 
 	public get engineForce() {
-		return this.states.engineForce;
+		return this.properties.getProperty('engineForce').value;
 	}
 
 	public set engineForce(force: number) {
-		this.states.engineForce = force;
+		this.properties.getProperty('engineForce').value = force;
 	}
 
 	public get breakingForce() {
-		return this.states.breakingForce;
+		return this.properties.getProperty('breakingForce').value;
 	}
 
 	public set breakingForce(force: number) {
-		this.states.breakingForce = force;
+		this.properties.getProperty('breakingForce').value = force;
 	}
 
 	public get steering() {
-		return this.states.steering;
+		return this.properties.getProperty('steering').value;
 	}
 
 	public set steering(value: number) {
-		this.states.steering = value;
+		this.properties.getProperty('steering').value = value;
+	}
+
+	public get speed() {
+		return this.vehicle.getCurrentSpeedKmHour();
 	}
 
 	public jump() {
@@ -341,26 +344,28 @@ export default class Tank extends Entity<TankState> {
 			this.wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
 		}
 
+		const {engineForce, breakingForce, steering, speed} = this;
+
 		this.vehicle.setSteeringValue(
-			this.states.steering,
+			steering,
 			WheelPosition.FrontLeft,
 		);
 		this.vehicle.setSteeringValue(
-			this.states.steering,
+			steering,
 			WheelPosition.FrontRight,
 		);
 
-		this.vehicle.applyEngineForce(this.states.engineForce, WheelPosition.FrontLeft);
-		this.vehicle.applyEngineForce(this.states.engineForce, WheelPosition.FrontRight);
+		this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
+		this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
 
-		this.vehicle.setBrake(this.states.breakingForce / 2, WheelPosition.FrontLeft);
-		this.vehicle.setBrake(this.states.breakingForce / 2, WheelPosition.FrontRight);
-		this.vehicle.setBrake(this.states.breakingForce, WheelPosition.RearLeft);
-		this.vehicle.setBrake(this.states.breakingForce, WheelPosition.RearRight);
+		this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
+		this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
+		this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
+		this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
 		// Friction
-		this.vehicle.applyEngineForce(-this.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearLeft);
-		this.vehicle.applyEngineForce(-this.vehicle.getCurrentSpeedKmHour() * 100, WheelPosition.RearRight);
+		this.vehicle.applyEngineForce(-speed * 100, WheelPosition.RearLeft);
+		this.vehicle.applyEngineForce(-speed * 100, WheelPosition.RearRight);
 	}
 
 	public addToScene() {
@@ -374,6 +379,14 @@ export default class Tank extends Entity<TankState> {
 
 	public destroy(): void {
 		throw new Error('Method not implemented.');
+	}
+
+	public export(): TankState {
+		return this.properties.export();
+	}
+
+	public import(state: Partial<TankState>): void {
+		this.properties.import(state);
 	}
 
 	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Euler}) {
