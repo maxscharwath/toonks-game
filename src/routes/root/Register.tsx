@@ -62,7 +62,7 @@ export default function Register() {
 						return (
 							<li
 								key={item.label}
-								className={clsx(isSelected && 'bg-gray-700', 'relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-t py-4 text-xl font-bold text-gray-900 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700/50 md:text-2xl')}
+								className={clsx(isSelected && 'bg-white dark:bg-gray-700', 'relative flex flex-1 cursor-pointer flex-col items-center justify-center rounded-t py-4 text-xl font-bold text-gray-900 transition-colors duration-200 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700/50 md:text-2xl')}
 								onClick={() => {
 									setSelectedTab(item);
 								}}

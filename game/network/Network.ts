@@ -16,7 +16,6 @@ export abstract class Network<T = Record<string, unknown>> extends Emittery<T & 
 	status: NetworkStatus;
 	data: {connection: DataConnection; data: any};
 }> {
-	abstract isHost: boolean;
 	private static get uniquePrefix() {
 		return 'SWNpT25Fc3REZXNDcmFja3M';
 	}
@@ -39,6 +38,8 @@ export abstract class Network<T = Record<string, unknown>> extends Emittery<T & 
 
 		return parts.at(-1);
 	}
+
+	abstract isHost: boolean;
 
 	abstract connect(id?: string): Awaitable<void>;
 
