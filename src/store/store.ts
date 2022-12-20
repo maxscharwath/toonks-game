@@ -2,12 +2,13 @@ import create from 'zustand';
 import {Network, NetworkStatus} from '@game/network/Network';
 import {ClientNetwork} from '@game/network/ClientNetwork';
 import {ServerNetwork} from '@game/network/ServerNetwork';
+import {type NetworkEvents} from '@game/network/NetworkEvents';
 
 type Store = {
 	hostGame: () => Promise<{code: string; network: ServerNetwork}>;
 	joinGame: (code: string) => Promise<{code: string; network: ClientNetwork}>;
 	code?: string;
-	network?: Network;
+	network?: Network<NetworkEvents>;
 	status: NetworkStatus;
 };
 
