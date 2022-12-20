@@ -1,5 +1,7 @@
 import create from 'zustand';
-import {ClientNetwork, Network, NetworkStatus, ServerNetwork} from '@game/network/Network';
+import {Network, NetworkStatus} from '@game/network/Network';
+import {ClientNetwork} from '@game/network/ClientNetwork';
+import {ServerNetwork} from '@game/network/ServerNetwork';
 
 type Store = {
 	hostGame: () => Promise<{code: string; network: ServerNetwork}>;
@@ -19,7 +21,7 @@ export const useNetwork = create<Store>((set, get) => {
 		return network;
 	}
 
-	return ({
+	return {
 		status: NetworkStatus.Disconnected,
 		async hostGame() {
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
@@ -34,5 +36,5 @@ export const useNetwork = create<Store>((set, get) => {
 			set({code});
 			return {network, code};
 		},
-	});
+	};
 });
