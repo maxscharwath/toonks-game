@@ -4,6 +4,7 @@ import {type Group, Object3D, type Vector3} from 'three';
 import {type Scene3D} from 'enable3d/dist/scene3d';
 import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import {ExtendedObject3D, THREE} from 'enable3d';
+import shortUuid from 'short-uuid';
 
 export default class Explosion extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
@@ -15,7 +16,7 @@ export default class Explosion extends Entity {
 	readonly object3d: ExtendedObject3D;
 
 	constructor(scene: Scene3D, private readonly position: Vector3, private readonly scale: number = 0.15) {
-		super(scene, 'explosion', {});
+		super(scene, shortUuid.uuid());
 		this.object3d = new ExtendedObject3D();
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(this.scale, this.scale, this.scale);
@@ -53,6 +54,14 @@ export default class Explosion extends Entity {
 	}
 
 	update(): void {
+		// Do nothing
+	}
+
+	export(): Record<string, unknown> {
+		return {};
+	}
+
+	import(state: Record<string, unknown>): void {
 		// Do nothing
 	}
 }
