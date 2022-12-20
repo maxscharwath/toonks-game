@@ -2,9 +2,10 @@ import {Scene3D, type THREE} from 'enable3d';
 import {type Network} from '@game/network/Network';
 import Tank from '@game/models/Tank';
 import Explosion from '@game/models/Explosion';
+import {type NetworkEvents} from '@game/network/NetworkEvents';
 
 export type GameConfig = {
-	network: Network;
+	network: Network<NetworkEvents>;
 };
 
 export default (config: GameConfig) => class extends Scene3D {

@@ -225,12 +225,16 @@ export default class Tank extends Entity {
 				default: 0,
 			})
 			.addProperty('position', {
-				default: new THREE.Vector3(),
+				default: this.chassis.position,
 				get: () => this.chassis.position,
+				export: data => data.toArray(),
+				import: data => new THREE.Vector3().fromArray(data),
 			})
 			.addProperty('rotation', {
-				default: new THREE.Euler(),
+				default: this.chassis.rotation,
 				get: () => this.chassis.rotation,
+				export: data => data.toArray(),
+				import: data => new THREE.Euler().fromArray(data),
 			});
 	}
 
@@ -391,8 +395,11 @@ export default class Tank extends Entity {
 		throw new Error('Method not implemented.');
 	}
 
-	public export(): TankState {
-		return this.properties.export();
+	public export(): TankState & {uuid: string} {
+		return {
+			uuid: this.uuid,
+			...this.properties.export(),
+		};
 	}
 
 	public import(state: Partial<TankState>): void {

@@ -1,10 +1,12 @@
 import Emittery from 'emittery';
 
-type PropertyOptions<T> = {
+type PropertyOptions<T, U=any> = {
 	default: T;
 	get?: (value: T) => T;
 	set?: (value: T) => T;
 	onChange?: (value: T) => void;
+	export?: (value: T) => U;
+	import?: (value: U) => T;
 };
 
 class Property<T> extends Emittery<{change: T}> {
@@ -26,6 +28,14 @@ class Property<T> extends Emittery<{change: T}> {
 		this._value = this.options.set?.(value) ?? value;
 		void this.emit('change', this.value);
 	}
+
+	public export(): unknown {
+		return this.options.export?.(this.value) ?? this.value;
+	}
+
+	public import(value: unknown): void {
+		this.value = this.options.import?.(value) ?? (value as T);
+	}
 }
 
 export class Properties<State extends Record<string, unknown>> {
@@ -45,7 +55,7 @@ export class Properties<State extends Record<string, unknown>> {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		const state: State = {} as State;
 		this.properties.forEach((property, key) => {
-			Object.assign(state, {[key]: property.value});
+			Object.assign(state, {[key]: property.export()});
 		});
 		return state;
 	}
@@ -53,7 +63,7 @@ export class Properties<State extends Record<string, unknown>> {
 	public import(state: Partial<State>): void {
 		this.properties.forEach((property, key) => {
 			if (state[key] !== undefined) {
-				property.value = state[key]!;
+				property.import(state[key]);
 			}
 		});
 	}

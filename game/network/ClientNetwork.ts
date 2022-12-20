@@ -1,10 +1,10 @@
 import Peer, {type DataConnection} from 'peerjs';
-import {Network, NetworkStatus} from './Network';
-import {type Message, MessageType} from './Message';
+import {type Message, Network, NetworkStatus} from './Network';
+import {type NetworkEvents} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 
-export class ClientNetwork extends Network {
+export class ClientNetwork extends Network<NetworkEvents> {
 	private peer?: Peer;
 	private connection?: DataConnection;
 	private peerConnectionsNumber: number;
@@ -16,6 +16,10 @@ export class ClientNetwork extends Network {
 	public constructor(private readonly metadata: unknown) {
 		super();
 		this.peerConnectionsNumber = 0;
+		this.channel('join').on(data => {
+			console.log('connection data', data);
+			this.peerConnectionsNumber = data;
+		});
 	}
 
 	connect(id: string): Awaitable<void> {
@@ -56,8 +60,8 @@ export class ClientNetwork extends Network {
 		void this.emit('status', NetworkStatus.Disconnected);
 	}
 
-	send(data: any): void {
-		this.connection?.send(data);
+	send(channel: string, data: unknown): void {
+		this.connection?.send({channel, data});
 	}
 
 	public connectedPeersNumber(): number {
@@ -78,10 +82,7 @@ export class ClientNetwork extends Network {
 			.on('data', data => {
 				const message = data as Message;
 				console.log('data got', message);
-				if (message.type === MessageType.JOIN) {
-					this.peerConnectionsNumber = message.data as number; // Tmp for testing, should be an array of player to display their infos
-				}
-
+				this.handleMessage(connection, message);
 				void this.emit('data', {connection, data});
 			});
 	}

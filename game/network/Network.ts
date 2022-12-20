@@ -7,9 +7,14 @@ export enum NetworkStatus {
 	Connected = 'connected',
 }
 
+export type Message = {
+	channel: string;
+	data: unknown;
+};
+
 type Awaitable<T> = T | Promise<T>;
 
-export abstract class Network<T = Record<string, unknown>> extends Emittery<T & {
+export abstract class Network<T = Record<string, any>> extends Emittery<{
 	connected: string;
 	disconnected: never;
 	status: NetworkStatus;
@@ -40,14 +45,32 @@ export abstract class Network<T = Record<string, unknown>> extends Emittery<T & 
 
 	abstract isHost: boolean;
 
+	protected channelEmitter = new Emittery();
+
+	public channel<U extends keyof T>(channel: U) {
+		return {
+			on: (listener: (data: T[U]) => void) => this.channelEmitter.on(channel, listener),
+			once: () => this.channelEmitter.once(channel),
+			off: (listener: (data: T[U]) => void) => {
+				this.channelEmitter.off(channel, listener);
+			},
+			send: (data: T[U]) => {
+				this.send(channel as string, data);
+			},
+		};
+	}
+
 	abstract connect(id?: string): Awaitable<void>;
 
 	abstract disconnect(): void;
 
-	// TODO: change any with the Message type
-	abstract send(data: any): void;
+	abstract send(channel: string, data: unknown): void;
 
 	abstract connectedPeersNumber(): number;
+
+	protected handleMessage(connection: DataConnection, data: Message) {
+		void this.channelEmitter.emit(data.channel, data.data);
+	}
 
 	protected abstract addConnection(connection: DataConnection): void;
 

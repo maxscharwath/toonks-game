@@ -122,7 +122,7 @@ export default class MainScene extends Scene3D {
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
 
-		this.data.network?.on('data', ({data}) => {
+		this.data.network?.channel('update').on(data => {
 			const entity = this.entities.get(data.uuid);
 			if (entity) {
 				entity.import(data);
@@ -134,7 +134,7 @@ export default class MainScene extends Scene3D {
 			}
 		});
 		setInterval(() => {
-			this.data.network?.send(this.player.export());
+			this.data.network?.channel('update').send(this.player.export());
 		}, 100);
 	}
 

@@ -1,11 +1,11 @@
 import Peer, {type DataConnection} from 'peerjs';
-import {Network, NetworkStatus} from './Network';
-import {type Message, MessageType} from './Message';
+import {type Message, Network, NetworkStatus} from './Network';
+import {type NetworkEvents} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 type HandleConnection = (connection: DataConnection) => Awaitable<boolean>;
 
-export class ServerNetwork extends Network {
+export class ServerNetwork extends Network<NetworkEvents> {
 	private peer?: Peer;
 	private readonly connections = new Set<DataConnection>();
 	private handleConnection?: HandleConnection;
@@ -63,9 +63,9 @@ export class ServerNetwork extends Network {
 		return [...this.connections];
 	}
 
-	public send(data: any): void {
+	public send(channel: string, data: unknown): void {
 		this.connections.forEach(connection => {
-			connection.send(data);
+			connection.send({channel, data});
 		});
 	}
 
@@ -86,15 +86,11 @@ export class ServerNetwork extends Network {
 			connection
 				.on('open', () => {
 					console.log('new conn, sending message to clients');
-					// Send message to all connected clients, to notify a new client is there
-					const message: Message = {
-						type: MessageType.JOIN,
-						data: this.connections.size,
-					};
-					this.send(message);
+					this.channel('join').send(this.connections.size);
 				})
 				.on('data', data => {
 					void this.emit('data', {connection, data});
+					this.handleMessage(connection, data as Message);
 				})
 				.on('close', () => {
 					this.removeConnection(connection);
