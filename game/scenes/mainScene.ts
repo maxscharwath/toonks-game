@@ -1,16 +1,14 @@
-import Tank, {type TankExport, TankState} from '@game/models/Tank';
 import {GUI} from 'lil-gui';
 import Stats from 'stats.js';
 import {Scene3D, THREE} from 'enable3d';
 import {type GameConfig} from '@game/scenes/initScene';
-import {type FlatArea} from '@enable3d/three-graphics/jsm/flat/flat';
 import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
-import Entity from '@game/models/Entity';
+import Tank from '@game/models/Tank';
 
 export default class MainScene extends Scene3D {
 	private readonly entities = new Map<string, Tank>();

@@ -1,5 +1,4 @@
 import {type Scene3D, type THREE} from 'enable3d';
-import Emittery from 'emittery';
 
 export default abstract class Entity {
 	abstract readonly object3d: THREE.Object3D;

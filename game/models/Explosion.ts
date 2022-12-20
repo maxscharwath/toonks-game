@@ -1,6 +1,6 @@
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
-import {type Group, Object3D, type Vector3} from 'three';
+import {type Vector3} from 'three';
 import {type Scene3D} from 'enable3d/dist/scene3d';
 import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import {ExtendedObject3D, THREE} from 'enable3d';
@@ -30,9 +30,6 @@ export default class Explosion extends Entity {
 			}
 		});
 		this.object3d.anims.mixer.timeScale = (1 / this.scale);
-		this.object3d.anims.mixer.addEventListener('finished', () => {
-
-		});
 		this.object3d.anims.mixer.addEventListener('finished', () => {
 			this.destroy();
 		});

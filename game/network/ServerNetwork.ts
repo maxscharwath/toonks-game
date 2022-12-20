@@ -1,6 +1,6 @@
 import Peer, {type DataConnection} from 'peerjs';
 import {Network, NetworkStatus} from './Network';
-import {MessageType, type Message} from './Message';
+import {type Message, MessageType} from './Message';
 
 type Awaitable<T> = T | Promise<T>;
 type HandleConnection = (connection: DataConnection) => Awaitable<boolean>;
