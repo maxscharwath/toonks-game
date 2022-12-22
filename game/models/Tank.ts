@@ -50,6 +50,10 @@ export default class Tank extends Entity {
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
 	private readonly properties = new Properties<TankState>();
+	private readonly targetTransform: {
+		position?: THREE.Vector3;
+		rotation?: THREE.Quaternion;
+	} = {};
 
 	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(scene, uuid);
@@ -230,11 +234,7 @@ export default class Tank extends Entity {
 				export: data => data.toArray(),
 				import: data => new THREE.Vector3().fromArray(data),
 				onChange: value => {
-					if (this.object3d.position.distanceTo(value) > 0.2) {
-						this.teleport({
-							pos: value,
-						});
-					}
+					this.targetTransform.position = value;
 				},
 			})
 			.addProperty('rotation', {
@@ -243,11 +243,7 @@ export default class Tank extends Entity {
 				export: data => data.toArray(),
 				import: data => new THREE.Quaternion().fromArray(data),
 				onChange: value => {
-					if (this.object3d.quaternion.angleTo(value) > 0.2) {
-						this.teleport({
-							rot: value,
-						});
-					}
+					this.targetTransform.rotation = value;
 				},
 			});
 	}
@@ -362,6 +358,7 @@ export default class Tank extends Entity {
 	}
 
 	public update() {
+		void this.lerpTransform();
 		const n = this.vehicle.getNumWheels();
 		for (let i = 0; i < n; i++) {
 			this.vehicle.updateWheelTransform(i, true);
@@ -420,41 +417,6 @@ export default class Tank extends Entity {
 		this.properties.import(state);
 	}
 
-	public teleport({pos, rot}: {pos?: THREE.Vector3; rot?: THREE.Quaternion}) {
-		// Send Velocity through network
-		(async () => {
-			this.chassis.body.setCollisionFlags(2);
-			this.turret.body.setCollisionFlags(2);
-			this.canon.body.setCollisionFlags(2);
-			const {velocity} = this.chassis.body;
-			const {angularVelocity} = this.chassis.body;
-			if (pos) {
-				const transRelative = this.chassis.position.clone().sub(pos);
-				this.chassis.position.copy(pos);
-				this.turret.position.sub(transRelative);
-				this.canon.position.sub(transRelative);
-			}
-
-			if (rot) {
-				this.chassis.quaternion.copy(rot);
-			}
-
-			await this.updatePhysics();
-
-			this.chassis.body.setCollisionFlags(0);
-			this.turret.body.setCollisionFlags(0);
-			this.canon.body.setCollisionFlags(0);
-
-			this.chassis.body.setVelocity(velocity.x, velocity.y, velocity.z);
-			this.turret.body.setVelocity(velocity.x, velocity.y, velocity.z);
-			this.canon.body.setVelocity(velocity.x, velocity.y, velocity.z);
-
-			this.chassis.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
-			this.turret.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
-			this.canon.body.setAngularVelocity(angularVelocity.x, angularVelocity.y, angularVelocity.z);
-		})();
-	}
-
 	private async updatePhysics() {
 		this.chassis.body.needUpdate = true;
 		this.turret.body.needUpdate = true;
@@ -476,6 +438,47 @@ export default class Tank extends Entity {
 				});
 			}),
 		]);
+	}
+
+	private setCollisionFlags(flags: number) {
+		this.chassis.body.setCollisionFlags(flags);
+	}
+
+	private setVelocity(velocity: THREE.Vector3) {
+		this.chassis.body.setVelocity(velocity.x, velocity.y, velocity.z);
+		this.turret.body.setVelocity(velocity.x, velocity.y, velocity.z);
+		this.canon.body.setVelocity(velocity.x, velocity.y, velocity.z);
+	}
+
+	private getVelocity() {
+		const {x, y, z} = this.chassis.body.velocity;
+		return new THREE.Vector3(x, y, z);
+	}
+
+	private setAngularVelocity(velocity: THREE.Vector3) {
+		this.chassis.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
+		this.turret.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
+		this.canon.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
+	}
+
+	private getAngularVelocity() {
+		const {x, y, z} = this.chassis.body.angularVelocity;
+		return new THREE.Vector3(x, y, z);
+	}
+
+	private async lerpTransform() {
+		const targetPosition = this.targetTransform.position ?? this.object3d.position;
+		const targetRotation = this.targetTransform.rotation ?? this.object3d.quaternion;
+		const diffPosition = this.object3d.position.distanceTo(targetPosition);
+		const diffRotation = this.object3d.quaternion.angleTo(targetRotation);
+		if (diffPosition > 0.2 || diffRotation > 0.2) {
+			this.setCollisionFlags(2);
+			this.object3d.position.lerp(targetPosition, diffPosition * 0.1);
+			this.object3d.quaternion.slerp(targetRotation, diffRotation * 0.1);
+			await this.updatePhysics();
+		} else {
+			this.setCollisionFlags(0);
+		}
 	}
 
 	private addWheel(
