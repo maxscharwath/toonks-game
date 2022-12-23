@@ -43,4 +43,9 @@ export class World {
 
 		return Promise.all(chunks);
 	}
+
+	public async getPositionAt(x: number, y: number) {
+		const chunk = await this.getChunk(Math.floor(x / 16), Math.floor(y / 16));
+		return chunk.getPositionAt(x % 16, y % 16);
+	}
 }

@@ -13,7 +13,7 @@ export class ChunkPopulator {
 	public populate(chunk: Chunk): void {
 		const random = Random.create(chunk.chunkId);
 		for (let i = 0; i < random.int(50); i++) {
-			const pos = chunk.getPosAt(
+			const pos = chunk.getPositionAt(
 				random.int(chunk.chunkSize),
 				random.int(chunk.chunkSize),
 			);

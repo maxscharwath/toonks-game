@@ -10,6 +10,7 @@ import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
 import Tank from '@game/models/Tank';
 import TankDistant from '@game/models/TankDistant';
+import Random from '@game/utils/Random';
 
 export default class MainScene extends Scene3D {
 	private readonly entities = new Map<string, Tank>();
@@ -81,10 +82,14 @@ export default class MainScene extends Scene3D {
 		});
 		const chunk = await world.getChunk(8, 8);
 
-		const position = chunk.getCenterPos();
+		const random = new Random();
+		const position = chunk.getPositionAt(
+			random.int(chunk.chunkSize),
+			random.int(chunk.chunkSize),
+		);
 		position.y += 0.5;
 
-		this.player = new Tank(this, new THREE.Vector3(position.x, position.y, position.z));
+		this.player = new Tank(this, position);
 		this.player.addToScene();
 		this.entities.set(this.player.uuid, this.player);
 

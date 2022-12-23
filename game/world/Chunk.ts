@@ -78,7 +78,7 @@ export class Chunk extends ExtendedGroup {
 		return this;
 	}
 
-	public getPosAt(x: number, y: number): THREE.Vector3 {
+	public getPositionAt(x: number, y: number): THREE.Vector3 {
 		const {position} = this.mesh;
 		const size = this.chunkSize / 2;
 		const h = this.getHeightAt(x, y);
@@ -86,9 +86,9 @@ export class Chunk extends ExtendedGroup {
 		return pos;
 	}
 
-	public getCenterPos(): THREE.Vector3 {
+	public getCenterPosition(): THREE.Vector3 {
 		const size = this.chunkSize / 2;
-		return this.getPosAt(size, size);
+		return this.getPositionAt(size, size);
 	}
 
 	private getHeightAt(x: number, y: number): number {
