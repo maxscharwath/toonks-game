@@ -9,6 +9,7 @@ import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
 import Tank from '@game/models/Tank';
+import TankDistant from '@game/models/TankDistant';
 
 export default class MainScene extends Scene3D {
 	private readonly entities = new Map<string, Tank>();
@@ -122,19 +123,32 @@ export default class MainScene extends Scene3D {
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
 
-		this.data.network?.channel('update').on(data => {
-			const entity = this.entities.get(data.uuid);
-			if (entity) {
-				entity.import(data);
-			} else {
-				const tank = new Tank(this, position);
-				tank.addToScene();
-				tank.import(data);
-				this.entities.set(data.uuid, tank);
-			}
+		this.data.network?.channel('update').on((res: any[]) => {
+			res.forEach((data: any) => {
+				const entity = this.entities.get(data.uuid);
+
+				if (entity) {
+					if (entity.uuid === this.player.uuid) {
+						return;
+					}
+
+					entity.import(data);
+				} else {
+					const tank = new TankDistant(this, position, data.uuid);
+					tank.addToScene();
+					tank.import(data);
+					this.entities.set(data.uuid, tank);
+				}
+			});
 		});
 		setInterval(() => {
-			this.data.network?.channel('update').send(this.player.export());
+			if (this.data.network.isHost) {
+				const entities = Array.from(this.entities.values()).map(entity => entity.export());
+				entities.push(this.player.export());
+				this.data.network?.channel('update').send(entities);
+			} else {
+				this.data.network?.channel('update').send([this.player.export()]);
+			}
 		}, 100);
 	}
 

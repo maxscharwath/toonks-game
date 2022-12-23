@@ -39,7 +39,9 @@ export default class Tank extends Entity {
 
 	private static model: Group;
 
-	readonly vehicle: Ammo.btRaycastVehicle;
+	protected readonly properties = new Properties<TankState>();
+
+	private readonly vehicle: Ammo.btRaycastVehicle;
 	private readonly wheelMeshes: ExtendedObject3D[] = [];
 	private readonly chassis: ExtendedObject3D;
 	private readonly turret: ExtendedObject3D;
@@ -49,16 +51,11 @@ export default class Tank extends Entity {
 	private readonly canonMotor: Ammo.btHingeConstraint;
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
-	private readonly properties = new Properties<TankState>();
-	private readonly targetTransform: {
-		position?: THREE.Vector3;
-		rotation?: THREE.Quaternion;
-	} = {};
 
 	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(scene, uuid);
-
 		const model = Tank.model.clone();
+		this.group = new ExtendedGroup();
 
 		this.chassis = meshToExtendedObject3D(
 			model.getObjectByName('TankFree_Body'),
@@ -72,6 +69,10 @@ export default class Tank extends Entity {
 
 		this.group.add(this.chassis, this.turret, this.canon);
 
+		this.chassis.position.copy(position);
+		this.canon.position.copy(position);
+		this.turret.position.copy(position);
+
 		// Add lights to chassis
 		const headlight = new THREE.SpotLight(0xffffff, 1, 100, Math.PI / 4, 0.5);
 		headlight.position.set(0, 0, 0.5);
@@ -79,13 +80,9 @@ export default class Tank extends Entity {
 		headlight.castShadow = true;
 		this.chassis.add(headlight, headlight.target);
 
-		this.chassis.position.copy(position);
-		this.turret.position.copy(position);
-		this.canon.position.copy(position);
-
-		scene.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
-		scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
-		scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
+		this.scene.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
+		this.scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
+		this.scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 
 		const texture = new FLAT.TextTexture('', {
 			background: 'rgba(0, 0, 0, 0.5)',
@@ -103,7 +100,7 @@ export default class Tank extends Entity {
 		this.chassis.add(sprite3d);
 
 		// Attach the tower to the chassis
-		this.turretMotor = scene.physics.add.constraints.hinge(
+		this.turretMotor = this.scene.physics.add.constraints.hinge(
 			this.chassis.body,
 			this.turret.body,
 			{
@@ -115,7 +112,7 @@ export default class Tank extends Entity {
 		);
 
 		// Attach the canon to the tower
-		this.canonMotor = scene.physics.add.constraints.hinge(
+		this.canonMotor = this.scene.physics.add.constraints.hinge(
 			this.turret.body,
 			this.canon.body,
 			{
@@ -138,7 +135,7 @@ export default class Tank extends Entity {
 
 		this.tuning = new Ammo.btVehicleTuning();
 		const rayCaster = new Ammo.btDefaultVehicleRaycaster(
-			scene.physics.physicsWorld,
+			this.scene.physics.physicsWorld,
 		);
 		this.vehicle = new Ammo.btRaycastVehicle(
 			this.tuning,
@@ -147,7 +144,7 @@ export default class Tank extends Entity {
 		);
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
-		scene.physics.physicsWorld.addAction(this.vehicle);
+		this.scene.physics.physicsWorld.addAction(this.vehicle);
 
 		const wheelAxisPositionBack = -0.4;
 		const wheelRadiusBack = 0.25;
@@ -233,18 +230,12 @@ export default class Tank extends Entity {
 				get: () => this.chassis.position,
 				export: data => data.toArray(),
 				import: data => new THREE.Vector3().fromArray(data),
-				onChange: value => {
-					this.targetTransform.position = value;
-				},
 			})
 			.addProperty('rotation', {
 				default: this.chassis.quaternion,
 				get: () => this.chassis.quaternion,
 				export: data => data.toArray(),
 				import: data => new THREE.Quaternion().fromArray(data),
-				onChange: value => {
-					this.targetTransform.rotation = value;
-				},
 			});
 	}
 
@@ -306,15 +297,6 @@ export default class Tank extends Entity {
 		return this.vehicle.getCurrentSpeedKmHour();
 	}
 
-	public jump() {
-		this.vehicle
-			.getRigidBody()
-			.applyCentralImpulse(new Ammo.btVector3(0, 1000, 0));
-		// Destroy constraint
-		this.scene.physics.physicsWorld.removeConstraint(this.turretMotor);
-		this.scene.physics.physicsWorld.removeConstraint(this.canonMotor);
-	}
-
 	public shoot() {
 		if (this.lastShot + 250 > Date.now()) {
 			return;
@@ -358,7 +340,6 @@ export default class Tank extends Entity {
 	}
 
 	public update() {
-		void this.lerpTransform();
 		const n = this.vehicle.getNumWheels();
 		for (let i = 0; i < n; i++) {
 			this.vehicle.updateWheelTransform(i, true);
@@ -417,37 +398,53 @@ export default class Tank extends Entity {
 		this.properties.import(state);
 	}
 
-	private async updatePhysics() {
-		this.chassis.body.needUpdate = true;
-		this.turret.body.needUpdate = true;
-		this.canon.body.needUpdate = true;
-		await Promise.all([
-			new Promise<void>(resolve => {
-				this.chassis.body.once.update(() => {
-					resolve();
-				});
-			}),
-			new Promise<void>(resolve => {
-				this.turret.body.once.update(() => {
-					resolve();
-				});
-			}),
-			new Promise<void>(resolve => {
-				this.canon.body.once.update(() => {
-					resolve();
-				});
-			}),
-		]);
+	protected async updatePhysics() {
+		const physics = [
+			this.chassis.body,
+			this.turret.body,
+			this.canon.body,
+		];
+
+		physics.forEach(body => {
+			body.needUpdate = true;
+		});
+
+		await Promise.all(physics.map(async body => new Promise(resolve => {
+			body.once.update(resolve);
+		})));
 	}
 
-	private setCollisionFlags(flags: number) {
+	protected setCollisionFlags(flags: number) {
 		this.chassis.body.setCollisionFlags(flags);
 	}
 
+	protected async teleport(position: THREE.Vector3) {
+		const physics = [
+			this.chassis,
+			this.turret,
+			this.canon,
+		];
+		const offset = this.object3d.position.clone().sub(position);
+		const velocity = this.getVelocity();
+		const angularVelocity = this.getAngularVelocity();
+		this.setCollisionFlags(2);
+		physics.forEach(obj => {
+			obj.position.sub(offset);
+		});
+		await this.updatePhysics();
+		this.setCollisionFlags(0);
+		this.setVelocity(velocity);
+		this.setAngularVelocity(angularVelocity);
+	}
+
 	private setVelocity(velocity: THREE.Vector3) {
-		this.chassis.body.setVelocity(velocity.x, velocity.y, velocity.z);
-		this.turret.body.setVelocity(velocity.x, velocity.y, velocity.z);
-		this.canon.body.setVelocity(velocity.x, velocity.y, velocity.z);
+		[
+			this.chassis.body,
+			this.turret.body,
+			this.canon.body,
+		].forEach(body => {
+			body.setVelocity(velocity.x, velocity.y, velocity.z);
+		});
 	}
 
 	private getVelocity() {
@@ -456,29 +453,18 @@ export default class Tank extends Entity {
 	}
 
 	private setAngularVelocity(velocity: THREE.Vector3) {
-		this.chassis.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
-		this.turret.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
-		this.canon.body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
+		[
+			this.chassis.body,
+			this.turret.body,
+			this.canon.body,
+		].forEach(body => {
+			body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
+		});
 	}
 
 	private getAngularVelocity() {
 		const {x, y, z} = this.chassis.body.angularVelocity;
 		return new THREE.Vector3(x, y, z);
-	}
-
-	private async lerpTransform() {
-		const targetPosition = this.targetTransform.position ?? this.object3d.position;
-		const targetRotation = this.targetTransform.rotation ?? this.object3d.quaternion;
-		const diffPosition = this.object3d.position.distanceTo(targetPosition);
-		const diffRotation = this.object3d.quaternion.angleTo(targetRotation);
-		if (diffPosition > 0.2 || diffRotation > 0.2) {
-			this.setCollisionFlags(2);
-			this.object3d.position.lerp(targetPosition, diffPosition * 0.1);
-			this.object3d.quaternion.slerp(targetRotation, diffRotation * 0.1);
-			await this.updatePhysics();
-		} else {
-			this.setCollisionFlags(0);
-		}
 	}
 
 	private addWheel(
