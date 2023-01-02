@@ -2,10 +2,19 @@ import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE}
 import {SimplifyModifier} from 'three/examples/jsm/modifiers/SimplifyModifier';
 import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
 import {WaterMaterial} from '@game/world/WaterMaterial';
+import {type WebGLRenderer} from 'three/src/renderers/WebGLRenderer';
+import {type Scene} from 'three/src/scenes/Scene';
+import {type Camera} from 'three/src/cameras/Camera';
+import {type BufferGeometry} from 'three/src/core/BufferGeometry';
+import {type Material} from 'three/src/materials/Material';
+import {type Group} from 'three/src/objects/Group';
 
 export class Chunk extends ExtendedGroup {
 	private static waterMaterial: WaterMaterial;
 	private static heightmapMaterial: HeightMapMaterial;
+	private static get waterLevel() {
+		return 2.1;
+	}
 
 	static {
 		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.png');
@@ -20,6 +29,7 @@ export class Chunk extends ExtendedGroup {
 		snowTexture.wrapS = snowTexture.wrapT = THREE.RepeatWrapping;
 		const texture = new THREE.TextureLoader().load('/images/water.png');
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(10, 10);
 		this.waterMaterial = new WaterMaterial(texture);
 
 		this.heightmapMaterial = new HeightMapMaterial({
@@ -33,13 +43,37 @@ export class Chunk extends ExtendedGroup {
 
 	readonly chunkId: number;
 	private scene?: Scene3D;
-	private _mesh?: ExtendedMesh;
+	private hasPhysics = false;
+	private _mesh?: {
+		mesh: ExtendedMesh;
+		minGroundHeight: number;
+	};
+
+	private _physicsMesh?: ExtendedMesh;
 
 	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
 		super();
 		this.chunkId = (x << 16) | y;
+
 		this.add(this.mesh);
-		this.add(this.makeWater());
+		if (this.minGroundHeight <= Chunk.waterLevel) {
+			this.add(this.makeWater());
+		}
+
+		this.mesh.onBeforeRender = (renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group) => {
+			const distance = this.getChunkPosition().distanceTo(camera.position);
+			const maxDistance = this.chunkSize * 1.2;
+			const isViewable = distance < maxDistance;
+			if (isViewable) {
+				this.addPhysics();
+			} else {
+				this.removePhysics();
+			}
+		};
+	}
+
+	public getChunkPosition() {
+		return this.mesh.position;
 	}
 
 	public get mesh() {
@@ -47,7 +81,28 @@ export class Chunk extends ExtendedGroup {
 			this._mesh = this.make();
 		}
 
-		return this._mesh;
+		return this._mesh.mesh;
+	}
+
+	public get physicsMesh() {
+		if (!this._physicsMesh) {
+			const {geometry} = this.mesh;
+			const modifier = new SimplifyModifier();
+
+			const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.3) | 0);
+			simplified.computeVertexNormals();
+			const mesh = new ExtendedMesh(simplified);
+			mesh.position.copy(this.mesh.position);
+			mesh.rotateX(-Math.PI / 2);
+			mesh.shape = 'concave';
+			this._physicsMesh = mesh;
+		}
+
+		return this._physicsMesh;
+	}
+
+	public get minGroundHeight() {
+		return this._mesh?.minGroundHeight ?? 0;
 	}
 
 	get chunkSize() {
@@ -58,23 +113,23 @@ export class Chunk extends ExtendedGroup {
 		return 4;
 	}
 
-	public addPhysics(scene: Scene3D) {
+	public setScene(scene: Scene3D) {
 		this.scene = scene;
-		const {geometry} = this.mesh;
-		const modifier = new SimplifyModifier();
-		// eslint-disable-next-line no-bitwise
-		const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.3) | 0);
-		simplified.computeVertexNormals();
-		const mesh = new ExtendedMesh(simplified);
-		mesh.position.copy(this.mesh.position);
-		mesh.rotateX(-Math.PI / 2);
-		mesh.shape = 'concave';
-		this.scene?.physics.add.existing(mesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
+	}
+
+	public addPhysics() {
+		if (!this.scene || this.hasPhysics) {
+			return;
+		}
+
+		this.hasPhysics = true;
+		this.scene.physics.add.existing(this.physicsMesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
 		return this;
 	}
 
 	public removePhysics() {
-		this.scene?.physics.destroy(this.mesh as unknown as ExtendedObject3D);
+		this.hasPhysics = false;
+		this.scene?.physics.destroy(this.physicsMesh as unknown as ExtendedObject3D);
 		return this;
 	}
 
@@ -103,9 +158,16 @@ export class Chunk extends ExtendedGroup {
 		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, width - 1, height - 1);
 
 		const vertices = geometry.attributes.position.array;
+		let minGroundHeight = Infinity;
 		for (let i = 0; i < vertices.length; i++) {
+			const h = (this.pixels.data[i * 4] - 15) / this.heightScale;
+			if (isNaN(h)) {
+				continue;
+			}
+
 			// @ts-expect-error - TS doesn't know that we're only using the first 2 channels
-			vertices[(i * 3) + 2] = (this.pixels.data[i * 4] - 15) / this.heightScale;
+			vertices[(i * 3) + 2] = h;
+			minGroundHeight = Math.min(minGroundHeight, h);
 		}
 
 		geometry.computeVertexNormals();
@@ -119,13 +181,13 @@ export class Chunk extends ExtendedGroup {
 
 		mesh.name = 'heightmap';
 
-		return mesh;
+		return {mesh, minGroundHeight};
 	}
 
 	private makeWater() {
 		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, 100, 100);
 		const mesh = new ExtendedMesh(geometry, Chunk.waterMaterial);
-		mesh.position.set(this.x * this.chunkSize, 2.1, this.y * this.chunkSize);
+		mesh.position.set(this.x * this.chunkSize, Chunk.waterLevel, this.y * this.chunkSize);
 		mesh.rotateX(-Math.PI / 2);
 		mesh.name = 'water';
 		return mesh;

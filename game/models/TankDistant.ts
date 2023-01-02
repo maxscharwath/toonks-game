@@ -1,6 +1,5 @@
 import Tank from '@game/models/Tank';
 import {type Scene3D, type THREE} from 'enable3d';
-import shortUuid from 'short-uuid';
 
 export default class TankDistant extends Tank {
 	protected readonly targetTransform: {

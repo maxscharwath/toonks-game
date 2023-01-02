@@ -31,6 +31,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-assigment': 'off',
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-floating-promises': 'off',
+    'no-bitwise': 'off',
     'new-cap': 'off'
   }
 };

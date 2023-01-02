@@ -71,23 +71,22 @@ export default class MainScene extends Scene3D {
 			.addElement(treeModel)
 			.addElement(rockModel);
 
-		const world = new World(chunkLoader, chunkPopulator);
+		const world = new World(this, chunkLoader, chunkPopulator);
 
 		// Generate a 5x5 chunk area
 		const chunks = await world.generateArea(8, 8, 4);
 		chunks.forEach(chunk => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			this.add.existing(chunk);
-			chunk.addPhysics(this);
 		});
 		const chunk = await world.getChunk(8, 8);
 
 		const random = new Random();
 		const position = chunk.getPositionAt(
-			random.int(chunk.chunkSize),
-			random.int(chunk.chunkSize),
+			(chunk.chunkSize / 2) + random.number(-chunk.chunkSize / 4, chunk.chunkSize / 4),
+			(chunk.chunkSize / 2) + random.number(-chunk.chunkSize / 4, chunk.chunkSize / 4),
 		);
-		position.y += 0.5;
+		position.y += 1;
 
 		this.player = new Tank(this, position);
 		this.player.addToScene();
@@ -147,7 +146,7 @@ export default class MainScene extends Scene3D {
 			});
 		});
 		setInterval(() => {
-			if (this.data.network.isHost) {
+			if (this.data.network?.isHost) {
 				const entities = Array.from(this.entities.values()).map(entity => entity.export());
 				entities.push(this.player.export());
 				this.data.network?.channel('update').send(entities);

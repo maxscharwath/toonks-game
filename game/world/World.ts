@@ -1,11 +1,12 @@
 import {type ChunkLoader} from '@game/world/ChunkLoader';
 import {type Chunk, mergeChunkMesh} from '@game/world/Chunk';
 import {type ChunkPopulator} from '@game/world/ChunkPopulator';
+import {type Scene3D} from 'enable3d';
 
 export class World {
 	private readonly chunks = new Map<string, Chunk>();
 
-	constructor(private readonly chunkloader: ChunkLoader, private readonly chunkPopulator: ChunkPopulator) {}
+	constructor(private readonly scene: Scene3D, private readonly chunkloader: ChunkLoader, private readonly chunkPopulator: ChunkPopulator) {}
 
 	public getNeighbours(x: number, y: number): Array<Chunk | undefined> {
 		return [
@@ -21,6 +22,7 @@ export class World {
 		let chunk = this.chunks.get(key);
 		if (!chunk) {
 			chunk = await this.chunkloader.loadChunk(x, y);
+			chunk.setScene(this.scene);
 			this.chunkPopulator.populate(chunk);
 			this.getNeighbours(x, y).forEach(neighbour => {
 				if (neighbour) {
