@@ -1,8 +1,14 @@
+import {motion} from 'framer-motion';
 import React from 'react';
 
 export default function KillToast({playerName}: {playerName: string}) {
 	return (
-		<div className='rounded-md border border-red-700/50 bg-gray-900/50 px-3 py-2 font-bold leading-snug text-gray-200'>
+		<motion.div
+			initial={{opacity: 1}}
+			animate={{opacity: 0, scale: 0.95}}
+			exit={{opacity: 0}}
+			transition={{delay: 1, duration: 1}}
+			className='rounded-md border border-red-700/50 bg-gray-900/50 px-3 py-2 font-bold leading-snug text-gray-200'>
 			<svg
 				width='20'
 				height='20'
@@ -15,6 +21,6 @@ export default function KillToast({playerName}: {playerName: string}) {
 				/>
 			</svg>
 			{playerName}
-		</div>
+		</motion.div>
 	);
 }

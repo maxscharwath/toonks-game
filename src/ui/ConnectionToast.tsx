@@ -1,3 +1,4 @@
+import {motion} from 'framer-motion';
 import React from 'react';
 
 export default function ConnectionToast({
@@ -8,7 +9,12 @@ export default function ConnectionToast({
 	type: 'join' | 'leave';
 }) {
 	return (
-		<div className='rounded-md bg-gray-900/50 px-3 py-2 font-bold leading-snug text-gray-200'>
+		<motion.div
+			initial={{opacity: 1}}
+			animate={{opacity: 0, scale: 0.95}}
+			exit={{opacity: 0}}
+			transition={{delay: 1, duration: 1}}
+			className='rounded-md bg-gray-900/50 px-3 py-2 font-bold leading-snug text-gray-200'>
 			<svg
 				width='24'
 				height='24'
@@ -40,6 +46,6 @@ export default function ConnectionToast({
 				)}
 			</svg>
 			<span>{playerName}</span>
-		</div>
+		</motion.div>
 	);
 }
