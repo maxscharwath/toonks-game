@@ -1,5 +1,7 @@
 import React from 'react';
 import {toast, Toaster} from 'react-hot-toast';
+import ConnectionToast from './ConnectionToast';
+import KillToast from './KillToast';
 
 export default function GameUi({children}: {children: React.ReactNode}) {
 	return (
@@ -7,24 +9,28 @@ export default function GameUi({children}: {children: React.ReactNode}) {
 			<div className='absolute inset-x-0 top-0 m-auto w-48'>
 				<div
 					onClick={() => {
-						toast('Player #1 joined the server', {icon: '🔥'});
+						toast.custom(
+							<ConnectionToast playerName='Player #1' type='join' />,
+						);
 					}}
 				>
-        Player Joined
+          Player Joined
 				</div>
 				<div
 					onClick={() => {
-						toast('Player #1 left the server', {icon: '👋'});
+						toast.custom(
+							<ConnectionToast playerName='Player #1' type='leave' />,
+						);
 					}}
 				>
-        Player left
+          Player left
 				</div>
 				<div
 					onClick={() => {
-						toast('Player #1 was killed', {icon: '☠️'});
+						toast.custom(<KillToast playerName='Player #1' />);
 					}}
 				>
-        Player killed
+          Player killed
 				</div>
 			</div>
 
@@ -32,8 +38,6 @@ export default function GameUi({children}: {children: React.ReactNode}) {
 				position='top-right'
 				gutter={2}
 				toastOptions={{
-					className:
-          'text-gray-300 font-bold border border-toonks-orange/50 bg-gray-800/75 px-3 py-2 rounded-full text-xs',
 					duration: 2000,
 				}}
 			/>
