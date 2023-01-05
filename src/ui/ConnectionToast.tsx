@@ -10,10 +10,10 @@ export default function ConnectionToast({
 }) {
 	return (
 		<motion.div
-			initial={{opacity: 1}}
-			animate={{opacity: 0, scale: 0.95}}
+			initial={{opacity: 1, y: -50}}
+			animate={{opacity: 0, y: 0, scale: 0.95}}
 			exit={{opacity: 0}}
-			transition={{delay: 1, duration: 1}}
+			transition={{opacity: {delay: 1, duration: 1}, y: {duration: 0.4}}}
 			className='rounded-md bg-gray-900/50 px-3 py-2 font-bold leading-snug text-gray-200'>
 			<svg
 				width='24'
