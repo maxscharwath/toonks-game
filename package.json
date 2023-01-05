@@ -31,6 +31,7 @@
     "react": "^18.2.0",
     "react-confetti": "^6.1.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.0",
     "react-router-dom": "^6.6.0",
     "react-use": "^17.4.0",
     "short-uuid": "^4.2.2",

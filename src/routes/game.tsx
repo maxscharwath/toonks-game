@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import {startGame} from '@game/game';
 import {useNetwork} from '@/store/store';
+import GameUi from '@/ui/GameUi';
 
 export default function Game() {
 	const {network} = useNetwork();
@@ -14,5 +15,9 @@ export default function Game() {
 		};
 	}, []);
 
-	return <canvas ref={canvasRef}/>;
+	return (
+		<GameUi>
+			<canvas ref={canvasRef}/>
+		</GameUi>
+	);
 }
