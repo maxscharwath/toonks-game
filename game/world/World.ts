@@ -1,5 +1,5 @@
 import {type ChunkLoader} from '@game/world/ChunkLoader';
-import {type Chunk, mergeChunkMesh} from '@game/world/Chunk';
+import {Chunk, mergeChunkMesh} from '@game/world/Chunk';
 import {type ChunkPopulator} from '@game/world/ChunkPopulator';
 import {type Scene3D} from 'enable3d';
 
@@ -30,6 +30,7 @@ export class World {
 				}
 			});
 			this.chunks.set(key, chunk);
+			this.scene.add.existing(chunk);
 		}
 
 		return chunk;
@@ -46,8 +47,19 @@ export class World {
 		return Promise.all(chunks);
 	}
 
-	public async getPositionAt(x: number, y: number) {
-		const chunk = await this.getChunk(Math.floor(x / 16), Math.floor(y / 16));
-		return chunk.getPositionAt(x % 16, y % 16);
+	public async update() {
+		const {camera} = this.scene;
+		const x = Math.round(camera.position.x / Chunk.chunkSize);
+		const y = Math.round(camera.position.z / Chunk.chunkSize);
+		const chunks = await this.generateArea(x, y, 2);
+		chunks.forEach(chunk => {
+			chunk.update();
+		});
+		this.chunks.forEach((chunk, chunkId) => {
+			if (chunk.lastUpdate + 10000 < Date.now()) {
+				chunk.destroy();
+				this.chunks.delete(chunkId);
+			}
+		});
 	}
 }

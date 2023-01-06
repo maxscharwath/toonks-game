@@ -11,6 +11,7 @@ import PlayerController from '@game/utils/PlayerController';
 import Tank from '@game/models/Tank';
 import TankDistant from '@game/models/TankDistant';
 import Random from '@game/utils/Random';
+import {Chunk} from '@game/world/Chunk';
 
 export default class MainScene extends Scene3D {
 	private readonly entities = new Map<string, Tank>();
@@ -21,6 +22,7 @@ export default class MainScene extends Scene3D {
 	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
 	private readonly playerController = new PlayerController(this);
+	private world!: World;
 
 	constructor() {
 		super({key: 'MainScene'});
@@ -71,20 +73,14 @@ export default class MainScene extends Scene3D {
 			.addElement(treeModel)
 			.addElement(rockModel);
 
-		const world = new World(this, chunkLoader, chunkPopulator);
+		this.world = new World(this, chunkLoader, chunkPopulator);
 
-		// Generate a 5x5 chunk area
-		const chunks = await world.generateArea(8, 8, 4);
-		chunks.forEach(chunk => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			this.add.existing(chunk);
-		});
-		const chunk = await world.getChunk(8, 8);
+		const chunk = await this.world.getChunk(8, 8);
 
 		const random = new Random();
 		const position = chunk.getPositionAt(
-			(chunk.chunkSize / 2) + random.number(-chunk.chunkSize / 4, chunk.chunkSize / 4),
-			(chunk.chunkSize / 2) + random.number(-chunk.chunkSize / 4, chunk.chunkSize / 4),
+			(Chunk.chunkSize / 2) + random.number(-Chunk.chunkSize / 4, Chunk.chunkSize / 4),
+			(Chunk.chunkSize / 2) + random.number(-Chunk.chunkSize / 4, Chunk.chunkSize / 4),
 		);
 		position.y += 1;
 
@@ -146,6 +142,11 @@ export default class MainScene extends Scene3D {
 			});
 		});
 		setInterval(() => {
+			void this.world.update();
+		}, 1000);
+
+		setInterval(() => {
+			void this.world.update();
 			if (this.data.network?.isHost) {
 				const entities = Array.from(this.entities.values()).map(entity => entity.export());
 				entities.push(this.player.export());

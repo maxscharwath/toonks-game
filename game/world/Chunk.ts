@@ -41,7 +41,9 @@ export class Chunk extends ExtendedGroup {
 		});
 	}
 
-	readonly chunkId: number;
+	public readonly chunkId: number;
+	public lastUpdate = 0;
+
 	private scene?: Scene3D;
 	private hasPhysics = false;
 	private _mesh?: {
@@ -62,7 +64,7 @@ export class Chunk extends ExtendedGroup {
 
 		this.mesh.onBeforeRender = (renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group) => {
 			const distance = this.getChunkPosition().distanceTo(camera.position);
-			const maxDistance = this.chunkSize * 1.2;
+			const maxDistance = Chunk.chunkSize * 1.2;
 			const isViewable = distance < maxDistance;
 			if (isViewable) {
 				this.addPhysics();
@@ -105,7 +107,7 @@ export class Chunk extends ExtendedGroup {
 		return this._mesh?.minGroundHeight ?? 0;
 	}
 
-	get chunkSize() {
+	static get chunkSize() {
 		return 64;
 	}
 
@@ -135,27 +137,36 @@ export class Chunk extends ExtendedGroup {
 
 	public getPositionAt(x: number, y: number): THREE.Vector3 {
 		const {position} = this.mesh;
-		const size = this.chunkSize / 2;
+		const size = Chunk.chunkSize / 2;
 		const h = this.getHeightAt(x, y);
 		const pos = position.clone().add(new THREE.Vector3(x - size, h, y - size));
 		return pos;
 	}
 
 	public getCenterPosition(): THREE.Vector3 {
-		const size = this.chunkSize / 2;
+		const size = Chunk.chunkSize / 2;
 		return this.getPositionAt(size, size);
 	}
 
+	public update() {
+		this.lastUpdate = Date.now();
+	}
+
+	public destroy() {
+		this.removePhysics();
+		this.removeFromParent();
+	}
+
 	private getHeightAt(x: number, y: number): number {
-		const x1 = Math.round((x / this.chunkSize) * this.pixels.width);
-		const y1 = Math.round((y / this.chunkSize) * this.pixels.height);
+		const x1 = Math.round((x / Chunk.chunkSize) * this.pixels.width);
+		const y1 = Math.round((y / Chunk.chunkSize) * this.pixels.height);
 		const h = this.pixels.data[((y1 * this.pixels.width) + x1) * 4];
 		return (h - 15) / this.heightScale;
 	}
 
 	private make() {
 		const {width, height} = this.pixels;
-		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, width - 1, height - 1);
+		const geometry = new THREE.PlaneGeometry(Chunk.chunkSize, Chunk.chunkSize, width - 1, height - 1);
 
 		const vertices = geometry.attributes.position.array;
 		let minGroundHeight = Infinity;
@@ -176,7 +187,7 @@ export class Chunk extends ExtendedGroup {
 		mesh.receiveShadow = true;
 		mesh.castShadow = true;
 
-		mesh.position.set(this.x * this.chunkSize, 0, this.y * this.chunkSize);
+		mesh.position.set(this.x * Chunk.chunkSize, 0, this.y * Chunk.chunkSize);
 		mesh.rotateX(-Math.PI / 2);
 
 		mesh.name = 'heightmap';
@@ -185,9 +196,9 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	private makeWater() {
-		const geometry = new THREE.PlaneGeometry(this.chunkSize, this.chunkSize, 100, 100);
+		const geometry = new THREE.PlaneGeometry(Chunk.chunkSize, Chunk.chunkSize, 100, 100);
 		const mesh = new ExtendedMesh(geometry, Chunk.waterMaterial);
-		mesh.position.set(this.x * this.chunkSize, Chunk.waterLevel, this.y * this.chunkSize);
+		mesh.position.set(this.x * Chunk.chunkSize, Chunk.waterLevel, this.y * Chunk.chunkSize);
 		mesh.rotateX(-Math.PI / 2);
 		mesh.name = 'water';
 		return mesh;
@@ -204,7 +215,7 @@ function determineSide(chunkA: Chunk, chunkB: Chunk): [Side, Side] {
 
 function getSideIndices(chunk: Chunk, side: Side) {
 	const {geometry} = chunk.mesh;
-	const half = chunk.chunkSize / 2;
+	const half = Chunk.chunkSize / 2;
 	const indices = [];
 	for (let i = 0; i < geometry.attributes.position.count; i++) {
 		const x = geometry.attributes.position.getX(i);
@@ -233,4 +244,6 @@ export function mergeChunkMesh(chunkA: Chunk, chunkB: Chunk) {
 
 	chunkA.mesh.geometry.computeVertexNormals();
 	chunkB.mesh.geometry.computeVertexNormals();
+	chunkB.mesh.geometry.attributes.position.needsUpdate = true;
+	chunkA.mesh.geometry.attributes.position.needsUpdate = true;
 }
