@@ -8,14 +8,18 @@ import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
-import Tank from '@game/models/Tank';
-import TankDistant from '@game/models/TankDistant';
+import type Tank from '@game/models/Tank';
+import TankNetwork from '@game/models/TankNetwork';
 import Random from '@game/utils/Random';
 import {Chunk} from '@game/world/Chunk';
+import GameEvent from '@game/event/GameEvent';
+import TankPlayer from '@game/models/TankPlayer';
 
-export default class MainScene extends Scene3D {
+export default class Game extends Scene3D {
+	public events = new GameEvent();
+
 	private readonly entities = new Map<string, Tank>();
-	private player!: Tank;
+	player!: TankPlayer;
 	private readonly stats = new Stats();
 
 	private data!: GameConfig;
@@ -25,11 +29,12 @@ export default class MainScene extends Scene3D {
 	private world!: World;
 
 	constructor() {
-		super({key: 'MainScene'});
+		super({key: 'GameScene'});
 	}
 
 	init(data: GameConfig) {
 		this.data = data;
+		this.events.setNetwork(data.network);
 		this.playerController.init();
 	}
 
@@ -84,7 +89,7 @@ export default class MainScene extends Scene3D {
 		);
 		position.y += 1;
 
-		this.player = new Tank(this, position);
+		this.player = new TankPlayer(this, position);
 		this.player.addToScene();
 		this.entities.set(this.player.uuid, this.player);
 
@@ -134,13 +139,22 @@ export default class MainScene extends Scene3D {
 
 					entity.import(data);
 				} else {
-					const tank = new TankDistant(this, position, data.uuid);
+					const tank = new TankNetwork(this, position, data.uuid);
 					tank.addToScene();
 					tank.import(data);
 					this.entities.set(data.uuid, tank);
 				}
 			});
 		});
+
+		this.events.on('tank:shoot', uuid => {
+			const entity = this.entities.get(uuid);
+
+			if (entity && entity.uuid !== this.player.uuid) {
+				entity.shoot();
+			}
+		});
+
 		setInterval(() => {
 			void this.world.update();
 		}, 1000);

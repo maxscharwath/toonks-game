@@ -1,10 +1,11 @@
-import {type Scene3D, type THREE} from 'enable3d';
+import {type THREE} from 'enable3d';
+import type Game from '@game/scenes/game';
 
 export default abstract class Entity {
 	abstract readonly object3d: THREE.Object3D;
 
 	protected constructor(
-		protected readonly scene: Scene3D,
+		protected readonly game: Game,
 		public readonly uuid: string,
 	) {
 	}

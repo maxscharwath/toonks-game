@@ -1,14 +1,15 @@
 import Tank from '@game/models/Tank';
-import {type Scene3D, type THREE} from 'enable3d';
+import {type THREE} from 'enable3d';
+import type Game from '@game/scenes/game';
 
-export default class TankDistant extends Tank {
+export default class TankNetwork extends Tank {
 	protected readonly targetTransform: {
 		position?: THREE.Vector3;
 		rotation?: THREE.Quaternion;
 	} = {};
 
-	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string) {
-		super(scene, position, uuid);
+	constructor(game: Game, position: THREE.Vector3, uuid: string) {
+		super(game, position, uuid);
 		this.setCollisionFlags(2);
 		this.properties.getProperty('position').on('change', position => {
 			this.targetTransform.position = position;

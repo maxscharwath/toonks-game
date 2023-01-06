@@ -13,7 +13,7 @@ type Store = {
 };
 
 export const useNetwork = create<Store>((set, get) => {
-	function switchNetwork<T extends Network>(network: T): T {
+	function switchNetwork<T extends Network<NetworkEvents>>(network: T): T {
 		get().network?.disconnect();
 		network.on('status', status => {
 			set({status});

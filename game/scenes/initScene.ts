@@ -34,6 +34,6 @@ export default (config: GameConfig) => class extends Scene3D {
 	}
 
 	async create() {
-		await this.start('MainScene', config);
+		await this.start('GameScene', config);
 	}
 };

@@ -1,10 +1,10 @@
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Vector3} from 'three';
-import {type Scene3D} from 'enable3d/dist/scene3d';
 import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import {ExtendedObject3D, THREE} from 'enable3d';
 import shortUuid from 'short-uuid';
+import type Game from '@game/scenes/game';
 
 export default class Explosion extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
@@ -15,15 +15,15 @@ export default class Explosion extends Entity {
 
 	readonly object3d: ExtendedObject3D;
 
-	constructor(scene: Scene3D, private readonly position: Vector3, private readonly scale: number = 0.15) {
-		super(scene, shortUuid.uuid());
+	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 0.15) {
+		super(game, shortUuid.uuid());
 		this.object3d = new ExtendedObject3D();
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(this.scale, this.scale, this.scale);
 		const light = new THREE.PointLight(0xffdf5e, 10, 80);
 		light.castShadow = true;
 		this.object3d.add(light);
-		scene.animationMixers.add(this.object3d.anims.mixer);
+		game.animationMixers.add(this.object3d.anims.mixer);
 		Explosion.model.animations.forEach(animation => {
 			if (animation.name) {
 				this.object3d.anims.add(animation.name, animation);
@@ -38,7 +38,7 @@ export default class Explosion extends Entity {
 
 	addToScene(): void {
 		this.object3d.position.copy(this.position);
-		this.scene.add.existing(this.object3d);
+		this.game.add.existing(this.object3d);
 	}
 
 	destroy(): void {

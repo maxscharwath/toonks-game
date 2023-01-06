@@ -1,4 +1,4 @@
-import MainScene from '@game/scenes/mainScene';
+import Game from '@game/scenes/game';
 import {PhysicsLoader, Project} from 'enable3d';
 import {WebGLRenderer} from 'three';
 import InitScene from '@game/scenes/initScene';
@@ -13,7 +13,7 @@ export async function startGame(canvas: HTMLCanvasElement, network: Network<Netw
 					canvas,
 					antialias: true,
 				}),
-				scenes: [InitScene({network}), MainScene],
+				scenes: [InitScene({network}), Game],
 			});
 			resolve(project);
 			return project;

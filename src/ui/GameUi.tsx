@@ -1,7 +1,7 @@
 import React from 'react';
 import {toast, Toaster} from 'react-hot-toast';
-import ConnectionToast from './ConnectionToast';
-import KillToast from './KillToast';
+import ConnectionToast from './toast/ConnectionToast';
+import KillToast from './toast/KillToast';
 
 export default function GameUi({children}: {children: React.ReactNode}) {
 	return (

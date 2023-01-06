@@ -12,11 +12,15 @@ export class ChunkPopulator {
 
 	public populate(chunk: Chunk): void {
 		const random = Random.create(chunk.chunkId);
-		for (let i = 0; i < random.int(50); i++) {
+		for (let i = 0; i < random.int(100); i++) {
 			const pos = chunk.getPositionAt(
 				random.int(Chunk.chunkSize),
 				random.int(Chunk.chunkSize),
 			);
+
+			if (pos.y < Chunk.waterLevel) {
+				continue;
+			}
 
 			const element = this.elements[random.int(this.elements.length)];
 			const clone = element.clone();

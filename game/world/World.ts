@@ -1,14 +1,27 @@
 import {type ChunkLoader} from '@game/world/ChunkLoader';
 import {Chunk, mergeChunkMesh} from '@game/world/Chunk';
 import {type ChunkPopulator} from '@game/world/ChunkPopulator';
-import {type Scene3D} from 'enable3d';
+import type Game from '@game/scenes/game';
+
+type Pending<P> = Promise<P> & {isPending: boolean; value?: P};
+function pending<P>(promise: Promise<P>): Pending<P> {
+	const p = Object.assign(promise, {isPending: true}) as Pending<P>;
+	p
+		.then(value => {
+			p.value = value;
+		})
+		.finally(() => {
+			p.isPending = false;
+		});
+	return p;
+}
 
 export class World {
-	private readonly chunks = new Map<string, Chunk>();
+	private readonly chunks = new Map<string, Pending<Chunk>>();
 
-	constructor(private readonly scene: Scene3D, private readonly chunkloader: ChunkLoader, private readonly chunkPopulator: ChunkPopulator) {}
+	constructor(private readonly game: Game, private readonly chunkloader: ChunkLoader, private readonly chunkPopulator: ChunkPopulator) {}
 
-	public getNeighbours(x: number, y: number): Array<Chunk | undefined> {
+	public getNeighbours(x: number, y: number): Array<Pending<Chunk> | undefined> {
 		return [
 			this.chunks.get(`${x - 1}:${y}`), // Left
 			this.chunks.get(`${x + 1}:${y}`), // Right
@@ -17,20 +30,15 @@ export class World {
 		];
 	}
 
-	public async getChunk(x: number, y: number): Promise<Chunk> {
+	public async getChunk(x: number, y: number) {
 		const key = `${x}:${y}`;
 		let chunk = this.chunks.get(key);
 		if (!chunk) {
-			chunk = await this.chunkloader.loadChunk(x, y);
-			chunk.setScene(this.scene);
-			this.chunkPopulator.populate(chunk);
-			this.getNeighbours(x, y).forEach(neighbour => {
-				if (neighbour) {
-					mergeChunkMesh(chunk!, neighbour);
-				}
-			});
+			chunk = pending(this.loadChunk(x, y));
 			this.chunks.set(key, chunk);
-			this.scene.add.existing(chunk);
+			void chunk.then(chunk => {
+				this.game.scene.add(chunk);
+			});
 		}
 
 		return chunk;
@@ -48,18 +56,33 @@ export class World {
 	}
 
 	public async update() {
-		const {camera} = this.scene;
-		const x = Math.round(camera.position.x / Chunk.chunkSize);
-		const y = Math.round(camera.position.z / Chunk.chunkSize);
+		const {position} = this.game.player.object3d;
+		const x = Math.round(position.x / Chunk.chunkSize);
+		const y = Math.round(position.z / Chunk.chunkSize);
 		const chunks = await this.generateArea(x, y, 2);
 		chunks.forEach(chunk => {
 			chunk.update();
 		});
 		this.chunks.forEach((chunk, chunkId) => {
-			if (chunk.lastUpdate + 10000 < Date.now()) {
-				chunk.destroy();
+			if (chunk.isPending || !chunk.value) {
+				return;
+			}
+
+			if (chunk.value.lastUpdate + 10000 < Date.now()) {
+				chunk.value.destroy();
 				this.chunks.delete(chunkId);
 			}
 		});
+	}
+
+	private async loadChunk(x: number, y: number): Promise<Chunk> {
+		const chunk = await this.chunkloader.loadChunk(this.game, x, y);
+		this.chunkPopulator.populate(chunk);
+		void this.getNeighbours(x, y).map(async neighbour => {
+			if (neighbour) {
+				mergeChunkMesh(chunk, await neighbour);
+			}
+		});
+		return chunk;
 	}
 }

@@ -1,6 +1,7 @@
 import {Chunk} from '@game/world/Chunk';
 import Worker from '@game/world/ChunkLoaderWorker?worker';
 import Emittery from 'emittery';
+import type Game from '@game/scenes/game';
 
 type ChunkLoaderOptions = {
 	worldHeightMapUrl: string;
@@ -19,10 +20,10 @@ export class ChunkLoader {
 		});
 	}
 
-	public async loadChunk(x: number, y: number): Promise<Chunk> {
+	public async loadChunk(game: Game, x: number, y: number): Promise<Chunk> {
 		const key = `${x}:${y}`;
 		const pixels = this.emittery.once(key);
 		this.worker.postMessage({options: this.options, x, y, key});
-		return new Chunk(x, y, await pixels);
+		return new Chunk(game, x, y, await pixels);
 	}
 }

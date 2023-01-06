@@ -1,4 +1,4 @@
-import {ExtendedGroup, type ExtendedObject3D, FLAT, type Scene3D, THREE} from 'enable3d';
+import {ExtendedGroup, type ExtendedObject3D, FLAT, THREE} from 'enable3d';
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Group} from 'three';
@@ -6,6 +6,7 @@ import Explosion from '@game/models/Explosion';
 import shortUuid from 'short-uuid';
 import {meshToExtendedObject3D} from '@game/utils/MeshToExtendedObject3D';
 import {Properties} from '@game/utils/Properties';
+import type Game from '@game/scenes/game';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -52,8 +53,8 @@ export default class Tank extends Entity {
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
 
-	constructor(scene: Scene3D, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
-		super(scene, uuid);
+	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
+		super(game, uuid);
 		const model = Tank.model.clone();
 		this.group = new ExtendedGroup();
 
@@ -80,9 +81,9 @@ export default class Tank extends Entity {
 		headlight.castShadow = true;
 		this.chassis.add(headlight, headlight.target);
 
-		this.scene.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
-		this.scene.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
-		this.scene.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
+		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
+		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
+		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
 
 		const texture = new FLAT.TextTexture('', {
 			background: 'rgba(0, 0, 0, 0.5)',
@@ -100,7 +101,7 @@ export default class Tank extends Entity {
 		this.chassis.add(sprite3d);
 
 		// Attach the tower to the chassis
-		this.turretMotor = this.scene.physics.add.constraints.hinge(
+		this.turretMotor = this.game.physics.add.constraints.hinge(
 			this.chassis.body,
 			this.turret.body,
 			{
@@ -112,7 +113,7 @@ export default class Tank extends Entity {
 		);
 
 		// Attach the canon to the tower
-		this.canonMotor = this.scene.physics.add.constraints.hinge(
+		this.canonMotor = this.game.physics.add.constraints.hinge(
 			this.turret.body,
 			this.canon.body,
 			{
@@ -135,7 +136,7 @@ export default class Tank extends Entity {
 
 		this.tuning = new Ammo.btVehicleTuning();
 		const rayCaster = new Ammo.btDefaultVehicleRaycaster(
-			this.scene.physics.physicsWorld,
+			this.game.physics.physicsWorld,
 		);
 		this.vehicle = new Ammo.btRaycastVehicle(
 			this.tuning,
@@ -144,7 +145,7 @@ export default class Tank extends Entity {
 		);
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
-		this.scene.physics.physicsWorld.addAction(this.vehicle);
+		this.game.physics.physicsWorld.addAction(this.vehicle);
 
 		const wheelAxisPositionBack = -0.4;
 		const wheelRadiusBack = 0.25;
@@ -299,7 +300,7 @@ export default class Tank extends Entity {
 
 	public shoot() {
 		if (this.lastShot + 250 > Date.now()) {
-			return;
+			return false;
 		}
 
 		this.lastShot = Date.now();
@@ -310,24 +311,24 @@ export default class Tank extends Entity {
 			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(1),
 		);
 
-		new Explosion(this.scene, pos).addToScene();
+		new Explosion(this.game, pos).addToScene();
 
-		const sphere = this.scene.physics.add.sphere(
+		const sphere = this.game.physics.add.sphere(
 			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 100},
 			{phong: {color: 0x202020}},
 		);
 		// Event when bullet hit something
 		sphere.body.on.collision(other => {
 			console.log('hit', other);
-			this.scene.physics.destroy(sphere);
+			this.game.physics.destroy(sphere);
 			sphere.removeFromParent();
 			const pos = sphere.getWorldPosition(new THREE.Vector3());
-			new Explosion(this.scene, pos, 0.5).addToScene();
+			new Explosion(this.game, pos, 0.5).addToScene();
 		});
 
 		sphere.receiveShadow = sphere.castShadow = true;
 		setTimeout(() => {
-			this.scene.physics.destroy(sphere);
+			this.game.physics.destroy(sphere);
 			sphere.removeFromParent();
 		}, 5000);
 
@@ -337,6 +338,7 @@ export default class Tank extends Entity {
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		sphere.body.applyForce(force.x, force.y, force.z);
+		return true;
 	}
 
 	public update() {
@@ -376,7 +378,7 @@ export default class Tank extends Entity {
 
 	public addToScene() {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		this.scene.add.existing(this.group);
+		this.game.add.existing(this.group);
 	}
 
 	public removeFromScene() {

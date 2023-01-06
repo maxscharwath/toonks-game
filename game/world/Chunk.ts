@@ -2,17 +2,12 @@ import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE}
 import {SimplifyModifier} from 'three/examples/jsm/modifiers/SimplifyModifier';
 import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
 import {WaterMaterial} from '@game/world/WaterMaterial';
-import {type WebGLRenderer} from 'three/src/renderers/WebGLRenderer';
-import {type Scene} from 'three/src/scenes/Scene';
-import {type Camera} from 'three/src/cameras/Camera';
-import {type BufferGeometry} from 'three/src/core/BufferGeometry';
-import {type Material} from 'three/src/materials/Material';
-import {type Group} from 'three/src/objects/Group';
+import type Game from '@game/scenes/game';
 
 export class Chunk extends ExtendedGroup {
 	private static waterMaterial: WaterMaterial;
 	private static heightmapMaterial: HeightMapMaterial;
-	private static get waterLevel() {
+	static get waterLevel() {
 		return 2.1;
 	}
 
@@ -44,7 +39,7 @@ export class Chunk extends ExtendedGroup {
 	public readonly chunkId: number;
 	public lastUpdate = 0;
 
-	private scene?: Scene3D;
+	private isDestroyed = false;
 	private hasPhysics = false;
 	private _mesh?: {
 		mesh: ExtendedMesh;
@@ -53,25 +48,15 @@ export class Chunk extends ExtendedGroup {
 
 	private _physicsMesh?: ExtendedMesh;
 
-	constructor(readonly x: number, readonly y: number, private readonly pixels: ImageData) {
+	constructor(private readonly game: Game, readonly x: number, readonly y: number, private readonly pixels: ImageData) {
 		super();
 		this.chunkId = (x << 16) | y;
+		console.log('Created chunk', x, y);
 
 		this.add(this.mesh);
 		if (this.minGroundHeight <= Chunk.waterLevel) {
 			this.add(this.makeWater());
 		}
-
-		this.mesh.onBeforeRender = (renderer: WebGLRenderer, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: Group) => {
-			const distance = this.getChunkPosition().distanceTo(camera.position);
-			const maxDistance = Chunk.chunkSize * 1.2;
-			const isViewable = distance < maxDistance;
-			if (isViewable) {
-				this.addPhysics();
-			} else {
-				this.removePhysics();
-			}
-		};
 	}
 
 	public getChunkPosition() {
@@ -115,23 +100,19 @@ export class Chunk extends ExtendedGroup {
 		return 4;
 	}
 
-	public setScene(scene: Scene3D) {
-		this.scene = scene;
-	}
-
 	public addPhysics() {
-		if (!this.scene || this.hasPhysics) {
+		if (!this.game || this.hasPhysics) {
 			return;
 		}
 
 		this.hasPhysics = true;
-		this.scene.physics.add.existing(this.physicsMesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
+		this.game.physics.add.existing(this.physicsMesh as unknown as ExtendedObject3D, {mass: 0, collisionFlags: 1});
 		return this;
 	}
 
 	public removePhysics() {
 		this.hasPhysics = false;
-		this.scene?.physics.destroy(this.physicsMesh as unknown as ExtendedObject3D);
+		this.game?.physics.destroy(this.physicsMesh as unknown as ExtendedObject3D);
 		return this;
 	}
 
@@ -149,11 +130,31 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	public update() {
+		if (this.isDestroyed) {
+			return;
+		}
+
 		this.lastUpdate = Date.now();
+
+		if (this.game) {
+			const distance = this.getChunkPosition().distanceTo(this.game.player.object3d.position);
+			const maxDistance = Chunk.chunkSize * 1.2;
+			const isViewable = distance < maxDistance;
+			if (isViewable) {
+				this.addPhysics();
+			} else {
+				this.removePhysics();
+			}
+		}
 	}
 
 	public destroy() {
+		console.log('Destroying chunk', this.x, this.y);
+		this.isDestroyed = true;
 		this.removePhysics();
+		this.mesh.geometry.dispose();
+		this.physicsMesh?.geometry.dispose();
+		this.clear();
 		this.removeFromParent();
 	}
 

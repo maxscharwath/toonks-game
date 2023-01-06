@@ -19,7 +19,7 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 	disconnected: never;
 	status: NetworkStatus;
 	data: {connection: DataConnection; data: any};
-}> {
+} & T> {
 	private static get uniquePrefix() {
 		return 'SWNpT25Fc3REZXNDcmFja3M';
 	}

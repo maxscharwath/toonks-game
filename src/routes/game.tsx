@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {startGame} from '@game/game';
+import {startGame} from '@game/main';
 import {useNetwork} from '@/store/store';
 import GameUi from '@/ui/GameUi';
 
