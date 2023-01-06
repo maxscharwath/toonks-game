@@ -153,7 +153,6 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	public destroy() {
-		console.log('destroying chunk', this.chunkId);
 		this.removePhysics();
 		this.removeFromParent();
 	}

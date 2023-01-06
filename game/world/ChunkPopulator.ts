@@ -1,6 +1,6 @@
 import {type THREE} from 'enable3d';
-import {type Chunk} from '@game/world/Chunk';
 import Random from '@game/utils/Random';
+import {Chunk} from '@game/world/Chunk';
 
 export class ChunkPopulator {
 	private readonly elements: THREE.Object3D[] = [];
@@ -14,8 +14,8 @@ export class ChunkPopulator {
 		const random = Random.create(chunk.chunkId);
 		for (let i = 0; i < random.int(50); i++) {
 			const pos = chunk.getPositionAt(
-				random.int(chunk.chunkSize),
-				random.int(chunk.chunkSize),
+				random.int(Chunk.chunkSize),
+				random.int(Chunk.chunkSize),
 			);
 
 			const element = this.elements[random.int(this.elements.length)];

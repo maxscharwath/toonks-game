@@ -49,8 +49,8 @@ export class World {
 
 	public async update() {
 		const {camera} = this.scene;
-		const x = Math.floor(camera.position.x / Chunk.chunkSize);
-		const y = Math.floor(camera.position.z / Chunk.chunkSize);
+		const x = Math.round(camera.position.x / Chunk.chunkSize);
+		const y = Math.round(camera.position.z / Chunk.chunkSize);
 		const chunks = await this.generateArea(x, y, 2);
 		chunks.forEach(chunk => {
 			chunk.update();

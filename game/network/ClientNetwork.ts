@@ -17,7 +17,6 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		super();
 		this.peerConnectionsNumber = 0;
 		this.channel('join').on(data => {
-			console.log('connection data', data);
 			this.peerConnectionsNumber = data;
 		});
 	}
@@ -81,7 +80,6 @@ export class ClientNetwork extends Network<NetworkEvents> {
 			})
 			.on('data', data => {
 				const message = data as Message;
-				console.log('data got', message);
 				this.handleMessage(connection, message);
 				void this.emit('data', {connection, data});
 			});

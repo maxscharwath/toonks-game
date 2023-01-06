@@ -29,12 +29,9 @@ export class ServerNetwork extends Network<NetworkEvents> {
 					void this.emit('status', NetworkStatus.Connected);
 					console.log('My peer ID is: ' + id);
 					peer.on('connection', async conn => {
-						console.log('Connection received');
 						if (await this.handleConnection?.(conn) ?? true) {
-							console.log('Connection accepted');
 							this.addConnection(conn);
 						} else {
-							console.log('Connection rejected');
 							conn.close();
 						}
 					});
@@ -85,7 +82,6 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		this.connections.add(
 			connection
 				.on('open', () => {
-					console.log('new conn, sending message to clients');
 					this.channel('join').send(this.connections.size);
 				})
 				.on('data', data => {
