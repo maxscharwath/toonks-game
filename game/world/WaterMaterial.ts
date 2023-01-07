@@ -176,7 +176,7 @@ void main() {
 export class WaterMaterial extends MeshStandardMaterial {
 	private static map: THREE.Texture;
 	static {
-		this.map = new THREE.TextureLoader().load('/images/Water_1_M_Normal.jpg');
+		this.map = new THREE.TextureLoader().load('/images/Water_1_M_Normal.png');
 		this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
 	}
 

@@ -20,7 +20,7 @@ export default class Explosion extends Entity {
 		this.object3d = new ExtendedObject3D();
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(this.scale, this.scale, this.scale);
-		const light = new THREE.PointLight(0xffdf5e, 10, 80);
+		const light = new THREE.PointLight(0xffdf5e, 8, 50);
 		light.castShadow = true;
 		this.object3d.add(light);
 		game.animationMixers.add(this.object3d.anims.mixer);

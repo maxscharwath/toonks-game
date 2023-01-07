@@ -36,9 +36,24 @@ export default class Tank extends Entity {
 				child.receiveShadow = true;
 			}
 		});
+
+		this.materials = [
+			'/images/tank/heig.png',
+			'/images/tank/military.png',
+			'/images/tank/studystorm.png',
+			'/images/tank/weeb.png',
+		].map(url => {
+			const map = new THREE.TextureLoader().load(url);
+			map.encoding = THREE.sRGBEncoding;
+			map.flipY = false;
+			map.repeat.set(1, 1);
+			map.needsUpdate = true;
+			return new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.5, metalnessMap: map, roughness: 0.05});
+		});
 	}
 
 	private static model: Group;
+	private static materials: THREE.Material[] = [];
 
 	protected readonly properties = new Properties<TankState>();
 
@@ -56,6 +71,9 @@ export default class Tank extends Entity {
 	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(game, uuid);
 		const model = Tank.model.clone();
+
+		this.setTexture(model);
+
 		this.group = new ExtendedGroup();
 
 		this.chassis = meshToExtendedObject3D(
@@ -84,21 +102,6 @@ export default class Tank extends Entity {
 		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
 		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
 		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
-
-		const texture = new FLAT.TextTexture('', {
-			background: 'rgba(0, 0, 0, 0.5)',
-			fillStyle: 'white',
-			padding: {
-				x: 10,
-				y: 15,
-			},
-			borderRadius: 10,
-		});
-		const sprite3d = new FLAT.TextSprite(texture);
-		sprite3d.setScale(0.005);
-		sprite3d.position.set(0, 1, 0);
-
-		this.chassis.add(sprite3d);
 
 		// Attach the tower to the chassis
 		this.turretMotor = this.game.physics.add.constraints.hinge(
@@ -213,9 +216,6 @@ export default class Tank extends Entity {
 			})
 			.addProperty('pseudo', {
 				default: 'Player',
-				onChange(pseudo) {
-					sprite3d.setText(pseudo);
-				},
 			})
 			.addProperty('engineForce', {
 				default: 0,
@@ -418,6 +418,15 @@ export default class Tank extends Entity {
 
 	protected setCollisionFlags(flags: number) {
 		this.chassis.body.setCollisionFlags(flags);
+	}
+
+	protected setTexture(model: THREE.Group) {
+		const material = Tank.materials[Math.floor(Math.random() * Tank.materials.length)];
+		model.traverse(child => {
+			if (child instanceof THREE.Mesh) {
+				child.material = material;
+			}
+		});
 	}
 
 	protected async teleport(position: THREE.Vector3) {

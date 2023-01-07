@@ -139,6 +139,7 @@ export default class Game extends Scene3D {
 
 					entity.import(data);
 				} else {
+					const position = new THREE.Vector3().fromArray(data.position);
 					const tank = new TankNetwork(this, position, data.uuid);
 					tank.addToScene();
 					tank.import(data);

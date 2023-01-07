@@ -1,5 +1,5 @@
 import Tank from '@game/models/Tank';
-import {type THREE} from 'enable3d';
+import {FLAT, type THREE} from 'enable3d';
 import type Game from '@game/scenes/game';
 
 export default class TankNetwork extends Tank {
@@ -16,6 +16,25 @@ export default class TankNetwork extends Tank {
 		});
 		this.properties.getProperty('rotation').on('change', rotation => {
 			this.targetTransform.rotation = rotation;
+		});
+
+		const texture = new FLAT.TextTexture('', {
+			background: 'rgba(0, 0, 0, 0.5)',
+			fillStyle: 'white',
+			padding: {
+				x: 10,
+				y: 15,
+			},
+			borderRadius: 10,
+		});
+		const sprite3d = new FLAT.TextSprite(texture);
+		sprite3d.setScale(0.005);
+		sprite3d.position.set(0, 1, 0);
+
+		this.object3d.add(sprite3d);
+
+		this.properties.getProperty('pseudo').on('change', name => {
+			sprite3d.setText(name);
 		});
 	}
 
