@@ -14,6 +14,7 @@ import Random from '@game/utils/Random';
 import {Chunk} from '@game/world/Chunk';
 import GameEvent from '@game/event/GameEvent';
 import TankPlayer from '@game/models/TankPlayer';
+import {MeshPhysicalMaterialParameters} from 'three/src/materials/MeshPhysicalMaterial';
 
 export default class Game extends Scene3D {
 	public events = new GameEvent();
@@ -47,7 +48,7 @@ export default class Game extends Scene3D {
 
 		// Fog
 		const fogColor = new THREE.Color('#63a7ff');
-		this.scene.fog = new THREE.Fog(fogColor, 0, 100);
+		this.scene.fog = new THREE.Fog(fogColor, 50, 150);
 		this.scene.background = new THREE.Color(fogColor);
 
 		const chunkLoader = new ChunkLoader({
@@ -106,6 +107,27 @@ export default class Game extends Scene3D {
 			mode: 2049,
 			cameramode: 'Follow',
 		};
+
+		{ // Wall
+			const sphere = new THREE.SphereGeometry(200, 200, 200);
+			const map = new THREE.TextureLoader().load('/images/storm.png');
+			map.wrapS = map.wrapT = THREE.RepeatWrapping;
+			map.repeat.set(8, 8);
+			map.rotation = Math.PI / 2;
+
+			const material = new THREE.MeshPhysicalMaterial({
+				roughness: 0.3,
+				transmission: 0.9,
+				reflectivity: 0.5,
+				thickness: 1,
+				bumpMap: map,
+				map,
+				side: THREE.DoubleSide,
+			} as THREE.MeshPhysicalMaterialParameters);
+			const mesh = new THREE.Mesh(sphere, material);
+			mesh.position.set(position.x, 0, position.z);
+			this.scene.add(mesh);
+		}
 
 		panel.add(params, 'cameramode', ['Follow', 'Free']).onChange((value: string) => {
 			if (value === 'Follow') {
