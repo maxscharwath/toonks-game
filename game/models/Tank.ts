@@ -48,7 +48,7 @@ export default class Tank extends Entity {
 			map.flipY = false;
 			map.repeat.set(1, 1);
 			map.needsUpdate = true;
-			return new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.5, metalnessMap: map, roughness: 0.05});
+			return new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.4, metalnessMap: map, roughness: 0.6});
 		});
 	}
 
