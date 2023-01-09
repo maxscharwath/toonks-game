@@ -1,8 +1,8 @@
-import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, type Scene3D, THREE} from 'enable3d';
+import {ExtendedGroup, ExtendedMesh, type ExtendedObject3D, THREE} from 'enable3d';
 import {SimplifyModifier} from 'three/examples/jsm/modifiers/SimplifyModifier';
 import {HeightMapMaterial} from '@game/world/HeightMapMaterial';
 import {WaterMaterial} from '@game/world/WaterMaterial';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 export class Chunk extends ExtendedGroup {
 	private static waterMaterial: WaterMaterial;

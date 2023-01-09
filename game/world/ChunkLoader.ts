@@ -1,7 +1,7 @@
 import {Chunk} from '@game/world/Chunk';
 import Worker from '@game/world/ChunkLoaderWorker?worker';
 import Emittery from 'emittery';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 type ChunkLoaderOptions = {
 	worldHeightMapUrl: string;

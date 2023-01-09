@@ -1,4 +1,4 @@
-import {ExtendedGroup, type ExtendedObject3D, FLAT, THREE} from 'enable3d';
+import {ExtendedGroup, type ExtendedObject3D, THREE} from 'enable3d';
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Group} from 'three';
@@ -6,7 +6,7 @@ import Explosion from '@game/models/Explosion';
 import shortUuid from 'short-uuid';
 import {meshToExtendedObject3D} from '@game/utils/MeshToExtendedObject3D';
 import {Properties} from '@game/utils/Properties';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 export enum WheelPosition {
 	FrontLeft = 0,

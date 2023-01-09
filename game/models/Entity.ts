@@ -1,5 +1,5 @@
 import {type THREE} from 'enable3d';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 export default abstract class Entity {
 	abstract readonly object3d: THREE.Object3D;

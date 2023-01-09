@@ -7,7 +7,7 @@ type Awaitable<T> = T | Promise<T>;
 export class ClientNetwork extends Network<NetworkEvents> {
 	private peer?: Peer;
 	private connection?: DataConnection;
-	private peerConnectionsNumber: number;
+	private peers: string[] = [];
 
 	public get isHost() {
 		return false;
@@ -15,9 +15,15 @@ export class ClientNetwork extends Network<NetworkEvents> {
 
 	public constructor(private readonly metadata: unknown) {
 		super();
-		this.peerConnectionsNumber = 0;
-		this.channel('join').on(data => {
-			this.peerConnectionsNumber = data;
+		this.channel('join').on(({uuid, peers}) => {
+			this.peers = peers;
+			void this.emit('peers', peers);
+			void this.emit('join', uuid);
+		});
+		this.channel('leave').on(({uuid, peers}) => {
+			this.peers = peers;
+			void this.emit('peers', peers);
+			void this.emit('leave', uuid);
 		});
 	}
 
@@ -56,6 +62,8 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		this.peer?.removeAllListeners();
 		this.peer = undefined;
 		this.connection = undefined;
+		this.peers = [];
+		void this.emit('peers', []);
 		void this.emit('status', NetworkStatus.Disconnected);
 	}
 
@@ -63,15 +71,12 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		this.connection?.send({channel, data});
 	}
 
-	public connectedPeersNumber(): number {
-		return this.peerConnectionsNumber;
+	public connectedPeers(): string[] {
+		return this.peers;
 	}
 
 	protected addConnection(connection: DataConnection): void {
 		this.connection = connection
-			.on('open', () => {
-				this.peerConnectionsNumber += 1;
-			})
 			.on('close', () => {
 				this.removeConnection(connection);
 			})
@@ -86,8 +91,6 @@ export class ClientNetwork extends Network<NetworkEvents> {
 	}
 
 	protected removeConnection(connection: DataConnection): void {
-		connection.close();
-		connection.removeAllListeners();
-		this.connection = undefined;
+		this.disconnect();
 	}
 }

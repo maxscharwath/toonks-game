@@ -18,8 +18,11 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 	connected: string;
 	disconnected: never;
 	status: NetworkStatus;
+	peers: string[];
+	join: string;
+	leave: string;
 	data: {connection: DataConnection; data: any};
-} & T> {
+}> {
 	private static get uniquePrefix() {
 		return 'SWNpT25Fc3REZXNDcmFja3M';
 	}
@@ -66,7 +69,7 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 
 	abstract send(channel: string, data: unknown): void;
 
-	abstract connectedPeersNumber(): number;
+	abstract connectedPeers(): string[];
 
 	protected handleMessage(connection: DataConnection, data: Message) {
 		void this.channelEmitter.emit(data.channel, data.data);

@@ -1,7 +1,7 @@
 import {type ChunkLoader} from '@game/world/ChunkLoader';
 import {Chunk, mergeChunkMesh} from '@game/world/Chunk';
 import {type ChunkPopulator} from '@game/world/ChunkPopulator';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 type Pending<P> = Promise<P> & {isPending: boolean; value?: P};
 function pending<P>(promise: Promise<P>): Pending<P> {

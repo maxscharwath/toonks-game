@@ -74,33 +74,47 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		this.handleConnection = handleConnection;
 	}
 
-	public connectedPeersNumber(): number {
-		return this.connections.size;
+	public connectedPeers(): string[] {
+		return Array.from(this.connections).map(connection => connection.peer);
 	}
 
 	protected addConnection(connection: DataConnection): void {
-		this.connections.add(
-			connection
-				.on('open', () => {
-					this.channel('join').send(this.connections.size);
-				})
-				.on('data', data => {
-					void this.emit('data', {connection, data});
-					this.handleMessage(connection, data as Message);
-				})
-				.on('close', () => {
-					this.removeConnection(connection);
-				})
-				.on('error', error => {
-					console.error(error);
-					this.removeConnection(connection);
-				}),
-		);
+		connection.once('open', () => {
+			this.connections.add(
+				connection
+					.on('data', data => {
+						void this.emit('data', {connection, data});
+						this.handleMessage(connection, data as Message);
+					})
+					.on('close', () => {
+						this.removeConnection(connection);
+					})
+					.on('error', error => {
+						console.error(error);
+						this.removeConnection(connection);
+					}),
+			);
+			const peers = this.connectedPeers();
+			void this.emit('peers', peers);
+			void this.emit('join', connection.peer);
+			this.channel('join').send({
+				uuid: connection.peer,
+				peers,
+			});
+		});
 	}
 
 	protected removeConnection(connection: DataConnection): void {
 		connection.close();
 		connection.removeAllListeners();
 		this.connections.delete(connection);
+
+		const peers = this.connectedPeers();
+		void this.emit('peers', peers);
+		void this.emit('leave', connection.peer);
+		this.channel('leave').send({
+			uuid: connection.peer,
+			peers,
+		});
 	}
 }

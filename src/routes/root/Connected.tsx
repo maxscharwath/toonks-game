@@ -5,7 +5,7 @@ import {useNetwork} from '@/store/store';
 
 export default function Connected() {
 	const navigate = useNavigate();
-	const {code, network} = useNetwork();
+	const {code, peers, status} = useNetwork();
 
 	return (
 		<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
@@ -14,7 +14,10 @@ export default function Connected() {
 				{code}
 			</h2>
 
-			<h3 className='text-black dark:text-white'>{ network?.connectedPeersNumber() } players connected (data not reactive)</h3>
+			<p className='text-black dark:text-white'>
+				<span className='font-bold'>{peers.length + 1}</span> players are ready to play.
+				({status})
+			</p>
 			<Button
 				onClick={() => {
 					navigate('/game');

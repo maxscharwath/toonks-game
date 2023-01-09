@@ -1,41 +1,55 @@
 import {GUI} from 'lil-gui';
 import Stats from 'stats.js';
-import {Scene3D, THREE} from 'enable3d';
-import {type GameConfig} from '@game/scenes/initScene';
+import {THREE} from 'enable3d';
 import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
 import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
-import type Tank from '@game/models/Tank';
+import Tank from '@game/models/Tank';
 import TankNetwork from '@game/models/TankNetwork';
 import Random from '@game/utils/Random';
 import {Chunk} from '@game/world/Chunk';
 import GameEvent from '@game/event/GameEvent';
 import TankPlayer from '@game/models/TankPlayer';
-import {MeshPhysicalMaterialParameters} from 'three/src/materials/MeshPhysicalMaterial';
+import Explosion from '@game/models/Explosion';
+import ResizeableScene3D from '@game/scenes/ResizeableScene3D';
+import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type Network} from '@game/network/Network';
 
-export default class Game extends Scene3D {
+export type GameConfig = {
+	network: Network<NetworkEvents>;
+};
+
+export default class Game extends ResizeableScene3D {
 	public events = new GameEvent();
+	public player!: TankPlayer;
 
 	private readonly entities = new Map<string, Tank>();
-	player!: TankPlayer;
 	private readonly stats = new Stats();
 
-	private data!: GameConfig;
+	private readonly config: GameConfig;
 	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
 	private readonly playerController = new PlayerController(this);
 	private world!: World;
 
-	constructor() {
+	constructor(config: GameConfig) {
 		super({key: 'GameScene'});
+		this.config = config;
+		this.events.setNetwork(config.network);
 	}
 
-	init(data: GameConfig) {
-		this.data = data;
-		this.events.setNetwork(data.network);
+	async preload() {
+		await this.load.preload('tree', '/glb/tree.glb');
+		await this.load.preload('rock', '/glb/rock.glb');
+		await Tank.loadModel(this.load, '/glb/tank.glb');
+		await Explosion.loadModel(this.load, '/glb/fireball.glb');
+	}
+
+	init() {
+		super.init();
 		this.playerController.init();
 	}
 
@@ -109,7 +123,7 @@ export default class Game extends Scene3D {
 		};
 
 		{ // Wall
-			const sphere = new THREE.SphereGeometry(200, 200, 200);
+			const sphere = new THREE.SphereGeometry(50, 200, 200);
 			const map = new THREE.TextureLoader().load('/images/storm.png');
 			map.wrapS = map.wrapT = THREE.RepeatWrapping;
 			map.repeat.set(8, 8);
@@ -118,9 +132,11 @@ export default class Game extends Scene3D {
 			const material = new THREE.MeshPhysicalMaterial({
 				roughness: 0.3,
 				transmission: 0.9,
-				reflectivity: 0.5,
 				thickness: 1,
-				bumpMap: map,
+				displacementMap: map,
+				displacementScale: 10,
+				displacementBias: -5,
+				color: 0x00ff00,
 				map,
 				side: THREE.DoubleSide,
 			} as THREE.MeshPhysicalMaterialParameters);
@@ -150,17 +166,20 @@ export default class Game extends Scene3D {
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
 
-		this.data.network?.channel('update').on((res: any[]) => {
+		this.config.network?.channel('update').on((res: any[]) => {
+			// Got tank update from server
 			res.forEach((data: any) => {
 				const entity = this.entities.get(data.uuid);
 
 				if (entity) {
+					// Update entity but not player
 					if (entity.uuid === this.player.uuid) {
 						return;
 					}
 
 					entity.import(data);
 				} else {
+					// Create new entity from data
 					const position = new THREE.Vector3().fromArray(data.position);
 					const tank = new TankNetwork(this, position, data.uuid);
 					tank.addToScene();
@@ -180,16 +199,11 @@ export default class Game extends Scene3D {
 
 		setInterval(() => {
 			void this.world.update();
-		}, 1000);
-
-		setInterval(() => {
-			void this.world.update();
-			if (this.data.network?.isHost) {
+			if (this.config.network?.isHost) {
 				const entities = Array.from(this.entities.values()).map(entity => entity.export());
-				entities.push(this.player.export());
-				this.data.network?.channel('update').send(entities);
+				this.config.network?.channel('update').send(entities);
 			} else {
-				this.data.network?.channel('update').send([this.player.export()]);
+				this.config.network?.channel('update').send([this.player.export()]);
 			}
 		}, 100);
 	}

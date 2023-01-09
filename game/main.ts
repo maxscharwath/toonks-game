@@ -1,22 +1,45 @@
-import Game from '@game/scenes/game';
-import {PhysicsLoader, Project} from 'enable3d';
+import Game from '@game/scenes/Game';
+import {PhysicsLoader} from 'enable3d';
 import {WebGLRenderer} from 'three';
-import InitScene from '@game/scenes/initScene';
 import {type Network} from '@game/network/Network';
 import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {Project} from '@game/scenes/Project';
 
-export async function startGame(canvas: HTMLCanvasElement, network: Network<NetworkEvents>) {
-	return new Promise<Project>(resolve => {
+async function startGame(canvas: HTMLCanvasElement, network: Network<NetworkEvents>) {
+	return new Promise<{
+		project: Project;
+		game: Game;
+	}>(resolve => {
 		PhysicsLoader('/ammo/kripken', () => {
+			const game = new Game({
+				network,
+			});
 			const project = new Project({
 				renderer: new WebGLRenderer({
 					canvas,
 					antialias: true,
 				}),
-				scenes: [InitScene({network}), Game],
+				scene: game,
 			});
-			resolve(project);
+			resolve({
+				project,
+				game,
+			});
 			return project;
 		});
 	});
+}
+
+export function initGame() {
+	let project: Project;
+	return {
+		async start(canvas: HTMLCanvasElement, network: Network<NetworkEvents>) {
+			const result = await startGame(canvas, network);
+			project = result.project;
+			return result.game;
+		},
+		stop() {
+			project?.renderer?.dispose();
+		},
+	};
 }

@@ -1,6 +1,6 @@
 import Tank from '@game/models/Tank';
 import {FLAT, type THREE} from 'enable3d';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 export default class TankNetwork extends Tank {
 	protected readonly targetTransform: {

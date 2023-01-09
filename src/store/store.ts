@@ -10,11 +10,17 @@ type Store = {
 	code?: string;
 	network?: Network<NetworkEvents>;
 	status: NetworkStatus;
+	peers: string[];
 };
 
 export const useNetwork = create<Store>((set, get) => {
 	function switchNetwork<T extends Network<NetworkEvents>>(network: T): T {
-		get().network?.disconnect();
+		const oldNetwork = get().network;
+		oldNetwork?.clearListeners();
+		oldNetwork?.disconnect();
+		network.on('peers', peers => {
+			set({peers});
+		});
 		network.on('status', status => {
 			set({status});
 		});
@@ -24,6 +30,7 @@ export const useNetwork = create<Store>((set, get) => {
 
 	return {
 		status: NetworkStatus.Disconnected,
+		peers: [],
 		async hostGame() {
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
 			const network = switchNetwork(new ServerNetwork(full));

@@ -4,7 +4,7 @@ import {type Vector3} from 'three';
 import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import {ExtendedObject3D, THREE} from 'enable3d';
 import shortUuid from 'short-uuid';
-import type Game from '@game/scenes/game';
+import type Game from '@game/scenes/Game';
 
 export default class Explosion extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
