@@ -36,7 +36,7 @@ export default function GameUi({children}: {children: React.ReactNode}) {
 
 			<Toaster
 				position='top-right'
-				gutter={2}
+				gutter={4}
 				toastOptions={{
 					duration: 2000,
 				}}
