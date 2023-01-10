@@ -39,7 +39,7 @@ export class ClientNetwork extends Network<NetworkEvents> {
 					});
 					connection
 						.once('open', () => {
-							void this.emit('connected', peerId);
+							// Void this.emit('connected', peerId);
 							void this.emit('status', NetworkStatus.Connected);
 							this.peer = peer;
 							this.addConnection(connection);
