@@ -1,6 +1,6 @@
 import Peer, {type DataConnection} from 'peerjs';
 import {type Message, Network, NetworkStatus} from './Network';
-import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type PeerData, type NetworkEvents} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 type HandleConnection = (connection: DataConnection) => Awaitable<boolean>;
@@ -18,14 +18,13 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		super();
 	}
 
-	public async connect(): Promise<void> {
+	public async connect(metadata: unknown): Promise<void> {
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);
 			const peer = new Peer(this.id);
 			peer
 				.once('open', id => {
-					// Void this.emit('connected', id);
 					void this.emit('status', NetworkStatus.Connected);
 					console.log('My peer ID is: ' + id);
 					peer.on('connection', async conn => {
@@ -74,8 +73,8 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		this.handleConnection = handleConnection;
 	}
 
-	public connectedPeers(): string[] {
-		return Array.from(this.connections).map(connection => connection.peer);
+	public connectedPeers(): PeerData[] {
+		return Array.from(this.connections).map(connection => ({uuid: connection.peer, metadata: connection.metadata as {name: string}}));
 	}
 
 	protected addConnection(connection: DataConnection): void {
@@ -98,7 +97,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 			void this.emit('peers', peers);
 			void this.emit('join', connection.peer);
 			this.channel('join').send({
-				uuid: connection.peer,
+				peer: {uuid: connection.peer, metadata: connection.metadata as {name: string}},
 				peers,
 			});
 		});
@@ -113,7 +112,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		void this.emit('peers', peers);
 		void this.emit('leave', connection.peer);
 		this.channel('leave').send({
-			uuid: connection.peer,
+			peer: {uuid: connection.peer, metadata: connection.metadata as {name: string}},
 			peers,
 		});
 	}

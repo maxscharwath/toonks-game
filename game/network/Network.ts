@@ -1,5 +1,6 @@
 import {type DataConnection} from 'peerjs';
 import Emittery from 'emittery';
+import {type PeerData} from './NetworkEvents';
 
 export enum NetworkStatus {
 	Disconnected = 'disconnected',
@@ -18,7 +19,7 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 	connected: string;
 	disconnected: never;
 	status: NetworkStatus;
-	peers: string[];
+	peers: PeerData[];
 	join: string;
 	leave: string;
 	data: {connection: DataConnection; data: any};
@@ -63,13 +64,13 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 		};
 	}
 
-	abstract connect(id?: string): Awaitable<void>;
+	abstract connect(id?: string, metadata?: unknown): Awaitable<void>;
 
 	abstract disconnect(): void;
 
 	abstract send(channel: string, data: unknown): void;
 
-	abstract connectedPeers(): string[];
+	abstract connectedPeers(): PeerData[];
 
 	protected handleMessage(connection: DataConnection, data: Message) {
 		void this.channelEmitter.emit(data.channel, data.data);

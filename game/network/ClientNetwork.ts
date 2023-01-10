@@ -1,33 +1,33 @@
 import Peer, {type DataConnection} from 'peerjs';
 import {type Message, Network, NetworkStatus} from './Network';
-import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 
 export class ClientNetwork extends Network<NetworkEvents> {
 	private peer?: Peer;
 	private connection?: DataConnection;
-	private peers: string[] = [];
+	private peers: PeerData[] = [];
 
 	public get isHost() {
 		return false;
 	}
 
-	public constructor(private readonly metadata: unknown) {
+	public constructor() {
 		super();
-		this.channel('join').on(({uuid, peers}) => {
+		this.channel('join').on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
-			void this.emit('join', uuid);
+			void this.emit('join', peerData.uuid);
 		});
-		this.channel('leave').on(({uuid, peers}) => {
+		this.channel('leave').on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
-			void this.emit('leave', uuid);
+			void this.emit('leave', peerData.uuid);
 		});
 	}
 
-	connect(id: string): Awaitable<void> {
+	connect(id: string, metadata: unknown): Awaitable<void> {
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);
@@ -35,11 +35,10 @@ export class ClientNetwork extends Network<NetworkEvents> {
 			peer
 				.once('open', peerId => {
 					const connection = peer.connect(id, {
-						metadata: this.metadata,
+						metadata,
 					});
 					connection
 						.once('open', () => {
-							// Void this.emit('connected', peerId);
 							void this.emit('status', NetworkStatus.Connected);
 							this.peer = peer;
 							this.addConnection(connection);
@@ -71,7 +70,7 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		this.connection?.send({channel, data});
 	}
 
-	public connectedPeers(): string[] {
+	public connectedPeers(): PeerData[] {
 		return this.peers;
 	}
 
