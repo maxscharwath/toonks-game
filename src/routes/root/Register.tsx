@@ -14,13 +14,14 @@ export default function Register() {
 			label: 'Host Game',
 			content() {
 				const {status, hostGame} = useNetwork();
+				const metadata = {};
 				return (
 					<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
 						<h2 className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
                      Ready to host a game?
 						</h2>
 						<PlayerInfosSelection />
-						<Button onClick={hostGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
+						<Button onClick={async () => hostGame(metadata)} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
                      Create
 						</Button>
 					</div>
@@ -32,7 +33,7 @@ export default function Register() {
 			content() {
 				const {status, joinGame} = useNetwork();
 				const [code, setCode] = useState('');
-
+				const metadata = {};
 				return (
 					<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
 
@@ -50,7 +51,7 @@ export default function Register() {
 
 						<Button
 							onClick={() => {
-								void joinGame(code);
+								void joinGame(code, metadata);
 							}}
 							loading={status === NetworkStatus.Connecting}
 							disabled={code.length !== 6}
