@@ -385,6 +385,13 @@ export default class Tank extends Entity {
 		this.group.removeFromParent();
 	}
 
+	public async resetPosition() {
+		const position = await this.game.world.getPositionAt(this.object3d.position);
+		console.log('reset position', position);
+		position.y += 0.5;
+		void this.teleport(position);
+	}
+
 	public destroy(): void {
 		throw new Error('Method not implemented.');
 	}
@@ -403,8 +410,6 @@ export default class Tank extends Entity {
 	protected async updatePhysics() {
 		const physics = [
 			this.chassis.body,
-			this.turret.body,
-			this.canon.body,
 		];
 
 		physics.forEach(body => {
@@ -430,18 +435,12 @@ export default class Tank extends Entity {
 	}
 
 	protected async teleport(position: THREE.Vector3) {
-		const physics = [
-			this.chassis,
-			this.turret,
-			this.canon,
-		];
 		const offset = this.object3d.position.clone().sub(position);
 		const velocity = this.getVelocity();
 		const angularVelocity = this.getAngularVelocity();
 		this.setCollisionFlags(2);
-		physics.forEach(obj => {
-			obj.position.sub(offset);
-		});
+		this.object3d.position.sub(offset);
+		this.object3d.rotation.set(0, 0, 0);
 		await this.updatePhysics();
 		this.setCollisionFlags(0);
 		this.setVelocity(velocity);

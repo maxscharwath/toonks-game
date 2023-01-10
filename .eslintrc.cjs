@@ -32,6 +32,7 @@ module.exports = {
     '@typescript-eslint/naming-convention': 'off',
     '@typescript-eslint/no-floating-promises': 'off',
     'no-bitwise': 'off',
-    'new-cap': 'off'
+    'new-cap': 'off',
+    'react/no-unknown-property': 'off',
   }
 };

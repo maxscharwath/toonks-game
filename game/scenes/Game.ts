@@ -25,6 +25,7 @@ export type GameConfig = {
 export default class Game extends ResizeableScene3D {
 	public events = new GameEvent();
 	public player!: TankPlayer;
+	public world!: World;
 
 	private readonly entities = new Map<string, Tank>();
 	private readonly stats = new Stats();
@@ -33,7 +34,6 @@ export default class Game extends ResizeableScene3D {
 	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
 	private readonly playerController = new PlayerController(this);
-	private world!: World;
 
 	constructor(config: GameConfig) {
 		super({key: 'GameScene'});

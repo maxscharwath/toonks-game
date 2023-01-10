@@ -26,7 +26,7 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 		onTankChange(nextIndex);
 	};
 
-	const changeName = (e: InputEvent) => {
+	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
 		console.log('dfsf');
 		setTmpName(e.target.value);
 		onNameChange(e.target.value);
@@ -48,6 +48,7 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
 			<Canvas camera={{fov: 35, zoom: 1.5}}>
 				<Suspense fallback={null}>
+					<TankModel url={selectedTank().meshUrl} />
 					<TankModel url={selectedTank().meshUrl} />
 				</Suspense>
 			</Canvas>

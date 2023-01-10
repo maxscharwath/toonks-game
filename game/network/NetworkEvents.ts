@@ -1,6 +1,13 @@
+export type PeerData = {
+	uuid: string;
+	metadata: {
+		name: string;
+	};
+};
+
 export type NetworkEvents = {
-	join: {uuid: string; peers: string[]};
-	leave: {uuid: string; peers: string[]};
+	join: {peer: PeerData; peers: PeerData[]};
+	leave: {peer: PeerData; peers: PeerData[]};
 	update: any;
 	event: {event: string; data: any};
 };
