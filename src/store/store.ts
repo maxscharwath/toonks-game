@@ -37,8 +37,7 @@ export const useNetwork = create<Store>((set, get) => {
 	return {
 		status: NetworkStatus.Disconnected,
 		peers: [],
-		async hostGame(metadata?: unknown) {
-			console.log(metadata);
+		async hostGame(metadata: PlayerMetadata) {
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
 			const network = switchNetwork(new ServerNetwork(full));
 			await network.connect({
@@ -47,8 +46,7 @@ export const useNetwork = create<Store>((set, get) => {
 			set({code});
 			return {network, code};
 		},
-		async joinGame(code, metadata?: unknown) {
-			console.log(metadata);
+		async joinGame(code, metadata: PlayerMetadata) {
 			const network = switchNetwork(new ClientNetwork());
 			await network.connect({
 				id: Network.createRoomId({prefix: 'TOONKS', value: code}).full,

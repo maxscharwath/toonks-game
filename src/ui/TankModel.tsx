@@ -23,7 +23,7 @@ export default function TankModel(props: {url: string}) {
 			<pointLight position={[10, 10, 10]} />
 			<group ref={tank}>
 				{Object.values(nodes).map(node => (
-					<primitive key={node.name} object={node}>
+					<primitive key={node.name} object={node} castShadow={true} receiveShadow={true}>
 						<meshStandardMaterial map={meshMap} />
 					</primitive>
 				),
