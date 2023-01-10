@@ -18,7 +18,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		super();
 	}
 
-	public async connect(metadata: unknown): Promise<void> {
+	public async connect(options: {metadata: unknown}): Promise<void> {
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);

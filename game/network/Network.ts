@@ -64,7 +64,7 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 		};
 	}
 
-	abstract connect(id?: string, metadata?: unknown): Awaitable<void>;
+	abstract connect(options: Partial<{id: string; metadata: unknown}>): Awaitable<void>;
 
 	abstract disconnect(): void;
 

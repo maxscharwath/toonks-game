@@ -27,15 +27,15 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		});
 	}
 
-	connect(id: string, metadata: unknown): Awaitable<void> {
+	connect(options: {id: string; metadata?: unknown}): Awaitable<void> {
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);
 			const peer = new Peer();
 			peer
-				.once('open', peerId => {
-					const connection = peer.connect(id, {
-						metadata,
+				.once('open', () => {
+					const connection = peer.connect(options?.id, {
+						metadata: options.metadata,
 					});
 					connection
 						.once('open', () => {

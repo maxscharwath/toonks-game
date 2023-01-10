@@ -2,7 +2,7 @@ import create from 'zustand';
 import {Network, NetworkStatus} from '@game/network/Network';
 import {ClientNetwork} from '@game/network/ClientNetwork';
 import {ServerNetwork} from '@game/network/ServerNetwork';
-import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
 
 type Store = {
 	hostGame: () => Promise<{code: string; network: ServerNetwork}>;
@@ -10,7 +10,7 @@ type Store = {
 	code?: string;
 	network?: Network<NetworkEvents>;
 	status: NetworkStatus;
-	peers: string[];
+	peers: PeerData[];
 };
 
 export const useNetwork = create<Store>((set, get) => {
@@ -31,16 +31,21 @@ export const useNetwork = create<Store>((set, get) => {
 	return {
 		status: NetworkStatus.Disconnected,
 		peers: [],
-		async hostGame() {
+		async hostGame(metadata?: unknown) {
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
 			const network = switchNetwork(new ServerNetwork(full));
-			await network.connect();
+			await network.connect({
+				metadata,
+			});
 			set({code});
 			return {network, code};
 		},
-		async joinGame(code) {
-			const network = switchNetwork(new ClientNetwork({}));
-			await network.connect(Network.createRoomId({prefix: 'TOONKS', value: code}).full);
+		async joinGame(code, metadata?: unknown) {
+			const network = switchNetwork(new ClientNetwork());
+			await network.connect({
+				id: Network.createRoomId({prefix: 'TOONKS', value: code}).full,
+				metadata,
+			});
 			set({code});
 			return {network, code};
 		},
