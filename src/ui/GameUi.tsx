@@ -27,7 +27,7 @@ export default function GameUi({children}: {children: React.ReactNode}) {
 				</div>
 				<div
 					onClick={() => {
-						toast.custom(<KillToast playerName='Player #1' />);
+						toast.custom(<KillToast killer='Player 1' killed='Player 2' />);
 					}}
 				>
           Player killed

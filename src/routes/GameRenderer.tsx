@@ -5,6 +5,7 @@ import GameUi from '@/ui/GameUi';
 import {toast} from 'react-hot-toast';
 import ConnectionToast from '@/ui/toast/ConnectionToast';
 import {NetworkStatus} from '@game/network/Network';
+import KillToast from '@/ui/toast/KillToast';
 
 export default function GameRenderer() {
 	const {network} = useNetwork();
@@ -16,21 +17,21 @@ export default function GameRenderer() {
 
 		const {start, stop} = initGame();
 		void start(canvasRef.current!, network!).then(async game => {
-			network?.on('join', () => {
-				toast.custom(<ConnectionToast playerName='Player #1' type='join' />);
-			});
 			network?.on('status', status => {
 				if (status === NetworkStatus.Disconnected) {
 					console.log('Disconnected from server, redirecting to home page');
 					window.location.href = '/';
 				}
 			});
+			network?.on('join', () => {
+				toast.custom(<ConnectionToast playerName='Player #1' type='join' />);
+			});
 			network?.on('leave', () => {
 				toast.custom(<ConnectionToast playerName='Player #1' type='leave' />);
 			});
-			game.events.on('tank:shoot', () => {
+			game.events.on('tank:killed', ({killer, killed}) => {
 				toast.custom(
-					<ConnectionToast playerName='Player #1' type='leave' />,
+					<KillToast killer={killer} killed={killed} />,
 				);
 			});
 		});
