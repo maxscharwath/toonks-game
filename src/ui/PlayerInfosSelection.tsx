@@ -1,44 +1,35 @@
 import React, {Suspense, useState} from 'react';
 import TankModel from '@/ui/TankModel';
 import {Canvas} from '@react-three/fiber';
+import {type Tank} from '@/models/index';
 
-export default function PlayerInfosSelection() {
-	const [name, setName] = useState('Player');
-	const [selectedTankIndex, setSelectedTankIndex] = useState(0);
+type Props = {
+	tanks: Tank[];
+	playerName: string;
+	tankIndex: number;
+	onNameChange: (name: string) => void;
+	onTankChange: (index: number) => void;
+};
 
-	const availableTanks = [
-		{
-			name: 'HEIG',
-			meshUrl: 'images/tank/heig.png',
-		},
-		{
-			name: 'Military',
-			meshUrl: 'images/tank/military.png',
-		},
-		{
-			name: 'StudyStorm',
-			meshUrl: 'images/tank/studystorm.png',
-		},
-		{
-			name: 'Weeb',
-			meshUrl: 'images/tank/weeb.png',
-		},
-	];
+export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNameChange, onTankChange}: Props) {
+	const [tmpName, setTmpName] = useState('');
 
-	const selectedTank = () => availableTanks[selectedTankIndex];
+	const selectedTank = (): Tank => tanks[tankIndex];
 
 	const nextTank = () => {
-		const nextIndex = (selectedTankIndex + 1) % availableTanks.length;
-		setSelectedTankIndex(nextIndex);
+		const nextIndex = (tankIndex + 1) % tanks.length;
+		onTankChange(nextIndex);
 	};
 
 	const prevTank = () => {
-		const nextIndex = ((selectedTankIndex - 1) + availableTanks.length) % availableTanks.length;
-		setSelectedTankIndex(nextIndex);
+		const nextIndex = (tankIndex - 1 + tanks.length) % tanks.length;
+		onTankChange(nextIndex);
 	};
 
 	const changeName = (e: InputEvent) => {
-		setName(e.target.value);
+		console.log('dfsf');
+		setTmpName(e.target.value);
+		onNameChange(e.target.value);
 	};
 
 	return (
@@ -46,17 +37,18 @@ export default function PlayerInfosSelection() {
 			<label htmlFor='nameInput' className='mb-2 block text-sm font-medium text-gray-900 dark:text-white'>
             Your name
 			</label>
+			{ tmpName }
 			<input
 				type='text'
 				id='nameInput'
 				className='block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'
-				value={name}
-				onChange={changeName}
+				value={tmpName}
+				onChange={() => changeName}
 			/>
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
 			<Canvas camera={{fov: 35, zoom: 1.5}}>
 				<Suspense fallback={null}>
-					<TankModel url={selectedTank.meshUrl} />
+					<TankModel url={selectedTank().meshUrl} />
 				</Suspense>
 			</Canvas>
 

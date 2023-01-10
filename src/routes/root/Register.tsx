@@ -1,4 +1,4 @@
-import React, {Suspense, useState} from 'react';
+import React, {useState} from 'react';
 import CodeInput from '@/ui/CodeInput';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
@@ -7,8 +7,31 @@ import {useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 
 import PlayerInfosSelection from '@/ui/PlayerInfosSelection';
+import {type Tank} from '@/models';
 
 export default function Register() {
+	const [name, setName] = useState('Player');
+	const [selectedTankIndex, setSelectedTankIndex] = useState(0);
+
+	const availableTanks: Tank[] = [
+		{
+			name: 'HEIG',
+			meshUrl: 'images/tank/heig.png',
+		},
+		{
+			name: 'Military',
+			meshUrl: 'images/tank/military.png',
+		},
+		{
+			name: 'StudyStorm',
+			meshUrl: 'images/tank/studystorm.png',
+		},
+		{
+			name: 'Weeb',
+			meshUrl: 'images/tank/weeb.png',
+		},
+	];
+
 	const tabs = [
 		{
 			label: 'Host Game',
@@ -19,8 +42,9 @@ export default function Register() {
 						<h2 className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
                      Ready to host a game?
 						</h2>
-						<PlayerInfosSelection />
-						<Button onClick={hostGame} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
+						name: { name }
+						<PlayerInfosSelection tanks={availableTanks} playerName={name} tankIndex={selectedTankIndex} onNameChange={setName} onTankChange={setSelectedTankIndex}/>
+						<Button onClick={async () => hostGame(userInfo)} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
                      Create
 						</Button>
 					</div>
@@ -35,7 +59,6 @@ export default function Register() {
 
 				return (
 					<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
-
 						<h2 className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
                      Enter Game ID
 						</h2>
@@ -46,11 +69,17 @@ export default function Register() {
 							length={6}
 							className='mb-5'
 						/>
-						<PlayerInfosSelection />
+
+						<PlayerInfosSelection updateInfos={e => {
+							console.log(e);
+							setUserInfos({
+								...e,
+							});
+						}} />
 
 						<Button
 							onClick={() => {
-								void joinGame(code);
+								void joinGame(code, userInfo);
 							}}
 							loading={status === NetworkStatus.Connecting}
 							disabled={code.length !== 6}
