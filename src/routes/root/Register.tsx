@@ -1,30 +1,10 @@
 import React, {useState} from 'react';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
-import {type Tank} from '@/models';
-import HostGameTab from './HostGameTab';
-import JoinGameTab from './JoinGameTab';
+import HostGameTab from './tab/HostGameTab';
+import JoinGameTab from './tab/JoinGameTab';
 
 export default function Register() {
-	const availableTanks: Tank[] = [
-		{
-			name: 'HEIG',
-			meshUrl: 'images/tank/heig.png',
-		},
-		{
-			name: 'Military',
-			meshUrl: 'images/tank/military.png',
-		},
-		{
-			name: 'StudyStorm',
-			meshUrl: 'images/tank/studystorm.png',
-		},
-		{
-			name: 'Weeb',
-			meshUrl: 'images/tank/weeb.png',
-		},
-	];
-
 	const tabs = [
 		{
 			label: 'Host Game',
@@ -75,7 +55,7 @@ export default function Register() {
 						exit={{opacity: 0, y: 10}}
 						transition={{duration: 0.2}}
 					>
-						<selectedTab.component tanks={availableTanks}/>
+						<selectedTab.component/>
 					</motion.div>
 				</AnimatePresence>
 			</main>

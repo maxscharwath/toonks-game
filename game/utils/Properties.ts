@@ -25,8 +25,15 @@ class Property<T> extends Emittery<{change: T}> {
 	}
 
 	public set value(value: T) {
-		this._value = this.options.set?.(value) ?? value;
-		void this.emit('change', this._value);
+		const v = this.options.set?.(value) ?? value;
+		if (v !== this._value) {
+			this._value = v;
+			void this.emit('change', v);
+		}
+	}
+
+	public set(setter: (value: T) => T): void {
+		this.value = setter(this.value);
 	}
 
 	public export(): unknown {

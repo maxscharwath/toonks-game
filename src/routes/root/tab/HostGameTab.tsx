@@ -1,20 +1,21 @@
 import React, {useState} from 'react';
-import {type Tank} from '@/models';
 import {useNetwork} from '@/store/store';
 import Button from '@/ui/Button';
 import PlayerInfosSelection from '@/ui/PlayerInfosSelection';
 import {NetworkStatus} from '@game/network/Network';
+import {type TankType} from '@game/models/TankType';
 
-type Props = {
-	tanks: Tank[];
-};
-
-export default function HostGameTab({tanks}: Props) {
+export default function HostGameTab() {
 	const [name, setName] = useState('Player');
-	const [selectedTankIndex, setSelectedTankIndex] = useState(0);
+	const [tank, setTank] = useState<TankType>('heig');
 	const {status, hostGame} = useNetwork();
 
-	const selectedTank = (): Tank => tanks[selectedTankIndex];
+	const handleHostGame = () => {
+		void hostGame({
+			name,
+			tank,
+		});
+	};
 
 	return (
 		<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
@@ -23,18 +24,12 @@ export default function HostGameTab({tanks}: Props) {
 			</h2>
 
 			<PlayerInfosSelection
-				tanks={tanks}
-				playerName={name}
-				tankIndex={selectedTankIndex}
-				onNameChange={setName}
-				onTankChange={setSelectedTankIndex}
+				setName={setName}
+				setTank={setTank}
 			/>
 
 			<Button
-				onClick={async () => hostGame({
-					name,
-					tank: selectedTank(),
-				})}
+				onClick={handleHostGame}
 				loading={status === NetworkStatus.Connecting}
 				fullWidth
 				size='large'

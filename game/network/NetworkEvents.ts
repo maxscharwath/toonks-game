@@ -1,8 +1,13 @@
+import {type TankType} from '@game/models/TankType';
+
+export type Metadata = {
+	name: string;
+	tank: TankType;
+};
+
 export type PeerData = {
 	uuid: string;
-	metadata: {
-		name: string;
-	};
+	metadata: Metadata;
 };
 
 export type NetworkEvents = {

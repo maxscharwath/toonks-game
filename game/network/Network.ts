@@ -15,7 +15,7 @@ export type Message = {
 
 type Awaitable<T> = T | Promise<T>;
 
-export abstract class Network<T = Record<string, any>> extends Emittery<{
+export abstract class Network<T = Record<string, any>, Metadata = never> extends Emittery<{
 	connected: string;
 	disconnected: never;
 	status: NetworkStatus;
@@ -71,6 +71,8 @@ export abstract class Network<T = Record<string, any>> extends Emittery<{
 	abstract send(channel: string, data: unknown): void;
 
 	abstract connectedPeers(): PeerData[];
+
+	abstract getMetadata(): Metadata | undefined;
 
 	protected handleMessage(connection: DataConnection, data: Message) {
 		void this.channelEmitter.emit(data.channel, data.data);

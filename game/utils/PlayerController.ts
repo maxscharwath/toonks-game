@@ -11,7 +11,8 @@ export default class PlayerController {
 		.addAction('moveBackward', ['KeyS'])
 		.addAction('shoot', ['Space'])
 		.addAction('break', ['AltLeft'])
-		.addAction('resetPosition', ['KeyR']);
+		.addAction('resetPosition', ['KeyR'])
+		.addAction('headlights', ['KeyL']);
 
 	private tank?: Tank;
 
@@ -68,14 +69,6 @@ export default class PlayerController {
 			this.tank.breakingForce = maxBreakingForce;
 		}
 
-		if (this.keyboard.getAction('shoot')) {
-			this.tank.shoot();
-		}
-
-		if (this.keyboard.getAction('resetPosition')) {
-			this.tank.resetPosition();
-		}
-
 		const rotation = this.scene3D.camera.getWorldDirection(new THREE.Vector3());
 		const rotation2 = this.tank.object3d.getWorldDirection(new THREE.Vector3());
 		this.tank.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
@@ -88,5 +81,16 @@ export default class PlayerController {
 				this.tank.canonAngle += event.deltaY * 0.0005;
 			}
 		});
+		this.keyboard.getOnAction('shoot', () => {
+			this.tank?.shoot();
+		});
+
+		this.keyboard.getOnAction('resetPosition', () => {
+			void this.tank?.resetPosition();
+		});
+
+		this.keyboard.getOnAction('headlights', () => {
+			this.tank?.toggleHeadlights();
+		}, 100);
 	}
 }

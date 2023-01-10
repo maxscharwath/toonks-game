@@ -15,11 +15,11 @@ import GameEvent from '@game/event/GameEvent';
 import TankPlayer from '@game/models/TankPlayer';
 import Explosion from '@game/models/Explosion';
 import ResizeableScene3D from '@game/scenes/ResizeableScene3D';
-import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 import {type Network} from '@game/network/Network';
 
 export type GameConfig = {
-	network: Network<NetworkEvents>;
+	network: Network<NetworkEvents, Metadata>;
 };
 
 export default class Game extends ResizeableScene3D {
@@ -105,6 +105,11 @@ export default class Game extends ResizeableScene3D {
 		position.y += 1;
 
 		this.player = new TankPlayer(this, position);
+		const data = this.config.network.getMetadata();
+		this.player.import({
+			pseudo: data?.name,
+			type: data?.tank,
+		});
 		this.player.addToScene();
 		this.entities.set(this.player.uuid, this.player);
 

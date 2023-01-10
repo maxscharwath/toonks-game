@@ -1,31 +1,31 @@
-import React, {Suspense, useState} from 'react';
+import React, {Suspense, useEffect, useState} from 'react';
 import TankModel from '@/ui/TankModel';
 import {Canvas} from '@react-three/fiber';
-import {type Tank} from '@/models/index';
+import {type TankType, TankTypeList} from '@game/models/TankType';
+import {AnimatePresence, motion} from 'framer-motion';
 
 type Props = {
-	tanks: Tank[];
-	playerName: string;
-	tankIndex: number;
-	onNameChange: (name: string) => void;
-	onTankChange: (index: number) => void;
+	setName: (name: string) => void;
+	setTank: (type: TankType) => void;
 };
 
-export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNameChange, onTankChange}: Props) {
-	const selectedTank = (): Tank => tanks[tankIndex];
+export default function PlayerInfosSelection({setTank, setName}: Props) {
+	const [index, setIndex] = useState(0);
+
+	useEffect(() => {
+		setTank(TankTypeList[index].key);
+	}, [index]);
 
 	const nextTank = () => {
-		const nextIndex = (tankIndex + 1) % tanks.length;
-		onTankChange(nextIndex);
+		setIndex((index + 1) % TankTypeList.length);
 	};
 
 	const prevTank = () => {
-		const nextIndex = (tankIndex - 1 + tanks.length) % tanks.length;
-		onTankChange(nextIndex);
+		setIndex((index - 1 + TankTypeList.length) % TankTypeList.length);
 	};
 
 	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-		onNameChange(e.target.value);
+		setName(e.target.value);
 	};
 
 	return (
@@ -37,14 +37,12 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 				type='text'
 				id='nameInput'
 				className='block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'
-				defaultValue={playerName}
+				defaultValue={'Player'}
 				onChange={changeName}
 			/>
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
 			<Canvas camera={{fov: 35, zoom: 1.5}}>
-				<Suspense fallback={null}>
-					<TankModel url={selectedTank().meshUrl} />
-				</Suspense>
+				<TankModel type={TankTypeList[index].key} />
 			</Canvas>
 
 			<div className='flex flex-row items-center justify-between'>
@@ -68,7 +66,7 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 				</span>
 
 				<h4 className='text-center  font-bold leading-tight tracking-tight text-gray-900 dark:text-white'>
-					{selectedTank().name}
+					{TankTypeList[index].value.name}
 				</h4>
 
 				<span

@@ -1,6 +1,6 @@
 import Emittery, {type EmitteryOncePromise, type UnsubscribeFunction} from 'emittery';
 import {type Network} from '@game/network/Network';
-import {type NetworkEvents} from '@game/network/NetworkEvents';
+import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 
 export type GameEvents = {
 	'tank:killed': {
@@ -16,9 +16,9 @@ export type GameEvents = {
 
 export default class GameEvent {
 	private readonly emitter = new Emittery<GameEvents>();
-	private network?: Network<NetworkEvents>;
+	private network?: Network<NetworkEvents, Metadata>;
 
-	public setNetwork(network?: Network<NetworkEvents>) {
+	public setNetwork(network?: Network<NetworkEvents, Metadata>) {
 		this.network = network;
 		this.network?.channel('event').on(({event, data}) => {
 			console.log('receive', event, data);

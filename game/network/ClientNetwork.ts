@@ -1,13 +1,14 @@
 import Peer, {type DataConnection} from 'peerjs';
 import {type Message, Network, NetworkStatus} from './Network';
-import {type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
+import {type Metadata, type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 
-export class ClientNetwork extends Network<NetworkEvents> {
+export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 	private peer?: Peer;
 	private connection?: DataConnection;
 	private peers: PeerData[] = [];
+	private metadata?: Metadata;
 
 	public get isHost() {
 		return false;
@@ -27,7 +28,8 @@ export class ClientNetwork extends Network<NetworkEvents> {
 		});
 	}
 
-	connect(options: {id: string; metadata?: unknown}): Awaitable<void> {
+	connect(options: {id: string; metadata: Metadata}): Awaitable<void> {
+		this.metadata = options.metadata;
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);
@@ -72,6 +74,10 @@ export class ClientNetwork extends Network<NetworkEvents> {
 
 	public connectedPeers(): PeerData[] {
 		return this.peers;
+	}
+
+	public getMetadata() {
+		return this.metadata;
 	}
 
 	protected addConnection(connection: DataConnection): void {

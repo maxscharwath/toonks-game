@@ -5,16 +5,24 @@ type Events = typeof Keyboard.events[number];
 
 export class Keyboard<T extends KeyMap> extends Emittery {
 	static readonly events = ['keydown', 'keyup'] as const;
-	private readonly actions = new Map<string, readonly string[]>();
-	private readonly keys = new Map<string, Events | false>();
+	private readonly actionKeys = new Map<string, readonly string[]>();
+	private readonly keys = new Map<string, {
+		actions: string[];
+		event: Events | false;
+	}>();
 
 	public start() {
 		Keyboard.events.forEach(event => {
 			document.addEventListener(event, e => {
 				if (!e.repeat && this.keys.has(e.code)) {
 					e.preventDefault();
-					void this.emit(e.code, event);
-					this.keys.set(e.code, event);
+					const key = this.keys.get(e.code);
+					if (key) {
+						key.event = event;
+						if (event === 'keydown') {
+							key.actions.forEach(async action => this.emit(action));
+						}
+					}
 				}
 			});
 		});
@@ -26,12 +34,31 @@ export class Keyboard<T extends KeyMap> extends Emittery {
 	}
 
 	addAction<A extends string>(action: A, keys: string[]): Keyboard<T & KeyMap<A>> {
-		this.actions.set(action, keys);
-		keys.forEach(key => this.keys.set(key, false));
+		this.actionKeys.set(action, keys);
+		keys.forEach(key => {
+			if (!this.keys.has(key)) {
+				this.keys.set(key, {
+					actions: [],
+					event: false,
+				});
+			}
+
+			this.keys.get(key)?.actions.push(action);
+		});
 		return this as Keyboard<T & KeyMap<A>>;
 	}
 
 	getAction(action: keyof T): boolean {
-		return this.actions.get(action as string)?.some(key => this.keys?.get(key) === 'keydown') ?? false;
+		return this.actionKeys.get(action as string)?.some(key => this.keys?.get(key)?.event === 'keydown') ?? false;
+	}
+
+	getOnAction(action: keyof T, listener: () => void, delta = 0): () => void {
+		let last = 0;
+		return this.on(action as string, () => {
+			if (last + delta < Date.now()) {
+				last = Date.now();
+				listener();
+			}
+		});
 	}
 }

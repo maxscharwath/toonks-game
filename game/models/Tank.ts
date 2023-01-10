@@ -1,12 +1,11 @@
-import {ExtendedGroup, type ExtendedObject3D, THREE} from 'enable3d';
+import {ExtendedGroup, ExtendedMesh, ExtendedObject3D, THREE} from 'enable3d';
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
-import {type Group} from 'three';
 import Explosion from '@game/models/Explosion';
 import shortUuid from 'short-uuid';
-import {meshToExtendedObject3D} from '@game/utils/MeshToExtendedObject3D';
 import {Properties} from '@game/utils/Properties';
 import type Game from '@game/scenes/Game';
+import {type TankType, TankTypes} from '@game/models/TankType';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -17,6 +16,7 @@ export enum WheelPosition {
 
 export type TankState = {
 	pseudo: string;
+	type: TankType;
 	turretAngle: number;
 	canonAngle: number;
 	steering: number;
@@ -24,36 +24,48 @@ export type TankState = {
 	breakingForce: number;
 	position: THREE.Vector3;
 	rotation: THREE.Quaternion;
+	headlights: boolean;
 };
+
+class Parts extends Map<string, ExtendedObject3D> {
+	public clone(): Parts {
+		const parts = new Parts();
+		this.forEach((part, key) => {
+			parts.set(key, part.clone());
+		});
+		return parts;
+	}
+}
 
 export default class Tank extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
 		const tankGlb = await loader.gltf(url);
-		this.model = tankGlb.scenes[0];
-		this.model.traverse(child => {
+		tankGlb.scene.children.forEach(child => {
 			if (child instanceof THREE.Mesh) {
-				child.castShadow = true;
-				child.receiveShadow = true;
+				const o = new ExtendedMesh(child.geometry, child.material);
+				o.geometry.center();
+				o.scale.set(child.scale.x, child.scale.y, child.scale.z);
+				o.castShadow = true;
+				o.receiveShadow = true;
+				o.name = child.name;
+				this.parts.set(child.name, o as unknown as ExtendedObject3D);
 			}
 		});
 
-		this.materials = [
-			'/images/tank/heig.png',
-			'/images/tank/military.png',
-			'/images/tank/studystorm.png',
-			'/images/tank/weeb.png',
-		].map(url => {
-			const map = new THREE.TextureLoader().load(url);
-			map.encoding = THREE.sRGBEncoding;
-			map.flipY = false;
-			map.repeat.set(1, 1);
-			map.needsUpdate = true;
-			return new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.4, metalnessMap: map, roughness: 0.6});
-		});
+		this.materials = Object.fromEntries(
+			Object.entries(TankTypes).map(([key, value]) => {
+				const map = new THREE.TextureLoader().load(value.url);
+				map.encoding = THREE.sRGBEncoding;
+				map.flipY = false;
+				map.repeat.set(1, 1);
+				map.needsUpdate = true;
+				return [key, new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.4, metalnessMap: map, roughness: 0.6})];
+			}),
+		) as Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 	}
 
-	private static model: Group;
-	private static materials: THREE.Material[] = [];
+	private static readonly parts = new Parts();
+	private static materials: Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 
 	protected readonly properties = new Properties<TankState>();
 
@@ -67,24 +79,16 @@ export default class Tank extends Entity {
 	private readonly canonMotor: Ammo.btHingeConstraint;
 	private readonly turretMotor: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
+	private readonly model = Tank.parts.clone();
+	private readonly headlights: THREE.SpotLight[] = [];
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(game, uuid);
-		const model = Tank.model.clone();
-
-		this.setTexture(model);
-
 		this.group = new ExtendedGroup();
 
-		this.chassis = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Body'),
-		);
-		this.turret = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Tower'),
-		);
-		this.canon = meshToExtendedObject3D(
-			model.getObjectByName('TankFree_Canon'),
-		);
+		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
+		this.turret = this.model.get('TankFree_Tower')!;
+		this.canon = this.model.get('TankFree_Canon')!;
 
 		this.group.add(this.chassis, this.turret, this.canon);
 
@@ -93,11 +97,15 @@ export default class Tank extends Entity {
 		this.turret.position.copy(position);
 
 		// Add lights to chassis
-		const headlight = new THREE.SpotLight(0xffffff, 1, 100, Math.PI / 4, 0.5);
-		headlight.position.set(0, 0, 0.5);
-		headlight.target.position.set(0, 0, 1);
-		headlight.castShadow = true;
-		this.chassis.add(headlight, headlight.target);
+		const headlightA = new THREE.SpotLight(0xfff0c7, 5, 50, Math.PI / 5, 0.5);
+		headlightA.castShadow = true;
+		const headlightB = headlightA.clone();
+		headlightA.position.set(0.5, 0.15, 0.5);
+		headlightA.target.position.copy(headlightA.position).add(new THREE.Vector3(0, -0.5, 2));
+		headlightB.position.set(-0.5, 0.15, 0.5);
+		headlightB.target.position.copy(headlightB.position).add(new THREE.Vector3(0, -0.5, 2));
+		this.chassis.add(headlightA, headlightA.target, headlightB, headlightB.target);
+		this.headlights.push(headlightA, headlightB);
 
 		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
 		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
@@ -131,10 +139,10 @@ export default class Tank extends Entity {
 		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
 
 		this.wheelMeshes = [
-			model.getObjectByName('TankFree_Wheel_f_right') as ExtendedObject3D,
-			model.getObjectByName('TankFree_Wheel_f_left') as ExtendedObject3D,
-			model.getObjectByName('TankFree_Wheel_b_left') as ExtendedObject3D,
-			model.getObjectByName('TankFree_Wheel_b_right') as ExtendedObject3D,
+			this.model.get('TankFree_Wheel_f_right')!,
+			this.model.get('TankFree_Wheel_f_left')!,
+			this.model.get('TankFree_Wheel_b_left')!,
+			this.model.get('TankFree_Wheel_b_right')!,
 		];
 
 		this.tuning = new Ammo.btVehicleTuning();
@@ -202,6 +210,20 @@ export default class Tank extends Entity {
 		);
 
 		this.properties
+			.addProperty('headlights', {
+				default: true,
+				onChange: (value: boolean) => {
+					this.headlights.forEach(light => {
+						light.visible = value;
+					});
+				},
+			})
+			.addProperty('type', {
+				default: 'heig',
+				onChange: value => {
+					this.setTexture(value);
+				},
+			})
 			.addProperty('turretAngle', {
 				default: 0,
 				onChange: value => {
@@ -341,6 +363,10 @@ export default class Tank extends Entity {
 		return true;
 	}
 
+	public toggleHeadlights() {
+		this.properties.getProperty('headlights').set(value => !value);
+	}
+
 	public update() {
 		const n = this.vehicle.getNumWheels();
 		for (let i = 0; i < n; i++) {
@@ -407,6 +433,13 @@ export default class Tank extends Entity {
 		this.properties.import(state);
 	}
 
+	public setTexture(type: TankType) {
+		const material = Tank.materials[type];
+		this.model.forEach(mesh => {
+			mesh.material = material;
+		});
+	}
+
 	protected async updatePhysics() {
 		const physics = [
 			this.chassis.body,
@@ -423,15 +456,6 @@ export default class Tank extends Entity {
 
 	protected setCollisionFlags(flags: number) {
 		this.chassis.body.setCollisionFlags(flags);
-	}
-
-	protected setTexture(model: THREE.Group) {
-		const material = Tank.materials[Math.floor(Math.random() * Tank.materials.length)];
-		model.traverse(child => {
-			if (child instanceof THREE.Mesh) {
-				child.material = material;
-			}
-		});
 	}
 
 	protected async teleport(position: THREE.Vector3) {

@@ -1,14 +1,15 @@
 import Peer, {type DataConnection} from 'peerjs';
 import {type Message, Network, NetworkStatus} from './Network';
-import {type PeerData, type NetworkEvents} from '@game/network/NetworkEvents';
+import {type PeerData, type NetworkEvents, type Metadata} from '@game/network/NetworkEvents';
 
 type Awaitable<T> = T | Promise<T>;
 type HandleConnection = (connection: DataConnection) => Awaitable<boolean>;
 
-export class ServerNetwork extends Network<NetworkEvents> {
+export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 	private peer?: Peer;
 	private readonly connections = new Set<DataConnection>();
 	private handleConnection?: HandleConnection;
+	private metadata?: Metadata;
 
 	public get isHost() {
 		return true;
@@ -18,7 +19,8 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		super();
 	}
 
-	public async connect(options: {metadata: unknown}): Promise<void> {
+	public async connect(options: {metadata: Metadata}): Promise<void> {
+		this.metadata = options.metadata;
 		return new Promise((resolve, reject) => {
 			this.disconnect();
 			void this.emit('status', NetworkStatus.Connecting);
@@ -35,6 +37,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 						}
 					});
 					this.peer = peer;
+					void this.emit('peers', this.connectedPeers());
 					resolve();
 				})
 				.once('disconnected', () => {
@@ -74,7 +77,16 @@ export class ServerNetwork extends Network<NetworkEvents> {
 	}
 
 	public connectedPeers(): PeerData[] {
-		return Array.from(this.connections).map(connection => ({uuid: connection.peer, metadata: connection.metadata as {name: string}}));
+		const peers = Array.from(this.connections).map(connection => ({uuid: connection.peer, metadata: connection.metadata as Metadata}));
+		if (this.metadata && this.peer) {
+			peers.push({uuid: this.peer.id, metadata: this.metadata});
+		}
+
+		return peers;
+	}
+
+	public getMetadata() {
+		return this.metadata;
 	}
 
 	protected addConnection(connection: DataConnection): void {
@@ -97,7 +109,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 			void this.emit('peers', peers);
 			void this.emit('join', connection.peer);
 			this.channel('join').send({
-				peer: {uuid: connection.peer, metadata: connection.metadata as {name: string}},
+				peer: {uuid: connection.peer, metadata: connection.metadata as Metadata},
 				peers,
 			});
 		});
@@ -112,7 +124,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 		void this.emit('peers', peers);
 		void this.emit('leave', connection.peer);
 		this.channel('leave').send({
-			peer: {uuid: connection.peer, metadata: connection.metadata as {name: string}},
+			peer: {uuid: connection.peer, metadata: connection.metadata as Metadata},
 			peers,
 		});
 	}
