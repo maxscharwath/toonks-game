@@ -1,43 +1,35 @@
-import React, {Suspense} from 'react';
-import {useFrame, useLoader} from '@react-three/fiber';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
-import {TextureLoader} from 'three';
-import {useGLTF} from '@react-three/drei';
-import {useTexture} from '@react-three/drei';
+import React from 'react';
+import {useFrame} from '@react-three/fiber';
+import * as THREE from 'three';
+import {useGLTF, useTexture} from '@react-three/drei';
 
-export default function TankModel() {
-	const gltf = useLoader(GLTFLoader, '/glb/tank.glb');
-	const meshMap = useLoader(TextureLoader, '/images/tank/military.png');
-	const tank = React.useRef();
-	const {nodes, materials} = useGLTF('/glb/tank.glb');
+export default function TankModel(props: {url: string}) {
+	const tank = React.useRef<THREE.Group>(null);
+	const {nodes} = useGLTF('/glb/tank.glb');
+	const [meshMap] = useTexture([props.url]);
+	meshMap.flipY = false;
+	meshMap.encoding = THREE.sRGBEncoding;
+	meshMap.repeat.set(1, 1);
 
 	useFrame(({clock}) => {
 		const a = clock.getElapsedTime();
-		tank.current.rotation.y = a;
-	});
-
-	// Return (
-	// 	<>
-	// 		<pointLight position={[10, 10, 10]} />
-	// 		<mesh ref={tank}>
-	// 			<primitive object={gltf.scene} dispose={null} />
-	// 			<meshStandardMaterial map={meshMap} />
-	// 		</mesh>
-	// 	</>
-	// );
-
-	const props = useTexture({
-		map: '/images/tank/military.png',
+		if (tank.current) {
+			tank.current.rotation.y = a;
+		}
 	});
 
 	return (
-		<mesh>
+		<>
 			<pointLight position={[10, 10, 10]} />
-			{/* <sphereGeometry args={[1, 16, 16]} /> */}
-			<mesh ref={tank} {...props}>
-				<primitive object={gltf.scene} dispose={null} />
-			</mesh>
-		</mesh>
+			<group ref={tank}>
+				{Object.values(nodes).map(node => (
+					<primitive key={node.name} object={node}>
+						<meshStandardMaterial map={meshMap} />
+					</primitive>
+				),
+				)}
+			</group>
+		</>
 	);
 }
 

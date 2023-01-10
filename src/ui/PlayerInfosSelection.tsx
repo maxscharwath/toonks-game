@@ -37,7 +37,7 @@ export default function PlayerInfosSelection() {
 		setSelectedTankIndex(nextIndex);
 	};
 
-	const changeName = (e: InputEvent) => {
+	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setName(e.target.value);
 	};
 
@@ -56,7 +56,7 @@ export default function PlayerInfosSelection() {
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
 			<Canvas camera={{fov: 35, zoom: 1.5}}>
 				<Suspense fallback={null}>
-					<TankModel url={selectedTank.meshUrl} />
+					<TankModel url={selectedTank().meshUrl} />
 				</Suspense>
 			</Canvas>
 

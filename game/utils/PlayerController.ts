@@ -10,7 +10,8 @@ export default class PlayerController {
 		.addAction('moveForward', ['KeyW'])
 		.addAction('moveBackward', ['KeyS'])
 		.addAction('shoot', ['Space'])
-		.addAction('break', ['AltLeft']);
+		.addAction('break', ['AltLeft'])
+		.addAction('resetPosition', ['KeyR']);
 
 	private tank?: Tank;
 
@@ -69,6 +70,10 @@ export default class PlayerController {
 
 		if (this.keyboard.getAction('shoot')) {
 			this.tank.shoot();
+		}
+
+		if (this.keyboard.getAction('resetPosition')) {
+			this.tank.resetPosition();
 		}
 
 		const rotation = this.scene3D.camera.getWorldDirection(new THREE.Vector3());
