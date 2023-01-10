@@ -3,10 +3,16 @@ import {Network, NetworkStatus} from '@game/network/Network';
 import {ClientNetwork} from '@game/network/ClientNetwork';
 import {ServerNetwork} from '@game/network/ServerNetwork';
 import {type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
+import {type Tank} from '@/models';
+
+type PlayerMetadata = {
+	name: string;
+	tank: Tank;
+};
 
 type Store = {
-	hostGame: (metadata: any) => Promise<{code: string; network: ServerNetwork}>;
-	joinGame: (code: string, metadata: any) => Promise<{code: string; network: ClientNetwork}>;
+	hostGame: (metadata: PlayerMetadata) => Promise<{code: string; network: ServerNetwork}>;
+	joinGame: (code: string, metadata: PlayerMetadata) => Promise<{code: string; network: ClientNetwork}>;
 	code?: string;
 	network?: Network<NetworkEvents>;
 	status: NetworkStatus;
@@ -31,7 +37,7 @@ export const useNetwork = create<Store>((set, get) => {
 	return {
 		status: NetworkStatus.Disconnected,
 		peers: [],
-		async hostGame(metadata?: unknownmetadata) {
+		async hostGame(metadata?: unknown) {
 			console.log(metadata);
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
 			const network = switchNetwork(new ServerNetwork(full));
@@ -41,7 +47,7 @@ export const useNetwork = create<Store>((set, get) => {
 			set({code});
 			return {network, code};
 		},
-		async joinGame(code, metadata, metadata?: unknown) {
+		async joinGame(code, metadata?: unknown) {
 			console.log(metadata);
 			const network = switchNetwork(new ClientNetwork());
 			await network.connect({

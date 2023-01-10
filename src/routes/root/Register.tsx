@@ -1,18 +1,11 @@
 import React, {useState} from 'react';
-import CodeInput from '@/ui/CodeInput';
 import clsx from 'clsx';
 import {AnimatePresence, motion} from 'framer-motion';
-import Button from '@/ui/Button';
-import {useNetwork} from '@/store/store';
-import {NetworkStatus} from '@game/network/Network';
-
-import PlayerInfosSelection from '@/ui/PlayerInfosSelection';
 import {type Tank} from '@/models';
+import HostGameTab from './HostGameTab';
+import JoinGameTab from './JoinGameTab';
 
 export default function Register() {
-	const [name, setName] = useState('Player');
-	const [selectedTankIndex, setSelectedTankIndex] = useState(0);
-
 	const availableTanks: Tank[] = [
 		{
 			name: 'HEIG',
@@ -35,62 +28,11 @@ export default function Register() {
 	const tabs = [
 		{
 			label: 'Host Game',
-			content() {
-				const {status, hostGame} = useNetwork();
-				return (
-					<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
-						<h2 className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
-                     Ready to host a game?
-						</h2>
-						name: { name }
-						<PlayerInfosSelection tanks={availableTanks} playerName={name} tankIndex={selectedTankIndex} onNameChange={setName} onTankChange={setSelectedTankIndex}/>
-						<Button onClick={async () => hostGame(userInfo)} loading={status === NetworkStatus.Connecting} fullWidth size='large'>
-                     Create
-						</Button>
-					</div>
-				);
-			},
+			component: HostGameTab,
 		},
 		{
 			label: 'Join Game',
-			content() {
-				const {status, joinGame} = useNetwork();
-				const [code, setCode] = useState('');
-
-				return (
-					<div className='space-y-4 p-6 sm:p-8 md:space-y-6'>
-						<h2 className='text-center text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl'>
-                     Enter Game ID
-						</h2>
-						<CodeInput
-							onChange={c => {
-								setCode(c);
-							}}
-							length={6}
-							className='mb-5'
-						/>
-
-						<PlayerInfosSelection updateInfos={e => {
-							console.log(e);
-							setUserInfos({
-								...e,
-							});
-						}} />
-
-						<Button
-							onClick={() => {
-								void joinGame(code, userInfo);
-							}}
-							loading={status === NetworkStatus.Connecting}
-							disabled={code.length !== 6}
-							fullWidth
-							size='large'
-						>
-                     Join
-						</Button>
-					</div>
-				);
-			},
+			component: JoinGameTab,
 		},
 	];
 	const [selectedTab, setSelectedTab] = useState(tabs[0]);
@@ -133,7 +75,7 @@ export default function Register() {
 						exit={{opacity: 0, y: 10}}
 						transition={{duration: 0.2}}
 					>
-						<selectedTab.content />
+						<selectedTab.component tanks={availableTanks}/>
 					</motion.div>
 				</AnimatePresence>
 			</main>

@@ -12,8 +12,6 @@ type Props = {
 };
 
 export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNameChange, onTankChange}: Props) {
-	const [tmpName, setTmpName] = useState('');
-
 	const selectedTank = (): Tank => tanks[tankIndex];
 
 	const nextTank = () => {
@@ -27,8 +25,6 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 	};
 
 	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-		console.log('dfsf');
-		setTmpName(e.target.value);
 		onNameChange(e.target.value);
 	};
 
@@ -37,25 +33,22 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 			<label htmlFor='nameInput' className='mb-2 block text-sm font-medium text-gray-900 dark:text-white'>
             Your name
 			</label>
-			{ tmpName }
 			<input
 				type='text'
 				id='nameInput'
 				className='block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500'
-				value={tmpName}
-				onChange={() => changeName}
+				defaultValue={playerName}
+				onChange={changeName}
 			/>
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
 			<Canvas camera={{fov: 35, zoom: 1.5}}>
 				<Suspense fallback={null}>
 					<TankModel url={selectedTank().meshUrl} />
-					<TankModel url={selectedTank().meshUrl} />
 				</Suspense>
 			</Canvas>
 
 			<div className='flex flex-row items-center justify-between'>
-				<a
-					href='#'
+				<span
 					className='ml-0 block rounded-l-lg border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
 					onClick={prevTank}
 				>
@@ -72,14 +65,13 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 							clipRule='evenodd'
 						></path>
 					</svg>
-				</a>
+				</span>
 
 				<h4 className='text-center  font-bold leading-tight tracking-tight text-gray-900 dark:text-white'>
 					{selectedTank().name}
 				</h4>
 
-				<a
-					href='#'
+				<span
 					className='block rounded-r-lg border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
 					onClick={nextTank}
 				>
@@ -96,7 +88,7 @@ export default function PlayerInfosSelection({tanks, playerName, tankIndex, onNa
 							clipRule='evenodd'
 						></path>
 					</svg>
-				</a>
+				</span>
 			</div>
 		</div>
 	);
