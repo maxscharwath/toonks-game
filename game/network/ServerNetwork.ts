@@ -25,7 +25,7 @@ export class ServerNetwork extends Network<NetworkEvents> {
 			const peer = new Peer(this.id);
 			peer
 				.once('open', id => {
-					void this.emit('connected', id);
+					// Void this.emit('connected', id);
 					void this.emit('status', NetworkStatus.Connected);
 					console.log('My peer ID is: ' + id);
 					peer.on('connection', async conn => {
