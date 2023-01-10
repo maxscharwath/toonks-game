@@ -18,6 +18,8 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
+    "@react-three/drei": "^9.51.22",
+    "@react-three/fiber": "^8.10.0",
     "chroma-js": "^2.4.2",
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",
