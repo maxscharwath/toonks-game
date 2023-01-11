@@ -58,14 +58,15 @@ export class World {
 
 	public async getPositionAt(position: Vector3): Promise<Vector3> {
 		const chunk = await this.getChunkAt(position);
-		const x = (position.x / Chunk.chunkSize) % Chunk.chunkSize;
-		const y = (position.z / Chunk.chunkSize) % Chunk.chunkSize;
-		const p = chunk.getPositionAt(x, y);
-		return new Vector3(
-			x * Chunk.chunkSize,
-			p.y,
-			y * Chunk.chunkSize,
-		);
+		const size = Chunk.chunkSize / 2;
+
+		const x = position.x - chunk.chunkPosition.x + size;
+		const y = position.z - chunk.chunkPosition.z + size;
+		return chunk.getPositionAt(x, y);
+	}
+
+	public async getPosition(x: number, y: number): Promise<Vector3> {
+		return this.getPositionAt(new Vector3(x, 0, y));
 	}
 
 	public async getChunkAt(position: Vector3): Promise<Chunk> {

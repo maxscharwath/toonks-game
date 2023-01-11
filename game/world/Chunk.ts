@@ -38,6 +38,7 @@ export class Chunk extends ExtendedGroup {
 
 	public readonly chunkId: number;
 	public lastUpdate = 0;
+	public readonly chunkPosition = new THREE.Vector3();
 
 	private isDestroyed = false;
 	private hasPhysics = false;
@@ -51,16 +52,11 @@ export class Chunk extends ExtendedGroup {
 	constructor(private readonly game: Game, readonly x: number, readonly y: number, private readonly pixels: ImageData) {
 		super();
 		this.chunkId = (x << 16) | y;
-		console.log('Created chunk', x, y);
-
+		this.chunkPosition.set(x * Chunk.chunkSize, 0, y * Chunk.chunkSize);
 		this.add(this.mesh);
 		if (this.minGroundHeight <= Chunk.waterLevel) {
 			this.add(this.makeWater());
 		}
-	}
-
-	public getChunkPosition() {
-		return this.mesh.position;
 	}
 
 	public get mesh() {
@@ -79,7 +75,7 @@ export class Chunk extends ExtendedGroup {
 			const simplified = modifier.modify(geometry, (geometry.attributes.position.count * 0.3) | 0);
 			simplified.computeVertexNormals();
 			const mesh = new ExtendedMesh(simplified);
-			mesh.position.copy(this.mesh.position);
+			mesh.position.copy(this.chunkPosition);
 			mesh.rotateX(-Math.PI / 2);
 			mesh.shape = 'concave';
 			this._physicsMesh = mesh;
@@ -120,13 +116,7 @@ export class Chunk extends ExtendedGroup {
 		const {position} = this.mesh;
 		const size = Chunk.chunkSize / 2;
 		const h = this.getHeightAt(x, y);
-		const pos = position.clone().add(new THREE.Vector3(x - size, h, y - size));
-		return pos;
-	}
-
-	public getCenterPosition(): THREE.Vector3 {
-		const size = Chunk.chunkSize / 2;
-		return this.getPositionAt(size, size);
+		return position.clone().add(new THREE.Vector3(x - size, h, y - size));
 	}
 
 	public update() {
@@ -137,7 +127,7 @@ export class Chunk extends ExtendedGroup {
 		this.lastUpdate = Date.now();
 
 		if (this.game) {
-			const distance = this.getChunkPosition().distanceTo(this.game.player.object3d.position);
+			const distance = this.chunkPosition.distanceTo(this.game.player.object3d.position);
 			const maxDistance = Chunk.chunkSize * 1.2;
 			const isViewable = distance < maxDistance;
 			if (isViewable) {
@@ -159,9 +149,13 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	private getHeightAt(x: number, y: number): number {
-		const x1 = Math.round((x / Chunk.chunkSize) * this.pixels.width);
-		const y1 = Math.round((y / Chunk.chunkSize) * this.pixels.height);
+		const x1 = Math.floor((x / Chunk.chunkSize) * this.pixels.width);
+		const y1 = Math.floor((y / Chunk.chunkSize) * this.pixels.height);
 		const h = this.pixels.data[((y1 * this.pixels.width) + x1) * 4];
+		if (isNaN(h)) {
+			return 0;
+		}
+
 		return (h - 15) / this.heightScale;
 	}
 
@@ -188,7 +182,7 @@ export class Chunk extends ExtendedGroup {
 		mesh.receiveShadow = true;
 		mesh.castShadow = true;
 
-		mesh.position.set(this.x * Chunk.chunkSize, 0, this.y * Chunk.chunkSize);
+		mesh.position.copy(this.chunkPosition);
 		mesh.rotateX(-Math.PI / 2);
 
 		mesh.name = 'heightmap';
@@ -199,7 +193,7 @@ export class Chunk extends ExtendedGroup {
 	private makeWater() {
 		const geometry = new THREE.PlaneGeometry(Chunk.chunkSize, Chunk.chunkSize, 100, 100);
 		const mesh = new ExtendedMesh(geometry, Chunk.waterMaterial);
-		mesh.position.set(this.x * Chunk.chunkSize, Chunk.waterLevel, this.y * Chunk.chunkSize);
+		mesh.position.copy(this.chunkPosition).y = Chunk.waterLevel;
 		mesh.rotateX(-Math.PI / 2);
 		mesh.name = 'water';
 		return mesh;

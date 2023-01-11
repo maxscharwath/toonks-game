@@ -12,42 +12,43 @@ export default class Explosion extends Entity {
 	}
 
 	private static model: GLTF;
+	readonly object3d = new ExtendedObject3D();
 
-	readonly object3d: ExtendedObject3D;
+	private readonly audio: THREE.PositionalAudio;
 
-	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 0.15) {
+	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 1) {
 		super(game, shortUuid.uuid());
-		this.object3d = new ExtendedObject3D();
+		this.audio = game.audioManager.createAudio('/sounds/explosion.mp3');
+		this.audio.setVolume(scale);
 		this.object3d.add(Explosion.model.scene.clone());
-		this.object3d.scale.set(this.scale, this.scale, this.scale);
+		this.object3d.scale.set(0.15 * scale, 0.15 * scale, 0.15 * scale);
 		const light = new THREE.PointLight(0xffdf5e, 1, 10);
-		// Light.castShadow = true;
-		this.object3d.add(light);
+		this.object3d.add(light, this.audio);
 		game.animationMixers.add(this.object3d.anims.mixer);
 		Explosion.model.animations.forEach(animation => {
 			if (animation.name) {
 				this.object3d.anims.add(animation.name, animation);
 			}
 		});
-		this.object3d.anims.mixer.timeScale = (1 / this.scale);
+		this.object3d.anims.mixer.timeScale = 6 / scale;
 		this.object3d.anims.mixer.addEventListener('finished', () => {
 			this.destroy();
 		});
-		this.object3d.anims.play('IcosphereAction', 0, false);
 	}
 
 	addToScene(): void {
 		this.object3d.position.copy(this.position);
-		this.game.add.existing(this.object3d);
+		this.game.scene.add(this.object3d);
+		this.audio.play();
+		this.object3d.anims.play('IcosphereAction', 0, false);
 	}
 
 	destroy(): void {
-		this.object3d.clear();
 		this.removeFromScene();
 	}
 
 	removeFromScene(): void {
-		this.object3d.parent?.remove(this.object3d);
+		this.object3d.removeFromParent();
 	}
 
 	update(): void {

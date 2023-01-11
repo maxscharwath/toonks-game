@@ -2,7 +2,7 @@ import {DirectionalLight, HemisphereLight} from 'three';
 import {type Scene3D, THREE} from 'enable3d';
 
 export class Sun extends DirectionalLight {
-	public angle = 0;
+	public angle = Math.PI / 2;
 
 	constructor(private readonly scene: Scene3D) {
 		super(0xffffff, 1);
@@ -30,7 +30,7 @@ export class Sun extends DirectionalLight {
 		this.target = camera;
 		this.position.set(x, y, z);
 
-		const color = new THREE.Color('#63a7ff').lerp(new THREE.Color('#002e72'), 1 - (y / distance));
+		const color = new THREE.Color('#adc1d8').lerp(new THREE.Color('#002e5a'), 1 - (y / distance));
 		this.scene.scene.background = color;
 		this.scene.scene.fog!.color = color;
 	}

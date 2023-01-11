@@ -17,13 +17,17 @@ import Explosion from '@game/models/Explosion';
 import ResizeableScene3D from '@game/scenes/ResizeableScene3D';
 import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 import {type Network} from '@game/network/Network';
+import AudioManager from '@game/utils/AudioManager';
+import {MultiplyBlending} from 'three/src/constants';
 
 export type GameConfig = {
 	network: Network<NetworkEvents, Metadata>;
 };
 
 export default class Game extends ResizeableScene3D {
-	public events = new GameEvent();
+	public readonly events = new GameEvent();
+	public readonly audioManager = new AudioManager();
+
 	public player!: TankPlayer;
 	public world!: World;
 
@@ -54,16 +58,28 @@ export default class Game extends ResizeableScene3D {
 	}
 
 	async create() {
-		const listener = new THREE.AudioListener();
-		this.camera.add(listener);
+		this.audioManager.setCamera(this.camera);
 
 		this.sun = new Sun(this);
 		this.scene.add(this.sun);
-
 		// Fog
 		const fogColor = new THREE.Color('#63a7ff');
 		this.scene.fog = new THREE.Fog(fogColor, 50, 150);
 		this.scene.background = new THREE.Color(fogColor);
+		const skybox = new THREE.Mesh(
+			new THREE.SphereGeometry(1000, 50, 50),
+			new THREE.MeshBasicMaterial({
+				blending: THREE.CustomBlending,
+				blendEquation: THREE.AddEquation,
+				blendSrc: THREE.DstColorFactor,
+				blendDst: THREE.DstColorFactor,
+				side: THREE.BackSide,
+				fog: false,
+				map: new THREE.TextureLoader().load('/images/skybox.png'),
+			}),
+		);
+		skybox.position.y = -100;
+		this.scene.add(skybox);
 
 		const chunkLoader = new ChunkLoader({
 			worldHeightMapUrl: '/images/heightmap.png',
@@ -147,7 +163,7 @@ export default class Game extends ResizeableScene3D {
 			} as THREE.MeshPhysicalMaterialParameters);
 			const mesh = new THREE.Mesh(sphere, material);
 			mesh.position.set(position.x, 0, position.z);
-			this.scene.add(mesh);
+			// This.scene.add(mesh);
 		}
 
 		panel.add(params, 'cameramode', ['Follow', 'Free']).onChange((value: string) => {

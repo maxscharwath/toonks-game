@@ -14,8 +14,8 @@ export class ChunkPopulator {
 		const random = Random.create(chunk.chunkId);
 		for (let i = 0; i < random.int(100); i++) {
 			const pos = chunk.getPositionAt(
-				random.int(Chunk.chunkSize),
-				random.int(Chunk.chunkSize),
+				random.number(Chunk.chunkSize),
+				random.number(Chunk.chunkSize),
 			);
 
 			if (pos.y < Chunk.waterLevel) {

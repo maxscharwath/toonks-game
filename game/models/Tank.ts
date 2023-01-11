@@ -81,10 +81,13 @@ export default class Tank extends Entity {
 	private readonly tuning: Ammo.btVehicleTuning;
 	private readonly model = Tank.parts.clone();
 	private readonly headlights: THREE.SpotLight[] = [];
+	private readonly shootSound: THREE.PositionalAudio;
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(game, uuid);
 		this.group = new ExtendedGroup();
+
+		this.shootSound = game.audioManager.createAudio('/sounds/shoot.mp3');
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
 		this.turret = this.model.get('TankFree_Tower')!;
@@ -95,6 +98,8 @@ export default class Tank extends Entity {
 		this.chassis.position.copy(position);
 		this.canon.position.copy(position);
 		this.turret.position.copy(position);
+
+		this.chassis.add(this.shootSound);
 
 		// Add lights to chassis
 		const headlightA = new THREE.SpotLight(0xfff0c7, 5, 50, Math.PI / 5, 0.5);
@@ -214,7 +219,7 @@ export default class Tank extends Entity {
 				default: true,
 				onChange: (value: boolean) => {
 					this.headlights.forEach(light => {
-						light.visible = value;
+						light.intensity = value ? 5 : 0;
 					});
 				},
 			})
@@ -325,6 +330,7 @@ export default class Tank extends Entity {
 			return false;
 		}
 
+		this.shootSound.play();
 		this.lastShot = Date.now();
 		// Get canon position
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
@@ -335,23 +341,23 @@ export default class Tank extends Entity {
 
 		new Explosion(this.game, pos).addToScene();
 
-		const sphere = this.game.physics.add.sphere(
+		const bullet = this.game.physics.add.sphere(
 			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 100},
 			{phong: {color: 0x202020}},
 		);
 		// Event when bullet hit something
-		sphere.body.on.collision(other => {
+		bullet.body.on.collision(other => {
 			console.log('hit', other);
-			this.game.physics.destroy(sphere);
-			sphere.removeFromParent();
-			const pos = sphere.getWorldPosition(new THREE.Vector3());
-			new Explosion(this.game, pos, 0.5).addToScene();
+			this.game.physics.destroy(bullet);
+			bullet.removeFromParent();
+			const pos = bullet.getWorldPosition(new THREE.Vector3());
+			new Explosion(this.game, pos, 5).addToScene();
 		});
 
-		sphere.receiveShadow = sphere.castShadow = true;
+		bullet.castShadow = true;
 		setTimeout(() => {
-			this.game.physics.destroy(sphere);
-			sphere.removeFromParent();
+			this.game.physics.destroy(bullet);
+			bullet.removeFromParent();
 		}, 5000);
 
 		const force = this.canon
@@ -359,7 +365,9 @@ export default class Tank extends Entity {
 			.multiplyScalar(10000);
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
-		sphere.body.applyForce(force.x, force.y, force.z);
+		bullet.body.setCcdSweptSphereRadius(0.2);
+		bullet.body.setCcdMotionThreshold(1);
+		bullet.body.applyForce(force.x, force.y, force.z);
 		return true;
 	}
 
@@ -397,9 +405,8 @@ export default class Tank extends Entity {
 		this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
 		this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
-		// Friction
-		this.vehicle.applyEngineForce(-speed * 100, WheelPosition.RearLeft);
-		this.vehicle.applyEngineForce(-speed * 100, WheelPosition.RearRight);
+		this.vehicle.applyEngineForce(-speed * 50, WheelPosition.RearLeft);
+		this.vehicle.applyEngineForce(-speed * 50, WheelPosition.RearRight);
 	}
 
 	public addToScene() {
@@ -413,8 +420,7 @@ export default class Tank extends Entity {
 
 	public async resetPosition() {
 		const position = await this.game.world.getPositionAt(this.object3d.position);
-		console.log('reset position', position);
-		position.y += 0.5;
+		position.y += 1;
 		void this.teleport(position);
 	}
 
@@ -460,15 +466,15 @@ export default class Tank extends Entity {
 
 	protected async teleport(position: THREE.Vector3) {
 		const offset = this.object3d.position.clone().sub(position);
-		const velocity = this.getVelocity();
-		const angularVelocity = this.getAngularVelocity();
 		this.setCollisionFlags(2);
 		this.object3d.position.sub(offset);
-		this.object3d.rotation.set(0, 0, 0);
+		const direction = this.object3d.getWorldDirection(new THREE.Vector3());
+		this.object3d.rotation.set(0, Math.atan2(direction.x, direction.z), 0);
+
 		await this.updatePhysics();
 		this.setCollisionFlags(0);
-		this.setVelocity(velocity);
-		this.setAngularVelocity(angularVelocity);
+		this.setVelocity(new THREE.Vector3());
+		this.setAngularVelocity(new THREE.Vector3());
 	}
 
 	private setVelocity(velocity: THREE.Vector3) {
