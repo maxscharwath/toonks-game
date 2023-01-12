@@ -19,10 +19,10 @@ export default class Explosion extends Entity {
 
 	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 1) {
 		super(game, shortUuid.uuid());
-		this.audio = game.audioManager.createAudio('/sounds/explosion.mp3');
+		this.audio = game.audioManager.createAudio();
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(0.15 * scale, 0.15 * scale, 0.15 * scale);
-		const light = new THREE.PointLight(0xffdf5e, 1, 10);
+		const light = new THREE.PointLight(0xffdf5e, 5, 20);
 		this.object3d.add(light, this.audio);
 		game.animationMixers.add(this.object3d.anims.mixer);
 		Explosion.model.animations.forEach(animation => {
@@ -39,7 +39,7 @@ export default class Explosion extends Entity {
 	addToScene(): void {
 		this.object3d.position.copy(this.position);
 		this.game.scene.add(this.object3d);
-		this.audio.play();
+		this.audio.play('/sounds/explosion.mp3');
 		this.object3d.anims.play('IcosphereAction', 0, false);
 	}
 

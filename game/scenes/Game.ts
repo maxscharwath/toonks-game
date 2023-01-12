@@ -27,6 +27,10 @@ class TankManager extends Map<string, Tank> {
 	private readonly networkTanks = new Map<string, WeakRef<TankNetwork>>();
 
 	public set(uuid: string, tank: Tank) {
+		if (this.has(uuid)) {
+			return this;
+		}
+
 		if (tank instanceof TankNetwork) {
 			this.networkTanks.set(tank.uuid, new WeakRef(tank));
 		}
@@ -72,7 +76,7 @@ export default class Game extends ResizeableScene3D {
 	public player!: TankPlayer;
 	public world!: World;
 
-	private readonly tanks = new TankManager();
+	public readonly tanks = new TankManager();
 	private readonly stats = new Stats();
 
 	private readonly config: GameConfig;
@@ -181,7 +185,6 @@ export default class Game extends ResizeableScene3D {
 		const params = {
 			debug: false,
 			mode: 2049,
-			cameramode: 'Follow',
 		};
 
 		{ // Wall
@@ -207,13 +210,6 @@ export default class Game extends ResizeableScene3D {
 			// This.scene.add(mesh);
 		}
 
-		panel.add(params, 'cameramode', ['Follow', 'Free']).onChange((value: string) => {
-			if (value === 'Follow') {
-				this.control.useThirdPerson();
-			} else {
-				this.control.useOrbitControls();
-			}
-		});
 		panel.add(params, 'debug').onChange((value: boolean) => {
 			if (value) {
 				this.physics.debug?.enable();
@@ -227,21 +223,27 @@ export default class Game extends ResizeableScene3D {
 				this.physics.debug?.mode(value);
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
-
 		this.config.network?.channel('update').on((res: any[]) => {
+			if (!this.player) {
+				return;
+			}
+
 			// Got tank update from server
 			res.forEach((data: any) => {
-				const entity = this.tanks.getNetwork(data.id);
+				if (!data?.uuid || data.uuid === this.player.uuid) {
+					return;
+				}
 
+				const entity = this.tanks.getNetwork(data.uuid);
 				if (entity) {
 					entity.import(data);
 				} else {
 					// Create new entity from data
 					const position = new THREE.Vector3().fromArray(data.position);
 					const tank = new TankNetwork(this, position, data.uuid);
+					this.tanks.add(tank);
 					tank.addToScene();
 					tank.import(data);
-					this.tanks.add(tank);
 				}
 			});
 		});
@@ -252,6 +254,10 @@ export default class Game extends ResizeableScene3D {
 
 		this.events.on('tank:honk', uuid => {
 			this.tanks.getNetwork(uuid)?.honk();
+		});
+
+		this.events.on('tank:hit', ({damage, to}) => {
+			this.tanks.get(to)?.hit(damage);
 		});
 
 		setInterval(() => {

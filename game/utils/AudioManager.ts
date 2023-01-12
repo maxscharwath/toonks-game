@@ -3,6 +3,7 @@ import * as THREE from 'three';
 export class Audio extends THREE.PositionalAudio {
 	constructor(private readonly manager: AudioManager) {
 		super(manager.listener);
+		this.setVolume(10);
 	}
 
 	async setBufferAsync(src: string) {

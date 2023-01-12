@@ -6,6 +6,7 @@ import {toast} from 'react-hot-toast';
 import ConnectionToast from '@/ui/toast/ConnectionToast';
 import {NetworkStatus} from '@game/network/Network';
 import KillToast from '@/ui/toast/KillToast';
+import HitToast from '@/ui/toast/HitToast';
 
 export default function GameRenderer() {
 	const {network} = useNetwork();
@@ -29,9 +30,16 @@ export default function GameRenderer() {
 			network?.on('leave', () => {
 				toast.custom(<ConnectionToast playerName='Player #1' type='leave' />);
 			});
-			game.events.on('tank:killed', ({killer, killed}) => {
+			game.events.on('tank:kill', ({killer, killed}) => {
 				toast.custom(
 					<KillToast killer={killer} killed={killed} />,
+				);
+			});
+			game.events.on('tank:hit', ({from, to, damage}) => {
+				const playerA = game.tanks.get(from)?.pseudo ?? 'Unknown';
+				const playerB = game.tanks.get(to)?.pseudo ?? 'Unknown';
+				toast.custom(
+					<HitToast from={playerA} to={playerB} damage={damage} />,
 				);
 			});
 		});

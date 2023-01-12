@@ -11,14 +11,14 @@ export default class TankNetwork extends Tank {
 	constructor(game: Game, position: THREE.Vector3, uuid: string) {
 		super(game, position, uuid);
 		this.setCollisionFlags(2);
-		this.properties.getProperty('position').on('change', position => {
+		this.properties.getProperty('position').onChange(position => {
 			this.targetTransform.position = position;
-		});
-		this.properties.getProperty('rotation').on('change', rotation => {
+		}, true);
+		this.properties.getProperty('rotation').onChange(rotation => {
 			this.targetTransform.rotation = rotation;
-		});
+		}, true);
 
-		const texture = new FLAT.TextTexture('', {
+		const texture = new FLAT.TextTexture('Toonks', {
 			background: 'rgba(0, 0, 0, 0.5)',
 			fillStyle: 'white',
 			padding: {
@@ -33,9 +33,9 @@ export default class TankNetwork extends Tank {
 
 		this.object3d.add(sprite3d);
 
-		this.properties.getProperty('pseudo').on('change', name => {
+		this.properties.getProperty('pseudo').onChange(name => {
 			sprite3d.setText(name);
-		});
+		}, true);
 	}
 
 	public update() {
@@ -44,6 +44,10 @@ export default class TankNetwork extends Tank {
 	}
 
 	private async lerpTransform() {
+		if (this.isDead) {
+			return;
+		}
+
 		const targetPosition = this.targetTransform.position ?? this.object3d.position;
 		const targetRotation = this.targetTransform.rotation ?? this.object3d.quaternion;
 		const diffPosition = this.object3d.position.distanceTo(targetPosition);

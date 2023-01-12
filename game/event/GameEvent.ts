@@ -3,9 +3,14 @@ import {type Network} from '@game/network/Network';
 import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 
 export type GameEvents = {
-	'tank:killed': {
+	'tank:kill': {
 		killer: string;
 		killed: string;
+	};
+	'tank:hit': {
+		from: string;
+		to: string;
+		damage: number;
 	};
 	'tank:shoot': string;
 	'tank:honk': string;

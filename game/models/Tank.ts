@@ -26,13 +26,16 @@ export type TankState = {
 	position: THREE.Vector3;
 	rotation: THREE.Quaternion;
 	headlights: boolean;
+	health: number;
 };
 
 class Parts extends Map<string, ExtendedObject3D> {
-	public clone(): Parts {
+	public clone(tank: Tank): Parts {
 		const parts = new Parts();
 		this.forEach((part, key) => {
-			parts.set(key, part.clone());
+			const p = part.clone();
+			p.userData = {tank};
+			parts.set(key, p);
 		});
 		return parts;
 	}
@@ -69,6 +72,7 @@ export default class Tank extends Entity {
 	private static materials: Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 
 	protected readonly properties = new Properties<TankState>();
+	protected isDead = false;
 
 	private readonly vehicle: Ammo.btRaycastVehicle;
 	private readonly wheelMeshes: ExtendedObject3D[] = [];
@@ -77,10 +81,10 @@ export default class Tank extends Entity {
 	private readonly canon: ExtendedObject3D;
 	private readonly group = new ExtendedGroup();
 	private lastShot = 0;
-	private readonly canonMotor: Ammo.btHingeConstraint;
-	private readonly turretMotor: Ammo.btHingeConstraint;
+	private canonMotor!: Ammo.btHingeConstraint;
+	private turretMotor!: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
-	private readonly model = Tank.parts.clone();
+	private readonly model = Tank.parts.clone(this);
 	private readonly headlights: THREE.SpotLight[] = [];
 	private readonly shootSound: Audio;
 	private readonly honkSound: Audio;
@@ -90,7 +94,7 @@ export default class Tank extends Entity {
 		this.group = new ExtendedGroup();
 
 		this.shootSound = game.audioManager.createAudio('/sounds/shoot.mp3');
-		this.honkSound = game.audioManager.createAudio('/sounds/bonk.mp3');
+		this.honkSound = game.audioManager.createAudio('/sounds/horn.mp3');
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
 		this.turret = this.model.get('TankFree_Tower')!;
@@ -115,36 +119,9 @@ export default class Tank extends Entity {
 		this.chassis.add(headlightA, headlightA.target, headlightB, headlightB.target);
 		this.headlights.push(headlightA, headlightB);
 
-		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500});
-		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200});
-		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50});
-
-		// Attach the tower to the chassis
-		this.turretMotor = this.game.physics.add.constraints.hinge(
-			this.chassis.body,
-			this.turret.body,
-			{
-				pivotA: {y: 0.3},
-				pivotB: {y: -0.22},
-				axisA: {y: 1},
-				axisB: {y: 1},
-			},
-		);
-
-		// Attach the canon to the tower
-		this.canonMotor = this.game.physics.add.constraints.hinge(
-			this.turret.body,
-			this.canon.body,
-			{
-				pivotA: {y: -0.05, z: 0.4},
-				pivotB: {y: 0, z: -0.3},
-				axisA: {x: 1},
-				axisB: {x: 1},
-			},
-		);
-
-		// Set the limits of the canon
-		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
+		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500, collisionGroup: 1});
+		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200, collisionGroup: 1});
+		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50, collisionGroup: 1});
 
 		this.wheelMeshes = [
 			this.model.get('TankFree_Wheel_f_right')!,
@@ -164,7 +141,8 @@ export default class Tank extends Entity {
 		);
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
-		this.game.physics.physicsWorld.addAction(this.vehicle);
+
+		this.init();
 
 		const wheelAxisPositionBack = -0.4;
 		const wheelRadiusBack = 0.25;
@@ -267,6 +245,15 @@ export default class Tank extends Entity {
 				get: () => this.chassis.quaternion,
 				export: data => data.toArray(),
 				import: data => new THREE.Quaternion().fromArray(data),
+			})
+			.addProperty('health', {
+				default: 100,
+				set: value => Math.min(Math.max(value, 0), 100),
+				onChange: value => {
+					if (value <= 0 && !this.isDead) {
+						this.die();
+					}
+				},
 			});
 	}
 
@@ -328,6 +315,40 @@ export default class Tank extends Entity {
 		return this.vehicle.getCurrentSpeedKmHour();
 	}
 
+	public get health() {
+		return this.properties.getProperty('health').value;
+	}
+
+	public set health(value: number) {
+		this.properties.getProperty('health').value = value;
+	}
+
+	public die() {
+		if (this.isDead) {
+			return;
+		}
+
+		this.isDead = true;
+		this.game.physics.physicsWorld.removeAction(this.vehicle);
+		this.game.physics.physicsWorld.removeConstraint(this.turretMotor);
+		this.game.physics.physicsWorld.removeConstraint(this.canonMotor);
+	}
+
+	public respawn() {
+		if (!this.isDead) {
+			return;
+		}
+
+		this.isDead = false;
+		this.health = 100;
+		this.init();
+	}
+
+	public hit(damage: number) {
+		console.log(`Tank ${this.pseudo} hit for ${damage} damage`);
+		this.properties.getProperty('health').value -= damage;
+	}
+
 	public shoot() {
 		if (this.lastShot + 250 > Date.now()) {
 			return false;
@@ -345,16 +366,23 @@ export default class Tank extends Entity {
 		new Explosion(this.game, pos).addToScene();
 
 		const bullet = this.game.physics.add.sphere(
-			{radius: 0.05, x: pos.x, y: pos.y, z: pos.z, mass: 100},
+			{radius: 0.1, x: pos.x, y: pos.y, z: pos.z, mass: 100},
 			{phong: {color: 0x202020}},
 		);
 		// Event when bullet hit something
 		bullet.body.on.collision(other => {
-			console.log('hit', other);
+			const tank = other.userData.tank as Tank;
+			if (tank && tank !== this) {
+				this.game.events.send('tank:hit', {
+					from: this.uuid,
+					to: tank.uuid,
+					damage: 10,
+				});
+			}
+
 			this.game.physics.destroy(bullet);
 			bullet.removeFromParent();
-			const pos = bullet.getWorldPosition(new THREE.Vector3());
-			new Explosion(this.game, pos, 5).addToScene();
+			new Explosion(this.game, bullet.getWorldPosition(new THREE.Vector3()), 5).addToScene();
 		});
 
 		bullet.castShadow = true;
@@ -368,8 +396,6 @@ export default class Tank extends Entity {
 			.multiplyScalar(10000);
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
-		bullet.body.setCcdSweptSphereRadius(0.2);
-		bullet.body.setCcdMotionThreshold(1);
 		bullet.body.applyForce(force.x, force.y, force.z);
 		return true;
 	}
@@ -433,7 +459,7 @@ export default class Tank extends Entity {
 	}
 
 	public destroy(): void {
-		throw new Error('Method not implemented.');
+		// TODO
 	}
 
 	public export(): TankState & {uuid: string} {
@@ -452,6 +478,36 @@ export default class Tank extends Entity {
 		this.model.forEach(mesh => {
 			mesh.material = material;
 		});
+	}
+
+	protected init() {
+		this.turretMotor = this.game.physics.add.constraints.hinge(
+			this.chassis.body,
+			this.turret.body,
+			{
+				pivotA: {y: 0.3},
+				pivotB: {y: -0.22},
+				axisA: {y: 1},
+				axisB: {y: 1},
+			},
+		);
+
+		// Attach the canon to the tower
+		this.canonMotor = this.game.physics.add.constraints.hinge(
+			this.turret.body,
+			this.canon.body,
+			{
+				pivotA: {y: -0.05, z: 0.4},
+				pivotB: {y: 0, z: -0.3},
+				axisA: {x: 1},
+				axisB: {x: 1},
+			},
+		);
+
+		// Set the limits of the canon
+		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
+
+		this.game.physics.physicsWorld.addAction(this.vehicle);
 	}
 
 	protected async updatePhysics() {
@@ -495,11 +551,6 @@ export default class Tank extends Entity {
 		});
 	}
 
-	private getVelocity() {
-		const {x, y, z} = this.chassis.body.velocity;
-		return new THREE.Vector3(x, y, z);
-	}
-
 	private setAngularVelocity(velocity: THREE.Vector3) {
 		[
 			this.chassis.body,
@@ -508,11 +559,6 @@ export default class Tank extends Entity {
 		].forEach(body => {
 			body.setAngularVelocity(velocity.x, velocity.y, velocity.z);
 		});
-	}
-
-	private getAngularVelocity() {
-		const {x, y, z} = this.chassis.body.angularVelocity;
-		return new THREE.Vector3(x, y, z);
 	}
 
 	private addWheel(

@@ -14,7 +14,7 @@ class Property<T> extends Emittery<{change: T}> {
 	constructor(private readonly options: PropertyOptions<T>) {
 		super();
 		if (options.onChange) {
-			this.on('change', options.onChange);
+			this.onChange(options.onChange);
 		}
 
 		this.value = options.default;
@@ -30,6 +30,14 @@ class Property<T> extends Emittery<{change: T}> {
 			this._value = v;
 			void this.emit('change', v);
 		}
+	}
+
+	public onChange(listener: (value: T) => void, fire?: boolean): () => void {
+		if (fire) {
+			listener(this.value);
+		}
+
+		return this.on('change', listener);
 	}
 
 	public set(setter: (value: T) => T): void {
