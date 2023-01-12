@@ -12,7 +12,8 @@ export default class PlayerController {
 		.addAction('shoot', ['Space'])
 		.addAction('break', ['AltLeft'])
 		.addAction('resetPosition', ['KeyR'])
-		.addAction('headlights', ['KeyL']);
+		.addAction('headlights', ['KeyL'])
+		.addAction('honk', ['KeyK']);
 
 	private tank?: Tank;
 
@@ -88,6 +89,10 @@ export default class PlayerController {
 		this.keyboard.getOnAction('resetPosition', () => {
 			void this.tank?.resetPosition();
 		});
+
+		this.keyboard.getOnAction('honk', () => {
+			this.tank?.honk();
+		}, 100);
 
 		this.keyboard.getOnAction('headlights', () => {
 			this.tank?.toggleHeadlights();

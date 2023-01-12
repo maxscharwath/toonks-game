@@ -18,11 +18,52 @@ import ResizeableScene3D from '@game/scenes/ResizeableScene3D';
 import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 import {type Network} from '@game/network/Network';
 import AudioManager from '@game/utils/AudioManager';
-import {MultiplyBlending} from 'three/src/constants';
 
 export type GameConfig = {
 	network: Network<NetworkEvents, Metadata>;
 };
+
+class TankManager extends Map<string, Tank> {
+	private readonly networkTanks = new Map<string, WeakRef<TankNetwork>>();
+
+	public set(uuid: string, tank: Tank) {
+		if (tank instanceof TankNetwork) {
+			this.networkTanks.set(tank.uuid, new WeakRef(tank));
+		}
+
+		return super.set(uuid, tank);
+	}
+
+	public add(tank: Tank) {
+		return this.set(tank.uuid, tank);
+	}
+
+	public delete(uuid: string) {
+		this.networkTanks.delete(uuid);
+		return super.delete(uuid);
+	}
+
+	public clear() {
+		this.networkTanks.clear();
+		super.clear();
+	}
+
+	public getNetwork(uuid: string) {
+		return this.networkTanks.get(uuid)?.deref();
+	}
+
+	public getTanks() {
+		return [...this.values()];
+	}
+
+	public getNetworks() {
+		return [...this.networkTanks.values()].map(ref => ref.deref()).filter(Boolean);
+	}
+
+	public get array() {
+		return [...this.values()];
+	}
+}
 
 export default class Game extends ResizeableScene3D {
 	public readonly events = new GameEvent();
@@ -31,7 +72,7 @@ export default class Game extends ResizeableScene3D {
 	public player!: TankPlayer;
 	public world!: World;
 
-	private readonly entities = new Map<string, Tank>();
+	private readonly tanks = new TankManager();
 	private readonly stats = new Stats();
 
 	private readonly config: GameConfig;
@@ -127,7 +168,7 @@ export default class Game extends ResizeableScene3D {
 			type: data?.tank,
 		});
 		this.player.addToScene();
-		this.entities.set(this.player.uuid, this.player);
+		this.tanks.add(this.player);
 
 		this.playerController.setTank(this.player);
 
@@ -190,14 +231,9 @@ export default class Game extends ResizeableScene3D {
 		this.config.network?.channel('update').on((res: any[]) => {
 			// Got tank update from server
 			res.forEach((data: any) => {
-				const entity = this.entities.get(data.uuid);
+				const entity = this.tanks.getNetwork(data.id);
 
 				if (entity) {
-					// Update entity but not player
-					if (entity.uuid === this.player.uuid) {
-						return;
-					}
-
 					entity.import(data);
 				} else {
 					// Create new entity from data
@@ -205,23 +241,23 @@ export default class Game extends ResizeableScene3D {
 					const tank = new TankNetwork(this, position, data.uuid);
 					tank.addToScene();
 					tank.import(data);
-					this.entities.set(data.uuid, tank);
+					this.tanks.add(tank);
 				}
 			});
 		});
 
 		this.events.on('tank:shoot', uuid => {
-			const entity = this.entities.get(uuid);
+			this.tanks.getNetwork(uuid)?.shoot();
+		});
 
-			if (entity && entity.uuid !== this.player.uuid) {
-				entity.shoot();
-			}
+		this.events.on('tank:honk', uuid => {
+			this.tanks.getNetwork(uuid)?.honk();
 		});
 
 		setInterval(() => {
 			void this.world.update();
 			if (this.config.network?.isHost) {
-				const entities = Array.from(this.entities.values()).map(entity => entity.export());
+				const entities = this.tanks.array.map(entity => entity.export());
 				this.config.network?.channel('update').send(entities);
 			} else {
 				this.config.network?.channel('update').send([this.player.export()]);
@@ -235,7 +271,7 @@ export default class Game extends ResizeableScene3D {
 		this.sun.update();
 		this.playerController.update();
 
-		this.entities.forEach(entity => {
+		this.tanks.forEach(entity => {
 			entity.update();
 		});
 

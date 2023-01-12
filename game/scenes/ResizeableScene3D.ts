@@ -13,7 +13,7 @@ export default class ResizeableScene3D extends Scene3D {
 		const newHeight = window.innerHeight;
 
 		this.renderer.setSize(newWidth, newHeight);
-		this.renderer.setPixelRatio(window.devicePixelRatio);
+		this.renderer.setPixelRatio(Math.max(1, window.devicePixelRatio / 2));
 		const camera = this.camera as THREE.PerspectiveCamera;
 		camera.aspect = newWidth / newHeight;
 		camera.updateProjectionMatrix();

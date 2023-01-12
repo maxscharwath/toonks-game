@@ -1,25 +1,38 @@
 import * as THREE from 'three';
 
-class Audio extends THREE.PositionalAudio {
-	constructor(listener: THREE.AudioListener, private readonly bufferPromise: Promise<AudioBuffer>) {
-		super(listener);
+export class Audio extends THREE.PositionalAudio {
+	constructor(private readonly manager: AudioManager) {
+		super(manager.listener);
 	}
 
-	play(delay?: number): this {
-		void this.bufferPromise.then(buffer => {
-			this.setBuffer(buffer);
-			if (this.isPlaying) {
-				this.stop();
-			}
+	async setBufferAsync(src: string) {
+		this.setBuffer(await this.manager.getAudioBuffer(src));
+	}
 
-			super.play(delay);
-		});
+	async playAsync(src?: string, delay?: number) {
+		if (src) {
+			await this.setBufferAsync(src);
+		}
+
+		if (this.isPlaying) {
+			this.stop();
+		}
+
+		super.play(delay);
+	}
+
+	play(delay?: number): this;
+	play(src?: string, delay?: number): this;
+	play(src?: string | number, delay?: number): this {
+		delay = typeof src === 'number' ? src : delay;
+		src = typeof src === 'string' ? src : undefined;
+		void this.playAsync(src, delay);
 		return this;
 	}
 }
 
 export default class AudioManager {
-	private readonly listener = new THREE.AudioListener();
+	readonly listener = new THREE.AudioListener();
 	private readonly loader = new THREE.AudioLoader();
 	private readonly sounds = new Map<string, Promise<AudioBuffer>>();
 
@@ -27,11 +40,16 @@ export default class AudioManager {
 		camera.add(this.listener);
 	}
 
-	public createAudio(url: string): Audio {
-		return new Audio(this.listener, this.getAudioBuffer(url));
+	public createAudio(src?: string): Audio {
+		const audio = new Audio(this);
+		if (src) {
+			void audio.setBufferAsync(src);
+		}
+
+		return audio;
 	}
 
-	private async getAudioBuffer(url: string) {
+	public async getAudioBuffer(url: string) {
 		let buffer = this.sounds.get(url);
 		if (!buffer) {
 			buffer = this.loader.loadAsync(url);

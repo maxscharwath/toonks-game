@@ -9,4 +9,9 @@ export default class TankPlayer extends Tank {
 
 		return hadShoot;
 	}
+
+	honk() {
+		super.honk();
+		this.game.events.send('tank:honk', this.uuid);
+	}
 }

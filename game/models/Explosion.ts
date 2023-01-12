@@ -5,6 +5,7 @@ import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import {ExtendedObject3D, THREE} from 'enable3d';
 import shortUuid from 'short-uuid';
 import type Game from '@game/scenes/Game';
+import {type Audio} from '@game/utils/AudioManager';
 
 export default class Explosion extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
@@ -14,12 +15,11 @@ export default class Explosion extends Entity {
 	private static model: GLTF;
 	readonly object3d = new ExtendedObject3D();
 
-	private readonly audio: THREE.PositionalAudio;
+	private readonly audio: Audio;
 
 	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 1) {
 		super(game, shortUuid.uuid());
 		this.audio = game.audioManager.createAudio('/sounds/explosion.mp3');
-		this.audio.setVolume(scale);
 		this.object3d.add(Explosion.model.scene.clone());
 		this.object3d.scale.set(0.15 * scale, 0.15 * scale, 0.15 * scale);
 		const light = new THREE.PointLight(0xffdf5e, 1, 10);

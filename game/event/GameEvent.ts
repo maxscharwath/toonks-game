@@ -8,6 +8,7 @@ export type GameEvents = {
 		killed: string;
 	};
 	'tank:shoot': string;
+	'tank:honk': string;
 	'game:toast': {
 		message: string;
 		icon: string;

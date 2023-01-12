@@ -6,6 +6,7 @@ import shortUuid from 'short-uuid';
 import {Properties} from '@game/utils/Properties';
 import type Game from '@game/scenes/Game';
 import {type TankType, TankTypes} from '@game/models/TankType';
+import {type Audio} from '@game/utils/AudioManager';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -81,13 +82,15 @@ export default class Tank extends Entity {
 	private readonly tuning: Ammo.btVehicleTuning;
 	private readonly model = Tank.parts.clone();
 	private readonly headlights: THREE.SpotLight[] = [];
-	private readonly shootSound: THREE.PositionalAudio;
+	private readonly shootSound: Audio;
+	private readonly honkSound: Audio;
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(game, uuid);
 		this.group = new ExtendedGroup();
 
 		this.shootSound = game.audioManager.createAudio('/sounds/shoot.mp3');
+		this.honkSound = game.audioManager.createAudio('/sounds/bonk.mp3');
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
 		this.turret = this.model.get('TankFree_Tower')!;
@@ -99,7 +102,7 @@ export default class Tank extends Entity {
 		this.canon.position.copy(position);
 		this.turret.position.copy(position);
 
-		this.chassis.add(this.shootSound);
+		this.chassis.add(this.shootSound, this.honkSound);
 
 		// Add lights to chassis
 		const headlightA = new THREE.SpotLight(0xfff0c7, 5, 50, Math.PI / 5, 0.5);
@@ -330,7 +333,7 @@ export default class Tank extends Entity {
 			return false;
 		}
 
-		this.shootSound.play();
+		this.shootSound.play('/sounds/shoot.mp3');
 		this.lastShot = Date.now();
 		// Get canon position
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
@@ -373,6 +376,11 @@ export default class Tank extends Entity {
 
 	public toggleHeadlights() {
 		this.properties.getProperty('headlights').set(value => !value);
+	}
+
+	public honk() {
+		this.honkSound.play();
+		console.log('honk');
 	}
 
 	public update() {
