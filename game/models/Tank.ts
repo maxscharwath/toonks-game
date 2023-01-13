@@ -323,6 +323,10 @@ export default class Tank extends Entity {
 		this.properties.getProperty('health').value = value;
 	}
 
+	public get type() {
+		return this.properties.getProperty('type').value;
+	}
+
 	public die() {
 		if (this.isDead) {
 			return;

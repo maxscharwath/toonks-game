@@ -27,7 +27,7 @@ export default function TankModel(props: {type: TankType}) {
 	return (
 		<>
 			<pointLight position={[10, 10, 10]} />
-			<group ref={tank} position={[0, -0.3, 0]}>
+			<group ref={tank} position={[0, -0.6, 0]}>
 				{parts?.map(part => (
 					<primitive key={part.name} object={part} castShadow={true} receiveShadow={true}>
 						<meshStandardMaterial map={meshMap} />
