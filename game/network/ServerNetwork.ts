@@ -63,13 +63,7 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 	}
 
 	public send(channel: string, data: unknown): void {
-		this.connections.forEach(connection => {
-			connection.send({channel, data});
-		});
-	}
-
-	public sendTo(connection: DataConnection, data: any): void {
-		connection.send(data);
+		this.broadcast({channel, data});
 	}
 
 	public setHandleConnection(handleConnection: HandleConnection): void {
@@ -94,7 +88,6 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 			this.connections.add(
 				connection
 					.on('data', data => {
-						void this.emit('data', {connection, data});
 						this.handleMessage(connection, data as Message);
 					})
 					.on('close', () => {
@@ -126,6 +119,19 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 		this.channel('leave').send({
 			peer: {uuid: connection.peer, metadata: connection.metadata as Metadata},
 			peers,
+		});
+	}
+
+	protected handleMessage(connection: DataConnection, data: Message): void {
+		super.handleMessage(connection, data);
+		this.broadcast(data, connection);
+	}
+
+	private broadcast(data: unknown, exclude?: DataConnection): void {
+		this.connections.forEach(connection => {
+			if (connection !== exclude) {
+				connection.send(data);
+			}
 		});
 	}
 }

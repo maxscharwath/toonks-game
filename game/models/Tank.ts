@@ -370,19 +370,18 @@ export default class Tank extends Entity {
 			{phong: {color: 0x202020}},
 		);
 		// Event when bullet hit something
-		bullet.body.on.collision(other => {
-			const tank = other.userData.tank as Tank;
-			if (tank && tank !== this) {
-				this.game.events.send('tank:hit', {
-					from: this.uuid,
-					to: tank.uuid,
-					damage: 10,
-				});
-			}
-
+		bullet.body.on.collision(() => {
 			this.game.physics.destroy(bullet);
 			bullet.removeFromParent();
-			new Explosion(this.game, bullet.getWorldPosition(new THREE.Vector3()), 5).addToScene();
+			new Explosion(this.game, bullet.getWorldPosition(new THREE.Vector3()), 5, tank => {
+				if (tank !== this) {
+					this.game.events.send('tank:hit', {
+						from: this.uuid,
+						to: tank.uuid,
+						damage: 10,
+					});
+				}
+			}).addToScene();
 		});
 
 		bullet.castShadow = true;

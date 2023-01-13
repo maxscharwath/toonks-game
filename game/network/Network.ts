@@ -22,7 +22,6 @@ export abstract class Network<T = Record<string, any>, Metadata = never> extends
 	peers: PeerData[];
 	join: string;
 	leave: string;
-	data: {connection: DataConnection; data: any};
 }> {
 	private static get uniquePrefix() {
 		return 'SWNpT25Fc3REZXNDcmFja3M';
@@ -61,6 +60,7 @@ export abstract class Network<T = Record<string, any>, Metadata = never> extends
 			send: (data: T[U]) => {
 				this.send(channel as string, data);
 			},
+			iterator: () => this.channelEmitter.events(channel),
 		};
 	}
 

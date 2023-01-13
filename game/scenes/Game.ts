@@ -223,30 +223,6 @@ export default class Game extends ResizeableScene3D {
 				this.physics.debug?.mode(value);
 			});
 		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
-		this.config.network?.channel('update').on((res: any[]) => {
-			if (!this.player) {
-				return;
-			}
-
-			// Got tank update from server
-			res.forEach((data: any) => {
-				if (!data?.uuid || data.uuid === this.player.uuid) {
-					return;
-				}
-
-				const entity = this.tanks.getNetwork(data.uuid);
-				if (entity) {
-					entity.import(data);
-				} else {
-					// Create new entity from data
-					const position = new THREE.Vector3().fromArray(data.position);
-					const tank = new TankNetwork(this, position, data.uuid);
-					this.tanks.add(tank);
-					tank.addToScene();
-					tank.import(data);
-				}
-			});
-		});
 
 		this.events.on('tank:shoot', uuid => {
 			this.tanks.getNetwork(uuid)?.shoot();
@@ -260,14 +236,31 @@ export default class Game extends ResizeableScene3D {
 			this.tanks.get(to)?.hit(damage);
 		});
 
-		setInterval(() => {
-			void this.world.update();
-			if (this.config.network?.isHost) {
-				const entities = this.tanks.array.map(entity => entity.export());
-				this.config.network?.channel('update').send(entities);
-			} else {
-				this.config.network?.channel('update').send([this.player.export()]);
+		const tanks = new Map<string, any>();
+		this.config.network.channel('update').on((data: any) => {
+			if (!this.player || data.uuid === this.player.uuid) {
+				return;
 			}
+
+			tanks.set(data.uuid, data);
+		});
+
+		asyncLoop(async () => this.world.update(), 300);
+		asyncLoop(async () => {
+			this.config.network.channel('update').send(this.player.export());
+			tanks.forEach((data, uuid) => {
+				const tank = this.tanks.getNetwork(uuid);
+				if (tank) {
+					tank.import(data);
+				} else {
+					const position = new THREE.Vector3().fromArray(data.position);
+					const tank = new TankNetwork(this, position, data.uuid);
+					this.tanks.add(tank);
+					tank.addToScene();
+					tank.import(data);
+				}
+			});
+			tanks.clear();
 		}, 100);
 	}
 
@@ -283,4 +276,16 @@ export default class Game extends ResizeableScene3D {
 
 		this.stats.end();
 	}
+}
+
+function asyncLoop(callback: () => Promise<void>, minInterval: number) {
+	const loop = async () => {
+		const start = Date.now();
+		await callback();
+		const end = Date.now();
+		const interval = Math.max(minInterval - (end - start), 0);
+		setTimeout(loop, interval);
+	};
+
+	void loop();
 }

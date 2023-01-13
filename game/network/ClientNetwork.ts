@@ -89,9 +89,7 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 				this.removeConnection(connection);
 			})
 			.on('data', data => {
-				const message = data as Message;
-				this.handleMessage(connection, message);
-				void this.emit('data', {connection, data});
+				this.handleMessage(connection, data as Message);
 			});
 	}
 
