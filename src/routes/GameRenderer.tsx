@@ -7,9 +7,11 @@ import ConnectionToast from '@/ui/toast/ConnectionToast';
 import {NetworkStatus} from '@game/network/Network';
 import KillToast from '@/ui/toast/KillToast';
 import HitToast from '@/ui/toast/HitToast';
+import type Game from '@game/scenes/Game';
 
 export default function GameRenderer() {
 	const {network} = useNetwork();
+	const [game, setGame] = React.useState<Game>();
 	const canvasRef = React.useRef<HTMLCanvasElement>(null);
 	useEffect(() => {
 		if (!network) {
@@ -18,6 +20,7 @@ export default function GameRenderer() {
 
 		const {start, stop} = initGame();
 		void start(canvasRef.current!, network!).then(async game => {
+			setGame(game);
 			network?.on('status', status => {
 				if (status === NetworkStatus.Disconnected) {
 					console.log('Disconnected from server, redirecting to home page');
@@ -49,8 +52,9 @@ export default function GameRenderer() {
 	}, []);
 
 	return (
-		<GameUi tanks={[]}>
-			<canvas ref={canvasRef}/>
-		</GameUi>
+		<div>
+			<canvas ref={canvasRef} key='game-canvas' />
+			{game && <GameUi game={game} />}
+		</div>
 	);
 }
