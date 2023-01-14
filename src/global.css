@@ -3,5 +3,5 @@
 @tailwind utilities;
 
 body {
-    @apply bg-gray-50 dark:bg-gray-900;
+    @apply bg-gray-50/60 dark:bg-gray-900/80 bg-toonks-bg bg-cover bg-toonks-bg-pos dark:bg-blend-multiply bg-no-repeat bg-fixed bg-blend-screen
 }

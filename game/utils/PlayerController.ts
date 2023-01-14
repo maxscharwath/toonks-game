@@ -31,7 +31,7 @@ export default class PlayerController {
 
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
-		const maxEngineForce = 5000;
+		const maxEngineForce = 3000;
 		const maxBreakingForce = 100;
 
 		// Front/back

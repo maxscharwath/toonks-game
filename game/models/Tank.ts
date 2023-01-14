@@ -442,8 +442,8 @@ export default class Tank extends Entity {
 		this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
 		this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
-		this.vehicle.applyEngineForce(-speed * 50, WheelPosition.RearLeft);
-		this.vehicle.applyEngineForce(-speed * 50, WheelPosition.RearRight);
+		this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearLeft);
+		this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearRight);
 	}
 
 	public addToScene() {

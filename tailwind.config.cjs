@@ -11,6 +11,12 @@ module.exports = {
           orangeLight: "#fecb00",
         },
       },
+      backgroundImage: {
+        "toonks-bg": "url('/images/toonks-bg.png')",
+      },
+      backgroundPosition: {
+        "toonks-bg-pos": "center 70%",
+      }
     },
   },
   plugins: [],

@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Logo from '@/ui/Logo';
 import Register from '@/routes/root/Register';
 import {useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
+import {Howl} from 'howler';
 
 function useToggleTimeout(initial: boolean, timeout: number) {
 	const [value, setValue] = useState(initial);
@@ -22,6 +23,13 @@ function useToggleTimeout(initial: boolean, timeout: number) {
 export default function Root() {
 	const {status} = useNetwork();
 	const [confetti, toggleConfetti] = useToggleTimeout(false, 2000);
+	const audio = useRef(new Howl({
+		src: ['/audio/Eyes_on_the_Podium.mp3'],
+	}));
+
+	useEffect(() => {
+		audio.current.play();
+	}, []);
 
 	useEffect(() => {
 		if (status === NetworkStatus.Connected) {
@@ -37,7 +45,7 @@ export default function Root() {
 					<Logo/>
 				</div>
 				<div
-					className='w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-xl md:mt-0 xl:p-0'>
+					className='w-full rounded-lg bg-white/90 shadow backdrop-blur dark:border dark:border-gray-700 dark:bg-gray-800/90 sm:max-w-xl md:mt-0 xl:p-0'>
 					{status === NetworkStatus.Connected ? <Connected/> : <Register/>}
 				</div>
 			</div>

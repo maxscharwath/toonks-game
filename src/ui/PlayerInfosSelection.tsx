@@ -11,6 +11,7 @@ type Props = {
 
 export default function PlayerInfosSelection({setTank, setName}: Props) {
 	const [index, setIndex] = useState(0);
+	const [direction, setDirection] = useState(1);
 
 	useEffect(() => {
 		setTank(TankTypeList[index].key);
@@ -18,10 +19,12 @@ export default function PlayerInfosSelection({setTank, setName}: Props) {
 
 	const nextTank = () => {
 		setIndex((index + 1) % TankTypeList.length);
+		setDirection(1);
 	};
 
 	const prevTank = () => {
 		setIndex((index - 1 + TankTypeList.length) % TankTypeList.length);
+		setDirection(-1);
 	};
 
 	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +44,21 @@ export default function PlayerInfosSelection({setTank, setName}: Props) {
 				onChange={changeName}
 			/>
 			<label className='mb-2 mt-4 block text-sm font-medium text-gray-900 dark:text-white'>Your tank</label>
-			<Canvas camera={{fov: 35, zoom: 1.5}}>
-				<TankModel type={TankTypeList[index].key} />
-			</Canvas>
+			<div className='relative overflow-hidden'>
+				<AnimatePresence mode={'wait'}>
+					<motion.div
+						key={TankTypeList[index].key}
+						initial={{opacity: 0, x: -200 * direction}}
+						animate={{opacity: 1, x: 0}}
+						exit={{opacity: 0, x: 200 * direction}}
+						transition={{duration: 0.25}}
+					>
+						<Canvas camera={{fov: 35, zoom: 1.5}}>
+							<TankModel type={TankTypeList[index].key} />
+						</Canvas>
+					</motion.div>
+				</AnimatePresence>
+			</div>
 
 			<div className='flex flex-row items-center justify-between'>
 				<span

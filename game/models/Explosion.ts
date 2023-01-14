@@ -32,7 +32,7 @@ export default class Explosion extends Entity {
 		this.audio = game.audioManager.createAudio();
 		this.object3d.add(Explosion.model.model.clone());
 		this.object3d.scale.set(0.15 * scale, 0.15 * scale, 0.15 * scale);
-		const light = new THREE.PointLight(0xffdf5e, 5, 20);
+		const light = new THREE.PointLight(0xffdf5e, 3, 20);
 		this.object3d.add(light, this.audio);
 		game.animationMixers.add(this.object3d.anims.mixer);
 		this.object3d.anims.add('IcosphereAction', Explosion.model.animation);

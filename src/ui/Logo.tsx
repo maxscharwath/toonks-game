@@ -12,8 +12,8 @@ export default function Logo(props: {style?: any}) {
 	return (
 		<div
 			style={{
-				width: 300,
-				height: 300,
+				width: 250,
+				height: 250,
 				...props?.style,
 				display: 'flex',
 				placeItems: 'center',
