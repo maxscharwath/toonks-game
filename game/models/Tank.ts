@@ -78,7 +78,7 @@ export default class Tank extends Entity {
 	private readonly wheelMeshes: ExtendedObject3D[] = [];
 	private readonly chassis: ExtendedObject3D;
 	private readonly turret: ExtendedObject3D;
-	private readonly canon: ExtendedObject3D;
+	protected readonly canon: ExtendedObject3D;
 	private readonly group = new ExtendedGroup();
 	private lastShot = 0;
 	private canonMotor!: Ammo.btHingeConstraint;
@@ -394,9 +394,10 @@ export default class Tank extends Entity {
 			bullet.removeFromParent();
 		}, 5000);
 
-		const force = this.canon
-			.getWorldDirection(new THREE.Vector3())
-			.multiplyScalar(10000);
+		const force = this.getCanonDirection().multiplyScalar(10000);
+
+		console.log(new THREE.Vector2(force.x, force.z).length(), force.y);
+
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		bullet.body.applyForce(force.x, force.y, force.z);
@@ -410,6 +411,10 @@ export default class Tank extends Entity {
 	public honk() {
 		this.honkSound.play();
 		console.log('honk');
+	}
+
+	public getCanonDirection() {
+		return this.canon.getWorldDirection(new THREE.Vector3());
 	}
 
 	public update() {
