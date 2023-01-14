@@ -62,7 +62,7 @@ export class Properties<State extends Record<string, unknown>> extends Emittery<
 	public addProperty<K extends keyof State>(key: K, options: PropertyOptions<State[K]>): this {
 		const property = new Property(options);
 		this.properties.set(key as string, property);
-		void property.on('change', ([value, oldValue]) => {
+		void property.on('change', () => {
 			void this.emit('change');
 		});
 		return this;
