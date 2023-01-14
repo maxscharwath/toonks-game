@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {initGame} from '@game/main';
 import {useNetwork} from '@/store/store';
 import GameUi from '@/ui/GameUi';
@@ -11,8 +11,8 @@ import type Game from '@game/scenes/Game';
 
 export default function GameRenderer() {
 	const {network} = useNetwork();
-	const [game, setGame] = React.useState<Game>();
-	const canvasRef = React.useRef<HTMLCanvasElement>(null);
+	const [game, setGame] = useState<Game>();
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 	useEffect(() => {
 		if (!network) {
 			window.location.href = '/';

@@ -25,7 +25,10 @@ export type GameConfig = {
 };
 
 class TankManager extends Map<string, Tank> {
-	private readonly emittery = new Emittery();
+	public readonly events = new Emittery<{
+		add: Tank;
+		remove: Tank[];
+	}>();
 
 	private readonly networkTanks = new Map<string, WeakRef<TankNetwork>>();
 
@@ -38,7 +41,7 @@ class TankManager extends Map<string, Tank> {
 			this.networkTanks.set(tank.uuid, new WeakRef(tank));
 		}
 
-		void this.emittery.emit('add', tank);
+		void this.events.emit('add', tank);
 		return super.set(uuid, tank);
 	}
 
@@ -48,12 +51,16 @@ class TankManager extends Map<string, Tank> {
 
 	public delete(uuid: string) {
 		this.networkTanks.delete(uuid);
-		void this.emittery.emit('remove', [this.get(uuid)]);
+		const tank = this.get(uuid);
+		if (tank) {
+			void this.events.emit('remove', [tank]);
+		}
+
 		return super.delete(uuid);
 	}
 
 	public clear() {
-		void this.emittery.emit('remove', this.array);
+		void this.events.emit('remove', this.array);
 		this.networkTanks.clear();
 		super.clear();
 	}
@@ -92,6 +99,7 @@ export default class Game extends ResizeableScene3D {
 
 	constructor(config: GameConfig) {
 		super({key: 'GameScene'});
+		this.stats.dom.style.cssText = 'position: absolute; bottom: 0; left: 0; z-index: 1000;';
 		this.config = config;
 		this.events.setNetwork(config.network);
 	}

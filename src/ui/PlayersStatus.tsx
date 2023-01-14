@@ -1,13 +1,39 @@
 import type Tank from '@game/models/Tank';
-import React, {useEffect} from 'react';
+import TankPlayer from '@game/models/TankPlayer';
+import React, {useEffect, useState} from 'react';
+
+function PlayerStatus({tankRaw}: {tankRaw: Tank}) {
+	const [tankData, setTankData] = useState({
+		isPlayer: tankRaw instanceof TankPlayer,
+		pseudo: tankRaw.pseudo,
+		health: tankRaw.health,
+	});
+	useEffect(() => {
+		const unregister = tankRaw.properties.getProperty('health').onChange(health => {
+			console.log('tank health changed', health);
+			setTankData({
+				...tankData,
+				health,
+			});
+		});
+
+		return () => {
+			unregister();
+		};
+	}, [tankRaw]);
+
+	return (
+		<div className='text-xl text-white'>
+			<span>{tankData.pseudo} : </span> <span>{tankData.health}</span>
+		</div>
+	);
+}
 
 export default function PlayersStatus({tanks}: {tanks: Tank[]}) {
 	return (
-		<div className='absolute top-0 left-0 z-10 m-10'>
+		<div className='absolute top-0 left-0 z-10 m-4'>
 			{tanks.map(tank => (
-				<div className='text-xl text-white' key={tank.uuid}>
-					<span>{tank.pseudo} : </span> <span>{tank.health}</span>
-				</div>
+				<PlayerStatus tankRaw={tank} key={tank.uuid} />
 			))}
 		</div>
 	);

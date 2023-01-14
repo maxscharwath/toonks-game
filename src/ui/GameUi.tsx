@@ -1,18 +1,19 @@
 import type Tank from '@game/models/Tank';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Toaster} from 'react-hot-toast';
 import PlayersStatus from '@/ui/PlayersStatus';
 import type Game from '@game/scenes/Game';
 
 export default function GameUi({game}: {game: Game}) {
-	const [tanks, setTanks] = React.useState<Tank[]>([]);
+	const [tanks, setTanks] = useState<Tank[]>([]);
 
 	useEffect(() => {
-		const interval = setInterval(() => {
+		const unregister = game.tanks.events.on(['add', 'remove'], () => {
 			setTanks(game.tanks.getTanks());
-		}, 250);
+		});
+
 		return () => {
-			clearInterval(interval);
+			unregister();
 		};
 	}, [game]);
 

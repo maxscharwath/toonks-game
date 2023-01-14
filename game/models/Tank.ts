@@ -71,7 +71,7 @@ export default class Tank extends Entity {
 	private static readonly parts = new Parts();
 	private static materials: Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 
-	protected readonly properties = new Properties<TankState>();
+	public readonly properties = new Properties<TankState>();
 	protected readonly chassis: ExtendedObject3D;
 	protected readonly turret: ExtendedObject3D;
 	protected readonly canon: ExtendedObject3D;

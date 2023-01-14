@@ -44,7 +44,7 @@ export default class TankNetwork extends Tank {
 	}
 
 	private async lerpTransform() {
-		if (this.isDead) {
+		if (this.isDead()) {
 			return;
 		}
 
