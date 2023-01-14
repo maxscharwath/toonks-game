@@ -4,12 +4,12 @@ type PropertyOptions<T, U=any> = {
 	default: T;
 	get?: (value: T) => T;
 	set?: (value: T) => T;
-	onChange?: (value: T) => void;
+	onChange?: (value: T, oldValue: T) => void;
 	export?: (value: T) => U;
 	import?: (value: U) => T;
 };
 
-class Property<T> extends Emittery<{change: T}> {
+class Property<T> extends Emittery<{change: [T, T]}> {
 	private _value!: T;
 	constructor(private readonly options: PropertyOptions<T>) {
 		super();
@@ -25,19 +25,22 @@ class Property<T> extends Emittery<{change: T}> {
 	}
 
 	public set value(value: T) {
+		const o = this._value;
 		const v = this.options.set?.(value) ?? value;
-		if (v !== this._value) {
+		if (v !== o) {
 			this._value = v;
-			void this.emit('change', v);
+			void this.emit('change', [v, o]);
 		}
 	}
 
-	public onChange(listener: (value: T) => void, fire?: boolean): () => void {
+	public onChange(listener: (value: T, oldValue: T) => void, fire?: boolean): () => void {
 		if (fire) {
-			listener(this.value);
+			listener(this.value, this.value);
 		}
 
-		return this.on('change', listener);
+		return this.on('change', ([value, oldValue]) => {
+			listener(value, oldValue);
+		});
 	}
 
 	public set(setter: (value: T) => T): void {
@@ -53,12 +56,15 @@ class Property<T> extends Emittery<{change: T}> {
 	}
 }
 
-export class Properties<State extends Record<string, unknown>> {
+export class Properties<State extends Record<string, unknown>> extends Emittery<{change: never}> {
 	private readonly properties = new Map<string, Property<any>>();
 
 	public addProperty<K extends keyof State>(key: K, options: PropertyOptions<State[K]>): this {
 		const property = new Property(options);
 		this.properties.set(key as string, property);
+		void property.on('change', ([value, oldValue]) => {
+			void this.emit('change');
+		});
 		return this;
 	}
 

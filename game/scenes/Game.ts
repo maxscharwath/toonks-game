@@ -18,12 +18,15 @@ import ResizeableScene3D from '@game/scenes/ResizeableScene3D';
 import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 import {type Network} from '@game/network/Network';
 import AudioManager from '@game/utils/AudioManager';
+import Emittery from 'emittery';
 
 export type GameConfig = {
 	network: Network<NetworkEvents, Metadata>;
 };
 
 class TankManager extends Map<string, Tank> {
+	private readonly emittery = new Emittery();
+
 	private readonly networkTanks = new Map<string, WeakRef<TankNetwork>>();
 
 	public set(uuid: string, tank: Tank) {
@@ -35,6 +38,7 @@ class TankManager extends Map<string, Tank> {
 			this.networkTanks.set(tank.uuid, new WeakRef(tank));
 		}
 
+		void this.emittery.emit('add', tank);
 		return super.set(uuid, tank);
 	}
 
@@ -44,10 +48,12 @@ class TankManager extends Map<string, Tank> {
 
 	public delete(uuid: string) {
 		this.networkTanks.delete(uuid);
+		void this.emittery.emit('remove', [this.get(uuid)]);
 		return super.delete(uuid);
 	}
 
 	public clear() {
+		void this.emittery.emit('remove', this.array);
 		this.networkTanks.clear();
 		super.clear();
 	}

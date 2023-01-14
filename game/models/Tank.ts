@@ -72,13 +72,12 @@ export default class Tank extends Entity {
 	private static materials: Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 
 	protected readonly properties = new Properties<TankState>();
-	protected isDead = false;
+	protected readonly chassis: ExtendedObject3D;
+	protected readonly turret: ExtendedObject3D;
+	protected readonly canon: ExtendedObject3D;
 
 	private readonly vehicle: Ammo.btRaycastVehicle;
 	private readonly wheelMeshes: ExtendedObject3D[] = [];
-	private readonly chassis: ExtendedObject3D;
-	private readonly turret: ExtendedObject3D;
-	protected readonly canon: ExtendedObject3D;
 	private readonly group = new ExtendedGroup();
 	private lastShot = 0;
 	private canonMotor!: Ammo.btHingeConstraint;
@@ -249,8 +248,8 @@ export default class Tank extends Entity {
 			.addProperty('health', {
 				default: 100,
 				set: value => Math.min(Math.max(value, 0), 100),
-				onChange: value => {
-					if (value <= 0 && !this.isDead) {
+				onChange: (health, oldHealth) => {
+					if (health <= 0 && oldHealth > 0) {
 						this.die();
 					}
 				},
@@ -259,6 +258,10 @@ export default class Tank extends Entity {
 
 	public get object3d(): THREE.Object3D {
 		return this.chassis;
+	}
+
+	public onChange(listener: () => void) {
+		return this.properties.on('change', listener);
 	}
 
 	public get turretAngle() {
@@ -327,23 +330,21 @@ export default class Tank extends Entity {
 		return this.properties.getProperty('type').value;
 	}
 
-	public die() {
-		if (this.isDead) {
-			return;
-		}
+	public isDead() {
+		return this.health <= 0;
+	}
 
-		this.isDead = true;
+	public die() {
 		this.game.physics.physicsWorld.removeAction(this.vehicle);
 		this.game.physics.physicsWorld.removeConstraint(this.turretMotor);
 		this.game.physics.physicsWorld.removeConstraint(this.canonMotor);
 	}
 
 	public respawn() {
-		if (!this.isDead) {
+		if (!this.isDead()) {
 			return;
 		}
 
-		this.isDead = false;
 		this.health = 100;
 		this.init();
 	}
