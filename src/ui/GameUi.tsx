@@ -3,13 +3,17 @@ import React, {useEffect, useState} from 'react';
 import {Toaster} from 'react-hot-toast';
 import PlayersStatus from '@/ui/PlayersStatus';
 import type Game from '@game/scenes/Game';
+import type TankPlayer from '@game/models/TankPlayer';
+import type TankNetwork from '@game/models/TankNetwork';
 
 export default function GameUi({game}: {game: Game}) {
-	const [tanks, setTanks] = useState<Tank[]>([]);
+	const [tanks, setTanks] = useState<TankNetwork[]>([]);
+	const [player, setPlayer] = useState<TankPlayer>();
 
 	useEffect(() => {
 		const unregister = game.tanks.events.on(['add', 'remove'], () => {
-			setTanks(game.tanks.getTanks());
+			setPlayer(game.player);
+			setTanks(game.tanks.getNetworks());
 		});
 
 		return () => {
@@ -19,7 +23,7 @@ export default function GameUi({game}: {game: Game}) {
 
 	return (
 		<div>
-			<PlayersStatus tanks={tanks}/>
+			<PlayersStatus player={player} tanks={tanks}/>
 			<Toaster
 				position='top-right'
 				gutter={4}

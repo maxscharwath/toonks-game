@@ -73,8 +73,8 @@ class TankManager extends Map<string, Tank> {
 		return [...this.values()];
 	}
 
-	public getNetworks() {
-		return [...this.networkTanks.values()].map(ref => ref.deref()).filter(Boolean);
+	public getNetworks(): TankNetwork[] {
+		return [...this.networkTanks.values()].map(ref => ref.deref()).filter(Boolean) as TankNetwork[];
 	}
 
 	public get array() {

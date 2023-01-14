@@ -29,9 +29,10 @@ function PlayerStatus({tankRaw}: {tankRaw: Tank}) {
 	);
 }
 
-export default function PlayersStatus({tanks}: {tanks: Tank[]}) {
+export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tanks: Tank[]}) {
 	return (
 		<div className='absolute top-0 left-0 z-10 m-4'>
+			{player && <PlayerStatus tankRaw={player} key={player.uuid} />}
 			{tanks.map(tank => (
 				<PlayerStatus tankRaw={tank} key={tank.uuid} />
 			))}
