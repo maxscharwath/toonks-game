@@ -19,12 +19,12 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 		this.channel('join').on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
-			void this.emit('join', peerData.uuid);
+			void this.emit('join', peerData.metadata.name);
 		});
 		this.channel('leave').on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
-			void this.emit('leave', peerData.uuid);
+			void this.emit('leave', peerData.metadata.name);
 		});
 	}
 

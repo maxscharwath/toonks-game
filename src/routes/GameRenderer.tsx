@@ -24,11 +24,11 @@ export default function GameRenderer() {
 					window.location.href = '/';
 				}
 			});
-			network?.on('join', () => {
-				toast.custom(<ConnectionToast playerName='Player #1' type='join' />);
+			network?.on('join', name => {
+				toast.custom(<ConnectionToast playerName={name} type='join' />);
 			});
-			network?.on('leave', () => {
-				toast.custom(<ConnectionToast playerName='Player #1' type='leave' />);
+			network?.on('leave', name => {
+				toast.custom(<ConnectionToast playerName={name} type='leave' />);
 			});
 			game.events.on('tank:kill', ({killer, killed}) => {
 				toast.custom(
@@ -49,7 +49,7 @@ export default function GameRenderer() {
 	}, []);
 
 	return (
-		<GameUi>
+		<GameUi tanks={[]}>
 			<canvas ref={canvasRef}/>
 		</GameUi>
 	);

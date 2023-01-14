@@ -100,7 +100,7 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 			);
 			const peers = this.connectedPeers();
 			void this.emit('peers', peers);
-			void this.emit('join', connection.peer);
+			void this.emit('join', connection.metadata.name);
 			this.channel('join').send({
 				peer: {uuid: connection.peer, metadata: connection.metadata as Metadata},
 				peers,
@@ -115,7 +115,7 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 
 		const peers = this.connectedPeers();
 		void this.emit('peers', peers);
-		void this.emit('leave', connection.peer);
+		void this.emit('leave', connection.metadata.name);
 		this.channel('leave').send({
 			peer: {uuid: connection.peer, metadata: connection.metadata as Metadata},
 			peers,
