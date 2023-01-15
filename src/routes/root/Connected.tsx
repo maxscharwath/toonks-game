@@ -22,12 +22,14 @@ export default function Connected() {
 						className='flex flex-col items-center space-y-2 rounded-lg bg-gray-100 py-4 dark:bg-gray-700'
 						key={peer.uuid}
 					>
-						<h2 className='text-lg font-bold text-gray-900 dark:text-white'>
+						<h2 className='w-full truncate px-4 text-center text-lg font-bold text-gray-900 dark:text-white'>
 							{peer.metadata.name}
 						</h2>
-						<Canvas camera={{fov: 35, zoom: 1.5}}>
-							<TankModel type={peer.metadata.tank}/>
-						</Canvas>
+						<div>
+							<Canvas camera={{fov: 35, zoom: 1.5}}>
+								<TankModel type={peer.metadata.tank}/>
+							</Canvas>
+						</div>
 					</div>
 				))}
 			</div>
