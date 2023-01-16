@@ -43,7 +43,9 @@ export default class TankPlayer extends Tank {
 	private readonly shootHelper = new ShootHelper(this);
 	public constructor(game: Game, position: THREE.Vector3, uuid?: string) {
 		super(game, position, uuid);
-
+		this.headlights.forEach(light => {
+			light.castShadow = true;
+		});
 		this.canon.add(this.shootHelper);
 
 		this.properties.getProperty('canonAngle').onChange(() => {

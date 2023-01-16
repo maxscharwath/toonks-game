@@ -31,11 +31,10 @@ export type TankState = {
 };
 
 class Parts extends Map<string, ExtendedObject3D> {
-	public clone(tank: Tank): Parts {
+	public clone(): Parts {
 		const parts = new Parts();
 		this.forEach((part, key) => {
 			const p = part.clone();
-			p.userData = {tank};
 			parts.set(key, p);
 		});
 		return parts;
@@ -50,8 +49,8 @@ export default class Tank extends Entity {
 				const o = new ExtendedMesh(child.geometry, child.material);
 				o.geometry.center();
 				o.scale.set(child.scale.x, child.scale.y, child.scale.z);
-				o.castShadow = true;
 				o.receiveShadow = true;
+				o.castShadow = true;
 				o.name = child.name;
 				this.parts.set(child.name, o as unknown as ExtendedObject3D);
 			}
@@ -76,6 +75,7 @@ export default class Tank extends Entity {
 	protected readonly chassis: ExtendedObject3D;
 	protected readonly turret: ExtendedObject3D;
 	protected readonly canon: ExtendedObject3D;
+	protected readonly headlights: THREE.SpotLight[] = [];
 
 	private readonly vehicle: Ammo.btRaycastVehicle;
 	private readonly wheelMeshes: ExtendedObject3D[] = [];
@@ -84,8 +84,7 @@ export default class Tank extends Entity {
 	private canonMotor!: Ammo.btHingeConstraint;
 	private turretMotor!: Ammo.btHingeConstraint;
 	private readonly tuning: Ammo.btVehicleTuning;
-	private readonly model = Tank.parts.clone(this);
-	private readonly headlights: THREE.SpotLight[] = [];
+	private readonly model = Tank.parts.clone();
 	private readonly shootSound: Audio;
 	private readonly honkSound: Audio;
 
@@ -113,7 +112,6 @@ export default class Tank extends Entity {
 
 		// Add lights to chassis
 		const headlightA = new THREE.SpotLight(0xfff0c7, 5, 50, Math.PI / 5, 0.5);
-		headlightA.castShadow = true;
 		const headlightB = headlightA.clone();
 		headlightA.position.set(0.5, 0.15, 0.5);
 		headlightA.target.position.copy(headlightA.position).add(new THREE.Vector3(0, -0.5, 2));
@@ -409,7 +407,6 @@ export default class Tank extends Entity {
 			}).addToScene();
 		});
 
-		bullet.castShadow = true;
 		setTimeout(() => {
 			this.game.physics.destroy(bullet);
 			bullet.removeFromParent();
@@ -493,6 +490,14 @@ export default class Tank extends Entity {
 		this.game.physics.destroy(this.chassis);
 		this.game.physics.destroy(this.turret);
 		this.game.physics.destroy(this.canon);
+		this.group.traverse(child => {
+			if (child instanceof THREE.Mesh) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				child.geometry?.dispose();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				child.material?.dispose();
+			}
+		});
 		this.group.clear();
 		this.group.removeFromParent();
 	}
@@ -628,7 +633,6 @@ export default class Tank extends Entity {
 		wheelInfo.set_m_frictionSlip(friction);
 		wheelInfo.set_m_rollInfluence(rollInfluence);
 
-		this.wheelMeshes[index].geometry.center();
 		this.group.add(this.wheelMeshes[index]);
 	}
 }

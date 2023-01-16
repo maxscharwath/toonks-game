@@ -179,7 +179,7 @@ export class Chunk extends ExtendedGroup {
 
 		const mesh = new ExtendedMesh(geometry, Chunk.heightmapMaterial);
 		mesh.receiveShadow = true;
-		mesh.castShadow = true;
+		mesh.castShadow = false;
 
 		mesh.position.copy(this.chunkPosition);
 		mesh.rotateX(-Math.PI / 2);
