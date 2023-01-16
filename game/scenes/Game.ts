@@ -8,8 +8,6 @@ import {Sun} from '@game/utils/Sun';
 import PlayerController from '@game/utils/PlayerController';
 import Tank from '@game/models/Tank';
 import TankNetwork from '@game/models/TankNetwork';
-import Random from '@game/utils/Random';
-import {Chunk} from '@game/world/Chunk';
 import GameEvent from '@game/event/GameEvent';
 import TankPlayer from '@game/models/TankPlayer';
 import Explosion from '@game/models/Explosion';
@@ -115,6 +113,26 @@ export default class Game extends ResizeableScene3D {
 		this.playerController.init();
 	}
 
+	public async respawn() {
+		const position = await this.world.getSpawnPosition();
+		position.y += 1;
+
+		if (this.player) {
+			this.tanks.remove(this.player);
+		}
+
+		this.player = new TankPlayer(this, position);
+		const data = this.config.network.getMetadata();
+		this.player.import({
+			pseudo: data?.name,
+			type: data?.tank,
+		});
+		this.player.addToScene();
+		this.tanks.add(this.player);
+
+		this.playerController.setTank(this.player);
+	}
+
 	async create() {
 		this.audioManager.setCamera(this.camera);
 
@@ -169,48 +187,13 @@ export default class Game extends ResizeableScene3D {
 
 		this.world = new World(this, chunkLoader, chunkPopulator);
 
-		const position = await this.world.getSpawnPosition();
-		position.y += 1;
-
-		this.player = new TankPlayer(this, position);
-		const data = this.config.network.getMetadata();
-		this.player.import({
-			pseudo: data?.name,
-			type: data?.tank,
-		});
-		this.player.addToScene();
-		this.tanks.add(this.player);
-
-		this.playerController.setTank(this.player);
+		await this.respawn();
 
 		const panel = new GUI();
 		const params = {
 			debug: false,
 			mode: 2049,
 		};
-
-		{ // Wall
-			const sphere = new THREE.SphereGeometry(50, 200, 200);
-			const map = new THREE.TextureLoader().load('/images/storm.png');
-			map.wrapS = map.wrapT = THREE.RepeatWrapping;
-			map.repeat.set(8, 8);
-			map.rotation = Math.PI / 2;
-
-			const material = new THREE.MeshPhysicalMaterial({
-				roughness: 0.3,
-				transmission: 0.9,
-				thickness: 1,
-				displacementMap: map,
-				displacementScale: 10,
-				displacementBias: -5,
-				color: 0x00ff00,
-				map,
-				side: THREE.DoubleSide,
-			} as THREE.MeshPhysicalMaterialParameters);
-			const mesh = new THREE.Mesh(sphere, material);
-			mesh.position.set(position.x, 0, position.z);
-			// This.scene.add(mesh);
-		}
 
 		panel.add(params, 'debug').onChange((value: boolean) => {
 			if (value) {

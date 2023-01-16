@@ -3,6 +3,7 @@ import type Tank from '@game/models/Tank';
 import {THREE} from 'enable3d';
 import {Keyboard} from '@game/utils/Keyboard';
 import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
+import type Game from '@game/scenes/Game';
 
 export default class PlayerController {
 	private readonly keyboard = new Keyboard(false)
@@ -19,7 +20,7 @@ export default class PlayerController {
 	private tank?: Tank;
 	private control?: AdvancedThirdPersonControls;
 
-	constructor(private readonly scene3D: Scene3D) {
+	constructor(private readonly game: Game) {
 	}
 
 	public setTank(tank: Tank) {
@@ -75,13 +76,13 @@ export default class PlayerController {
 			this.tank.breakingForce = maxBreakingForce;
 		}
 
-		const rotation = this.scene3D.camera.getWorldDirection(new THREE.Vector3());
+		const rotation = this.game.camera.getWorldDirection(new THREE.Vector3());
 		const rotation2 = this.tank.object3d.getWorldDirection(new THREE.Vector3());
 		this.tank.turretAngle = -Math.atan2(rotation2.x, rotation2.z) + Math.atan2(rotation.x, rotation.z);
 	}
 
 	init() {
-		this.control = new AdvancedThirdPersonControls(this.scene3D.camera, this.scene3D.renderer.domElement, {
+		this.control = new AdvancedThirdPersonControls(this.game.camera, this.game.renderer.domElement, {
 			offset: new THREE.Vector3(0, 0, 0),
 			targetRadius: 5,
 		});
@@ -104,7 +105,11 @@ export default class PlayerController {
 		});
 
 		this.keyboard.getOnAction('resetPosition', () => {
-			void this.tank?.resetPosition();
+			if (this.tank && !this.tank.isDead()) {
+				void this.tank.resetPosition();
+			} else {
+				void this.game.respawn();
+			}
 		});
 
 		this.keyboard.getOnAction('honk', () => {
