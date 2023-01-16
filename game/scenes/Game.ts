@@ -1,7 +1,6 @@
 import {GUI} from 'lil-gui';
 import Stats from 'stats.js';
 import {THREE} from 'enable3d';
-import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 import {ChunkLoader} from '@game/world/ChunkLoader';
 import {World} from '@game/world/World';
 import {ChunkPopulator} from '@game/world/ChunkPopulator';
@@ -49,10 +48,15 @@ class TankManager extends Map<string, Tank> {
 		return this.set(tank.uuid, tank);
 	}
 
+	public remove(tank: Tank) {
+		return this.delete(tank.uuid);
+	}
+
 	public delete(uuid: string) {
 		this.networkTanks.delete(uuid);
 		const tank = this.get(uuid);
 		if (tank) {
+			tank.destroy();
 			void this.events.emit('remove', [tank]);
 		}
 
@@ -67,10 +71,6 @@ class TankManager extends Map<string, Tank> {
 
 	public getNetwork(uuid: string) {
 		return this.networkTanks.get(uuid)?.deref();
-	}
-
-	public getTanks() {
-		return [...this.values()];
 	}
 
 	public getNetworks(): TankNetwork[] {
@@ -169,13 +169,7 @@ export default class Game extends ResizeableScene3D {
 
 		this.world = new World(this, chunkLoader, chunkPopulator);
 
-		const chunk = await this.world.getChunk(8, 8);
-
-		const random = new Random();
-		const position = chunk.getPositionAt(
-			(Chunk.chunkSize / 2) + random.number(-Chunk.chunkSize / 4, Chunk.chunkSize / 4),
-			(Chunk.chunkSize / 2) + random.number(-Chunk.chunkSize / 4, Chunk.chunkSize / 4),
-		);
+		const position = await this.world.getSpawnPosition();
 		position.y += 1;
 
 		this.player = new TankPlayer(this, position);
@@ -259,26 +253,29 @@ export default class Game extends ResizeableScene3D {
 			tanks.forEach((data, uuid) => {
 				const tank = this.tanks.getNetwork(uuid);
 				if (tank) {
-					tank.import(data);
+					tank.networkUpdate(data);
 				} else {
 					const position = new THREE.Vector3().fromArray(data.position);
 					const tank = new TankNetwork(this, position, data.uuid);
 					this.tanks.add(tank);
 					tank.addToScene();
-					tank.import(data);
+					tank.networkUpdate(data);
 				}
 			});
 			tanks.clear();
 		}, 100);
 	}
 
-	update() {
+	update(_time: number, delta: number) {
 		this.stats.begin();
 		this.sun.update();
 		this.playerController.update();
 
 		this.tanks.forEach(entity => {
 			entity.update();
+			if (entity instanceof TankNetwork && entity.getLastUpdate() + (5000 + delta) < Date.now()) {
+				this.tanks.remove(entity);
+			}
 		});
 
 		this.stats.end();

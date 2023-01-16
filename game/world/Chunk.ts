@@ -139,7 +139,6 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	public destroy() {
-		console.log('Destroying chunk', this.x, this.y);
 		this.isDestroyed = true;
 		this.removePhysics();
 		this.mesh.geometry.dispose();

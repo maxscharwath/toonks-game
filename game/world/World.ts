@@ -3,6 +3,7 @@ import {Chunk, mergeChunkMesh} from '@game/world/Chunk';
 import {type ChunkPopulator} from '@game/world/ChunkPopulator';
 import type Game from '@game/scenes/Game';
 import {Vector3} from 'three';
+import Random from '@game/utils/Random';
 
 type Pending<P> = Promise<P> & {isPending: boolean; value?: P};
 function pending<P>(promise: Promise<P>): Pending<P> {
@@ -71,6 +72,14 @@ export class World {
 
 	public async getChunkAt(position: Vector3): Promise<Chunk> {
 		return this.getChunk(Math.round(position.x / Chunk.chunkSize), Math.round(position.z / Chunk.chunkSize));
+	}
+
+	public async getSpawnPosition(): Promise<Vector3> {
+		const random = new Random();
+		return this.getPosition(
+			random.number(400, 600),
+			random.number(400, 600),
+		);
 	}
 
 	public async update() {

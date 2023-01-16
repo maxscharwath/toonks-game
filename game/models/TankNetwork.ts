@@ -1,4 +1,4 @@
-import Tank from '@game/models/Tank';
+import Tank, {type TankState} from '@game/models/Tank';
 import {FLAT, type THREE} from 'enable3d';
 import type Game from '@game/scenes/Game';
 
@@ -7,6 +7,8 @@ export default class TankNetwork extends Tank {
 		position?: THREE.Vector3;
 		rotation?: THREE.Quaternion;
 	} = {};
+
+	private lastUpdate: number = Date.now();
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string) {
 		super(game, position, uuid);
@@ -41,6 +43,15 @@ export default class TankNetwork extends Tank {
 	public update() {
 		void this.lerpTransform();
 		super.update();
+	}
+
+	public getLastUpdate(): number {
+		return this.lastUpdate;
+	}
+
+	public networkUpdate(state: Partial<TankState>): void {
+		this.lastUpdate = Date.now();
+		this.import(state);
 	}
 
 	private async lerpTransform() {

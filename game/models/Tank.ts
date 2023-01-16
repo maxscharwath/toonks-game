@@ -63,7 +63,7 @@ export default class Tank extends Entity {
 				map.flipY = false;
 				map.repeat.set(1, 1);
 				map.needsUpdate = true;
-				return [key, new THREE.MeshStandardMaterial({map, bumpMap: map, bumpScale: 0.03, metalness: 0.4, metalnessMap: map, roughness: 0.6})];
+				return [key, new THREE.MeshStandardMaterial({map, metalness: 0.4, metalnessMap: map, roughness: 0.8})];
 			}),
 		) as Record<keyof typeof TankTypes, THREE.MeshStandardMaterial>;
 	}
@@ -96,14 +96,17 @@ export default class Tank extends Entity {
 		this.honkSound = game.audioManager.createAudio('/sounds/horn.mp3');
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
-		this.turret = this.model.get('TankFree_Tower')!;
-		this.canon = this.model.get('TankFree_Canon')!;
+		this.turret = new ExtendedObject3D().add(this.model.get('TankFree_Tower')!);
+		this.canon = new ExtendedObject3D().add(this.model.get('TankFree_Canon')!);
 
 		this.group.add(this.chassis, this.turret, this.canon);
 
 		this.chassis.position.copy(position);
+		this.chassis.rotation.set(0, Math.PI, 0);
 		this.canon.position.copy(position);
+		this.canon.rotation.set(0, Math.PI, 0);
 		this.turret.position.copy(position);
+		this.turret.rotation.set(0, Math.PI, 0);
 
 		this.chassis.add(this.shootSound, this.honkSound);
 
@@ -354,12 +357,11 @@ export default class Tank extends Entity {
 	}
 
 	public hit(damage: number) {
-		console.log(`Tank ${this.pseudo} hit for ${damage} damage`);
 		this.properties.getProperty('health').value -= damage;
 	}
 
 	public shoot() {
-		if (this.lastShot + 250 > Date.now()) {
+		if (this.lastShot + 750 > Date.now()) {
 			return false;
 		}
 
@@ -401,8 +403,6 @@ export default class Tank extends Entity {
 
 		const force = this.getCanonDirection().multiplyScalar(10000);
 
-		console.log(new THREE.Vector2(force.x, force.z).length(), force.y);
-
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		bullet.body.applyForce(force.x, force.y, force.z);
@@ -415,7 +415,6 @@ export default class Tank extends Entity {
 
 	public honk() {
 		this.honkSound.play();
-		console.log('honk');
 	}
 
 	public getCanonDirection() {
@@ -473,7 +472,14 @@ export default class Tank extends Entity {
 	}
 
 	public destroy(): void {
-		// TODO
+		this.game.physics.physicsWorld.removeAction(this.vehicle);
+		this.game.physics.physicsWorld.removeConstraint(this.turretMotor);
+		this.game.physics.physicsWorld.removeConstraint(this.canonMotor);
+		this.game.physics.destroy(this.chassis);
+		this.game.physics.destroy(this.turret);
+		this.game.physics.destroy(this.canon);
+		this.group.clear();
+		this.group.removeFromParent();
 	}
 
 	public export(): TankState & {uuid: string} {
