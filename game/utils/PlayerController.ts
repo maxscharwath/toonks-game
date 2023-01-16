@@ -43,7 +43,7 @@ export default class PlayerController {
 		if (this.keyboard.getAction('moveForward')) {
 			this.tank.engineForce = maxEngineForce;
 		} else if (this.keyboard.getAction('moveBackward')) {
-			this.tank.engineForce = -maxEngineForce;
+			this.tank.engineForce = -maxEngineForce / 2;
 		} else {
 			this.tank.engineForce = 0;
 		}

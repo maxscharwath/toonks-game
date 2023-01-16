@@ -67,7 +67,7 @@ export class Chunk extends ExtendedGroup {
 		return this._mesh.mesh;
 	}
 
-	public get physicsMesh() {
+	public get physicsMesh(): ExtendedMesh {
 		if (!this._physicsMesh) {
 			const {geometry} = this.mesh;
 			const modifier = new SimplifyModifier();
@@ -207,14 +207,12 @@ function determineSide(chunkA: Chunk, chunkB: Chunk): [Side, Side] {
 		: (chunkA.x < chunkB.x ? ['right', 'left'] : ['left', 'right']);
 }
 
-function getSideIndices(chunk: Chunk, side: Side) {
-	const {geometry} = chunk.mesh;
-	const half = Chunk.chunkSize / 2;
+function getSideIndices(geometry: THREE.BufferGeometry, size: number, side: Side) {
 	const indices = [];
 	for (let i = 0; i < geometry.attributes.position.count; i++) {
 		const x = geometry.attributes.position.getX(i);
 		const y = geometry.attributes.position.getY(i);
-		if ((side === 'left' && x === -half) || (side === 'right' && x === half) || (side === 'top' && y === -half) || (side === 'bottom' && y === half)) {
+		if ((side === 'left' && x === -size) || (side === 'right' && x === size) || (side === 'top' && y === -size) || (side === 'bottom' && y === size)) {
 			indices.push(i);
 		}
 	}
@@ -222,22 +220,34 @@ function getSideIndices(chunk: Chunk, side: Side) {
 	return indices;
 }
 
-export function mergeChunkMesh(chunkA: Chunk, chunkB: Chunk) {
-	const [sideA, sideB] = determineSide(chunkA, chunkB);
-	const indicesA = getSideIndices(chunkA, sideA);
-	const indicesB = getSideIndices(chunkB, sideB);
+function mergeChunkGeometry(
+	geometryA: THREE.BufferGeometry,
+	sideA: Side,
+	geometryB: THREE.BufferGeometry,
+	sideB: Side,
+	size: number,
+) {
+	const indicesA = getSideIndices(geometryA, size, sideA);
+	const indicesB = getSideIndices(geometryB, size, sideB);
 	for (let i = 0; i < indicesA.length; i++) {
 		const indexA = indicesA[i];
 		const indexB = indicesB[i];
-		const zA = chunkA.mesh.geometry.attributes.position.getZ(indexA);
-		const zB = chunkB.mesh.geometry.attributes.position.getZ(indexB);
+		const zA = geometryA.attributes.position.getZ(indexA);
+		const zB = geometryB.attributes.position.getZ(indexB);
 		const z = (zA + zB) / 2;
-		chunkA.mesh.geometry.attributes.position.setZ(indexA, z);
-		chunkB.mesh.geometry.attributes.position.setZ(indexB, z);
+		geometryA.attributes.position.setZ(indexA, z);
+		geometryB.attributes.position.setZ(indexB, z);
 	}
 
-	chunkA.mesh.geometry.computeVertexNormals();
-	chunkB.mesh.geometry.computeVertexNormals();
-	chunkB.mesh.geometry.attributes.position.needsUpdate = true;
-	chunkA.mesh.geometry.attributes.position.needsUpdate = true;
+	geometryA.computeVertexNormals();
+	geometryB.computeVertexNormals();
+	geometryA.attributes.position.needsUpdate = true;
+	geometryB.attributes.position.needsUpdate = true;
+}
+
+export function mergeChunkMesh(chunkA: Chunk, chunkB: Chunk) {
+	const [sideA, sideB] = determineSide(chunkA, chunkB);
+	const size = Chunk.chunkSize / 2;
+	mergeChunkGeometry(chunkA.mesh.geometry, sideA, chunkB.mesh.geometry, sideB, size);
+	mergeChunkGeometry(chunkA.physicsMesh.geometry, sideA, chunkB.physicsMesh.geometry, sideB, size);
 }
