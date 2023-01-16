@@ -493,6 +493,15 @@ export default class Tank extends Entity {
 		});
 	}
 
+	public getDistanceTo(tank: Tank): {distance: number; direction: number} {
+		const distance = this.position.distanceTo(tank.position);
+		const direction = Math.atan2(
+			tank.position.x - this.object3d.position.x,
+			tank.position.z - this.object3d.position.z,
+		);
+		return {distance, direction};
+	}
+
 	protected init() {
 		this.turretMotor = this.game.physics.add.constraints.hinge(
 			this.chassis.body,

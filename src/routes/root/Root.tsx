@@ -25,6 +25,7 @@ export default function Root() {
 	const [confetti, toggleConfetti] = useToggleTimeout(false, 2000);
 	const audio = useRef(new Howl({
 		src: ['/audio/Eyes_on_the_Podium.mp3'],
+		volume: 0.5,
 	}));
 
 	useEffect(() => {

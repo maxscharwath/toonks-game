@@ -66,7 +66,7 @@ function HealthBar(props: {health: number; maxHealth: number; className?: string
 	);
 }
 
-function PlayerStatus({tank, isPlayer}: {tank: Tank; isPlayer: boolean}) {
+function PlayerStatus({tank, isPlayer, children}: {tank: Tank; isPlayer: boolean; children?: React.ReactNode}) {
 	const [tankData, setTankData] = useState({
 		type: tank.type,
 		pseudo: tank.pseudo,
@@ -121,6 +121,7 @@ function PlayerStatus({tank, isPlayer}: {tank: Tank; isPlayer: boolean}) {
 				>
 					{tankData.pseudo}
 				</div>
+				{children}
 			</div>
 		</div>
 
@@ -145,10 +146,34 @@ function PlayerInfo({tank}: {tank: Tank}) {
 	}, [tank]);
 
 	return (
-		<p className='space-x-2 text-xl text-white'>
+		<p className='space-x-2 text-sm text-white'>
 			<span>x: {x}</span>
 			<span>y: {y}</span>
 			<span>z: {z}</span>
+		</p>
+	);
+}
+
+function PlayerCompas({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
+	const [info, setInfo] = useState({
+		direction: 0,
+		distance: 0,
+	});
+
+	useEffect(() => {
+		const unregister = tankA.on('update', () => {
+			setInfo(tankA.getDistanceTo(tankB));
+		});
+
+		return () => {
+			unregister();
+		};
+	}, [tankA, tankB]);
+
+	return (
+		<p className='space-x-2 text-sm text-white'>
+			<span>{Math.round(info.direction * 180 / Math.PI)}°</span>
+			<span>{info.distance.toFixed(0)}m</span>
 		</p>
 	);
 }
@@ -158,8 +183,10 @@ export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tan
 		<div className='absolute top-0 left-0 z-10 m-4 flex flex-col justify-start space-y-4'>
 			{player && <PlayerStatus tank={player} isPlayer={true}/>}
 			{player && <PlayerInfo tank={player}/>}
-			{tanks.map(tank => (
-				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid} />
+			{player && tanks.map(tank => (
+				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid}>
+					<PlayerCompas tankA={player} tankB={tank}/>
+				</PlayerStatus>
 			))}
 		</div>
 	);
