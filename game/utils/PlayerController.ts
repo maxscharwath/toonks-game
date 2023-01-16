@@ -1,4 +1,3 @@
-import {type Scene3D} from 'enable3d/dist/scene3d';
 import type Tank from '@game/models/Tank';
 import {THREE} from 'enable3d';
 import {Keyboard} from '@game/utils/Keyboard';
@@ -37,7 +36,7 @@ export default class PlayerController {
 
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
-		const maxEngineForce = 3000;
+		const maxEngineForce = 6000;
 		const maxBreakingForce = 100;
 
 		// Front/back

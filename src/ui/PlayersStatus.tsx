@@ -48,7 +48,9 @@ function HealthBar(props: {health: number; maxHealth: number; className?: string
 					className={clsx('relative h-full overflow-hidden bg-gray-900/50 backdrop-blur', props.barClassName)}
 				>
 					<motion.div
-						className='absolute inset-0 h-full bg-gradient-to-b from-white/50 to-black/30 bg-blend-lighten shadow-md'
+						className={clsx('absolute inset-0 h-full bg-gradient-to-b from-white/50 to-black/30 bg-blend-lighten shadow-md', {
+							'animate-health': healthPercent <= 30,
+						})}
 						initial={{
 							width: '100%',
 							backgroundColor: 'rgba(0,151,107,0.5)',
@@ -56,15 +58,6 @@ function HealthBar(props: {health: number; maxHealth: number; className?: string
 						animate={{
 							width: `${p}%`,
 							backgroundColor: healthPercent > 50 ? 'rgba(0,151,107,0.5)' : healthPercent > 30 ? 'rgba(219,119,6,0.5)' : 'rgba(186,28,28,0.5)',
-							opacity: healthPercent > 30 || healthPercent <= 0 ? 1 : 0,
-						}}
-						transition={{
-							opacity: {
-								duration: 0.3,
-								repeatType: 'reverse',
-								repeat: 'Infinity',
-								repeatDelay: 0.1,
-							},
 						}}
 					/>
 				</div>
@@ -83,12 +76,11 @@ function PlayerStatus({tank, isPlayer}: {tank: Tank; isPlayer: boolean}) {
 		const unregister = tank.properties
 			.getProperty('health')
 			.onChange(health => {
-				console.log('tank health changed', health);
 				setTankData({
 					...tankData,
 					health,
 				});
-			});
+			}, true);
 
 		return () => {
 			unregister();
@@ -164,8 +156,8 @@ function PlayerInfo({tank}: {tank: Tank}) {
 export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tanks: Tank[]}) {
 	return (
 		<div className='absolute top-0 left-0 z-10 m-4 flex flex-col justify-start space-y-4'>
-			{player && <PlayerStatus tank={player} isPlayer={true} />}
-			{player && <PlayerInfo tank={player} />}
+			{player && <PlayerStatus tank={player} isPlayer={true}/>}
+			{player && <PlayerInfo tank={player}/>}
 			{tanks.map(tank => (
 				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid} />
 			))}

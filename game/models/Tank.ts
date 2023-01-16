@@ -357,6 +357,8 @@ export default class Tank extends Entity {
 		);
 		this.game.physics.physicsWorld.removeConstraint(this.turretMotor);
 		this.game.physics.physicsWorld.removeConstraint(this.canonMotor);
+		this.vehicle.applyEngineForce(0, WheelPosition.FrontLeft);
+		this.vehicle.applyEngineForce(0, WheelPosition.FrontRight);
 	}
 
 	public respawn() {
@@ -445,9 +447,8 @@ export default class Tank extends Entity {
 			this.wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
 		}
 
+		const {engineForce, breakingForce, steering, speed} = this;
 		if (!this.isDead()) {
-			const {engineForce, breakingForce, steering, speed} = this;
-
 			this.vehicle.setSteeringValue(
 				steering,
 				WheelPosition.FrontLeft,
@@ -457,17 +458,17 @@ export default class Tank extends Entity {
 				WheelPosition.FrontRight,
 			);
 
-			this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
-			this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
+			this.vehicle.applyEngineForce(engineForce - (speed * 75), WheelPosition.FrontLeft);
+			this.vehicle.applyEngineForce(engineForce - (speed * 75), WheelPosition.FrontRight);
 
 			this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
 			this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
 			this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
 			this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
-
-			this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearLeft);
-			this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearRight);
 		}
+
+		this.vehicle.applyEngineForce(-(speed) * 75, WheelPosition.RearLeft);
+		this.vehicle.applyEngineForce(-(speed) * 75, WheelPosition.RearRight);
 	}
 
 	public addToScene() {

@@ -27,7 +27,7 @@ class TankManager extends Map<string, Tank> {
 		remove: Tank[];
 	}>();
 
-	private readonly networkTanks = new Map<string, WeakRef<TankNetwork>>();
+	private readonly networkTanks = new Map<string, TankNetwork>();
 
 	public set(uuid: string, tank: Tank) {
 		if (this.has(uuid)) {
@@ -35,7 +35,7 @@ class TankManager extends Map<string, Tank> {
 		}
 
 		if (tank instanceof TankNetwork) {
-			this.networkTanks.set(tank.uuid, new WeakRef(tank));
+			this.networkTanks.set(tank.uuid, tank);
 		}
 
 		void this.events.emit('add', tank);
@@ -68,11 +68,11 @@ class TankManager extends Map<string, Tank> {
 	}
 
 	public getNetwork(uuid: string) {
-		return this.networkTanks.get(uuid)?.deref();
+		return this.networkTanks.get(uuid);
 	}
 
 	public getNetworks(): TankNetwork[] {
-		return [...this.networkTanks.values()].map(ref => ref.deref()).filter(Boolean) as TankNetwork[];
+		return [...this.networkTanks.values()];
 	}
 
 	public get array() {

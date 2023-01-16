@@ -1,4 +1,3 @@
-import type Tank from '@game/models/Tank';
 import React, {useEffect, useState} from 'react';
 import {Toaster} from 'react-hot-toast';
 import PlayersStatus from '@/ui/PlayersStatus';
@@ -13,6 +12,7 @@ export default function GameUi({game}: {game: Game}) {
 
 	useEffect(() => {
 		const unregister = game.tanks.events.on(['add', 'remove'], () => {
+			console.log(player === game.player);
 			setPlayer(game.player);
 			setTanks(game.tanks.getNetworks());
 		});
