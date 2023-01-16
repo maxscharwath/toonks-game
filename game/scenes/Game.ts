@@ -221,6 +221,10 @@ export default class Game extends ResizeableScene3D {
 			this.tanks.get(to)?.hit(damage);
 		});
 
+		this.events.on('explosion:create', ({position, scale}) => {
+			Explosion.make(this, new THREE.Vector3().fromArray(position), scale);
+		});
+
 		const tanks = new Map<string, any>();
 		this.config.network.channel('update').on((data: any) => {
 			if (!this.player || data.uuid === this.player.uuid) {

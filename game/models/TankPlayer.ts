@@ -4,6 +4,7 @@ import {THREE} from 'enable3d';
 import {LineGeometry} from 'three/examples/jsm/lines/LineGeometry';
 import {LineMaterial} from 'three/examples/jsm/lines/LineMaterial';
 import {Line2} from 'three/examples/jsm/lines/Line2';
+import Explosion from '@game/models/Explosion';
 
 class ShootHelper extends Line2 {
 	constructor(private readonly tank: Tank) {
@@ -65,5 +66,29 @@ export default class TankPlayer extends Tank {
 	honk() {
 		super.honk();
 		this.game.events.send('tank:honk', this.uuid);
+	}
+
+	protected createBullet(pos: THREE.Vector3, dir: THREE.Vector3) {
+		const bullet = super.createBullet(pos, dir);
+		// Event when bullet hit something
+		bullet.body.on.collision(() => {
+			this.game.physics.destroy(bullet);
+			bullet.removeFromParent();
+			const position = bullet.getWorldPosition(new THREE.Vector3());
+			this.game.events.send('explosion:create', {
+				position: position.toArray(),
+				scale: 5,
+			}, false);
+			Explosion.make(this.game, position, 5, tank => {
+				if (tank !== this) {
+					this.game.events.send('tank:hit', {
+						from: this.uuid,
+						to: tank.uuid,
+						damage: 10,
+					});
+				}
+			});
+		});
+		return bullet;
 	}
 }

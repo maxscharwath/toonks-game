@@ -386,37 +386,10 @@ export default class Tank extends Entity {
 			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(1),
 		);
 
-		new Explosion(this.game, pos).addToScene();
+		Explosion.make(this.game, pos);
 
-		const bullet = this.game.physics.add.sphere(
-			{radius: 0.1, x: pos.x, y: pos.y, z: pos.z, mass: 100},
-			{phong: {color: 0x202020}},
-		);
-		// Event when bullet hit something
-		bullet.body.on.collision(() => {
-			this.game.physics.destroy(bullet);
-			bullet.removeFromParent();
-			new Explosion(this.game, bullet.getWorldPosition(new THREE.Vector3()), 5, tank => {
-				if (tank !== this) {
-					this.game.events.send('tank:hit', {
-						from: this.uuid,
-						to: tank.uuid,
-						damage: 10,
-					});
-				}
-			}).addToScene();
-		});
+		this.createBullet(pos, this.getCanonDirection());
 
-		setTimeout(() => {
-			this.game.physics.destroy(bullet);
-			bullet.removeFromParent();
-		}, 5000);
-
-		const force = this.getCanonDirection().multiplyScalar(10000);
-
-		const recoil = force.clone().multiplyScalar(-0.2);
-		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
-		bullet.body.applyForce(force.x, force.y, force.z);
 		return true;
 	}
 
@@ -577,6 +550,24 @@ export default class Tank extends Entity {
 		this.setCollisionFlags(0);
 		this.setVelocity(new THREE.Vector3());
 		this.setAngularVelocity(new THREE.Vector3());
+	}
+
+	protected createBullet(pos: THREE.Vector3, direction: THREE.Vector3) {
+		const bullet = this.game.physics.add.sphere(
+			{radius: 0.1, x: pos.x, y: pos.y, z: pos.z, mass: 100},
+			{phong: {color: 0x202020}},
+		);
+		setTimeout(() => {
+			this.game.physics.destroy(bullet);
+			bullet.removeFromParent();
+		}, 5000);
+
+		const force = direction.clone().multiplyScalar(10000);
+
+		const recoil = force.clone().multiplyScalar(-0.2);
+		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
+		bullet.body.applyForce(force.x, force.y, force.z);
+		return bullet;
 	}
 
 	private setVelocity(velocity: THREE.Vector3) {

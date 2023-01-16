@@ -18,6 +18,10 @@ export default class Explosion extends Entity {
 		};
 	}
 
+	public static make(game: Game, position: Vector3, scale = 1, onCollision?: (tank: Tank, distance: number) => void) {
+		new Explosion(game, position, scale, onCollision).addToScene();
+	}
+
 	private static model: {
 		model: THREE.Group;
 		animation: AnimationClip;
@@ -27,31 +31,42 @@ export default class Explosion extends Entity {
 
 	private readonly audio: Audio;
 
-	constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 1, private readonly onCollision?: (tank: Tank, distance: number) => void) {
+	private constructor(game: Game, private readonly position: Vector3, private readonly scale: number = 1, private readonly onCollision?: (tank: Tank, distance: number) => void) {
 		super(game, shortUuid.uuid());
-		this.audio = game.audioManager.createAudio();
-		this.object3d.add(Explosion.model.model.clone());
-		this.object3d.scale.set(0.15 * scale, 0.15 * scale, 0.15 * scale);
-		const light = new THREE.PointLight(0xffdf5e, 3, 20);
-		this.object3d.add(light, this.audio);
-		game.animationMixers.add(this.object3d.anims.mixer);
-		this.object3d.anims.add('IcosphereAction', Explosion.model.animation);
-		this.object3d.anims.mixer.timeScale = 6 / scale;
-		this.object3d.anims.mixer.addEventListener('finished', () => {
-			this.destroy();
-		});
-	}
-
-	addToScene(): void {
 		this.object3d.position.copy(this.position);
-		this.game.scene.add(this.object3d);
+		this.audio = game.audioManager.createAudio();
+		this.object3d.add(this.audio);
+
 		this.audio.play('/sounds/explosion.mp3');
-		this.object3d.anims.play('IcosphereAction', 0, false);
 		if (this.onCollision) {
 			setTimeout(() => {
 				this.checkCollision();
 			}, Explosion.model.animation.duration / this.object3d.anims.mixer.timeScale * 500);
 		}
+	}
+
+	addToScene(): void {
+		const distance = this.game.camera.position.distanceTo(this.position);
+		if (distance > 100) {
+			return;
+		}
+
+		this.object3d.scale.set(0.15 * this.scale, 0.15 * this.scale, 0.15 * this.scale);
+		this.object3d.add(Explosion.model.model.clone());
+		if (distance < 40) {
+			const light = new THREE.PointLight(0xffdf5e, 3, 20);
+			this.object3d.add(light);
+		}
+
+		this.game.animationMixers.add(this.object3d.anims.mixer);
+		this.object3d.anims.add('IcosphereAction', Explosion.model.animation);
+		this.object3d.anims.mixer.timeScale = 6 / this.scale;
+		this.object3d.anims.mixer.addEventListener('finished', () => {
+			this.destroy();
+		});
+
+		this.game.scene.add(this.object3d);
+		this.object3d.anims.play('IcosphereAction', 0, false);
 	}
 
 	destroy(): void {

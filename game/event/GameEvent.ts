@@ -1,6 +1,7 @@
 import Emittery, {type EmitteryOncePromise, type UnsubscribeFunction} from 'emittery';
 import {type Network} from '@game/network/Network';
 import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
+import {type Vector3Tuple} from 'three';
 
 export type GameEvents = {
 	'tank:kill': {
@@ -11,6 +12,10 @@ export type GameEvents = {
 		from: string;
 		to: string;
 		damage: number;
+	};
+	'explosion:create': {
+		position: Vector3Tuple;
+		scale: number;
 	};
 	'tank:shoot': string;
 	'tank:honk': string;
@@ -27,7 +32,6 @@ export default class GameEvent {
 	public setNetwork(network?: Network<NetworkEvents, Metadata>) {
 		this.network = network;
 		this.network?.channel('event').on(({event, data}) => {
-			console.log('receive', event, data);
 			void this.emitter.emit(event as keyof GameEvents, data);
 		});
 	}
@@ -62,9 +66,11 @@ export default class GameEvent {
 	public send<Name extends keyof GameEvents>(
 		event: Name,
 		data: GameEvents[Name],
+		sendToHimself = true,
 	) {
-		console.log('send', event, data);
 		this.network?.channel('event').send({event, data});
-		void this.emitter.emit(event, data); // Emit locally
+		if (sendToHimself) {
+			void this.emitter.emit(event, data);
+		}
 	}
 }
