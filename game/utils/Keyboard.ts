@@ -11,9 +11,26 @@ export class Keyboard<T extends KeyMap> extends Emittery {
 		event: Events | false;
 	}>();
 
+	constructor(private enabled = true) {
+		super();
+	}
+
+	public setEnabled(enabled: boolean) {
+		this.enabled = enabled;
+		if (!enabled) {
+			this.keys.forEach(key => {
+				key.event = false;
+			});
+		}
+	}
+
 	public start() {
 		Keyboard.events.forEach(event => {
 			document.addEventListener(event, e => {
+				if (!this.enabled) {
+					return;
+				}
+
 				if (!e.repeat && this.keys.has(e.code)) {
 					e.preventDefault();
 					const key = this.keys.get(e.code);
@@ -29,8 +46,11 @@ export class Keyboard<T extends KeyMap> extends Emittery {
 
 		// Wheel event
 		document.addEventListener('wheel', e => {
-			void this.emit('wheel', e);
-		});
+			if (this.enabled) {
+				e.preventDefault();
+				void this.emit('wheel', e);
+			}
+		}, {passive: false});
 	}
 
 	addAction<A extends string>(action: A, keys: string[]): Keyboard<T & KeyMap<A>> {

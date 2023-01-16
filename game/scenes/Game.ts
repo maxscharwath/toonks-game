@@ -93,13 +93,12 @@ export default class Game extends ResizeableScene3D {
 	private readonly stats = new Stats();
 
 	private readonly config: GameConfig;
-	private control!: AdvancedThirdPersonControls;
 	private sun!: Sun;
 	private readonly playerController = new PlayerController(this);
 
 	constructor(config: GameConfig) {
 		super({key: 'GameScene'});
-		this.stats.dom.style.cssText = 'position: absolute; bottom: 0; left: 0; z-index: 1000;';
+		this.stats.dom.style.cssText = 'position: absolute; bottom: 0; right: 0; z-index: 1000;';
 		this.config = config;
 		this.events.setNetwork(config.network);
 	}
@@ -190,11 +189,6 @@ export default class Game extends ResizeableScene3D {
 
 		this.playerController.setTank(this.player);
 
-		this.control = new AdvancedThirdPersonControls(this.camera, this.player.object3d, this.renderer.domElement, {
-			offset: new THREE.Vector3(0, 0, 0),
-			targetRadius: 5,
-		});
-		this.control.useThirdPerson();
 		const panel = new GUI();
 		const params = {
 			debug: false,
@@ -280,7 +274,6 @@ export default class Game extends ResizeableScene3D {
 
 	update() {
 		this.stats.begin();
-		this.control.update();
 		this.sun.update();
 		this.playerController.update();
 

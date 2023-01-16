@@ -5,6 +5,7 @@ import PlayersStatus from '@/ui/PlayersStatus';
 import type Game from '@game/scenes/Game';
 import type TankPlayer from '@game/models/TankPlayer';
 import type TankNetwork from '@game/models/TankNetwork';
+import ChatUi from '@/ui/ChatUi';
 
 export default function GameUi({game}: {game: Game}) {
 	const [tanks, setTanks] = useState<TankNetwork[]>([]);
@@ -22,8 +23,9 @@ export default function GameUi({game}: {game: Game}) {
 	}, [game]);
 
 	return (
-		<div>
+		<>
 			<PlayersStatus player={player} tanks={tanks}/>
+			<ChatUi className='absolute bottom-0 left-0 h-1/3 w-full max-w-sm p-3 text-sm'/>
 			<Toaster
 				position='top-right'
 				gutter={4}
@@ -32,6 +34,6 @@ export default function GameUi({game}: {game: Game}) {
 					duration: 2000,
 				}}
 			/>
-		</div>
+		</>
 	);
 }

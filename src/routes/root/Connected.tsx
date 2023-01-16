@@ -3,7 +3,6 @@ import Button from '@/ui/Button';
 import {useNavigate} from 'react-router-dom';
 import {useNetwork} from '@/store/store';
 import TankModel from '@/ui/TankModel';
-import {TankTypeList} from '@game/models/TankType';
 import {Canvas} from '@react-three/fiber';
 
 export default function Connected() {

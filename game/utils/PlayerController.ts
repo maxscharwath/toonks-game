@@ -2,9 +2,10 @@ import {type Scene3D} from 'enable3d/dist/scene3d';
 import type Tank from '@game/models/Tank';
 import {THREE} from 'enable3d';
 import {Keyboard} from '@game/utils/Keyboard';
+import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 
 export default class PlayerController {
-	private readonly keyboard = new Keyboard()
+	private readonly keyboard = new Keyboard(false)
 		.addAction('turnRight', ['KeyD'])
 		.addAction('turnLeft', ['KeyA'])
 		.addAction('moveForward', ['KeyW'])
@@ -16,18 +17,22 @@ export default class PlayerController {
 		.addAction('honk', ['KeyK']);
 
 	private tank?: Tank;
+	private control?: AdvancedThirdPersonControls;
 
 	constructor(private readonly scene3D: Scene3D) {
 	}
 
 	public setTank(tank: Tank) {
 		this.tank = tank;
+		this.control?.setTarget(tank.object3d);
 	}
 
 	public update() {
 		if (!this.tank) {
 			return;
 		}
+
+		this.control?.update();
 
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
@@ -76,6 +81,18 @@ export default class PlayerController {
 	}
 
 	init() {
+		this.control = new AdvancedThirdPersonControls(this.scene3D.camera, this.scene3D.renderer.domElement, {
+			offset: new THREE.Vector3(0, 0, 0),
+			targetRadius: 5,
+		});
+		this.control.onPointerLockChange(isLocked => {
+			this.keyboard.setEnabled(isLocked);
+		});
+
+		if (this.tank) {
+			this.control.setTarget(this.tank.object3d);
+		}
+
 		this.keyboard.start();
 		this.keyboard.on('wheel', (event: WheelEvent) => {
 			if (this.tank) {

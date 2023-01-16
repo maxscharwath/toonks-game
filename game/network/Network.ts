@@ -9,6 +9,7 @@ export enum NetworkStatus {
 }
 
 export type Message = {
+	peer: string;
 	channel: string;
 	data: unknown;
 };
@@ -48,19 +49,24 @@ export abstract class Network<T = Record<string, any>, Metadata = never> extends
 
 	abstract isHost: boolean;
 
-	protected channelEmitter = new Emittery();
+	protected channelEmitter = new Emittery<{
+		[K in keyof T]: {
+			peer: string;
+			data: T[K];
+		};
+	}>();
 
-	public channel<U extends keyof T>(channel: U) {
+	public channel<U extends keyof T>(channel: U, checkPeer = true) {
 		return {
-			on: (listener: (data: T[U]) => void) => this.channelEmitter.on(channel, listener),
-			once: () => this.channelEmitter.once(channel),
-			off: (listener: (data: T[U]) => void) => {
-				this.channelEmitter.off(channel, listener);
-			},
+			on: (listener: (data: T[U], peer: PeerData) => void) => this.channelEmitter.on(channel, msg => {
+				const peerData = this.connectedPeers().find(peer => peer.uuid === msg.peer);
+				if (!checkPeer || peerData) {
+					listener(msg.data as T[U], peerData!);
+				}
+			}),
 			send: (data: T[U]) => {
 				this.send(channel as string, data);
 			},
-			iterator: () => this.channelEmitter.events(channel),
 		};
 	}
 
@@ -74,8 +80,11 @@ export abstract class Network<T = Record<string, any>, Metadata = never> extends
 
 	abstract getMetadata(): Metadata | undefined;
 
+	abstract getPeerData(): PeerData | undefined;
+
 	protected handleMessage(connection: DataConnection, data: Message) {
-		void this.channelEmitter.emit(data.channel, data.data);
+		const {channel, ...message} = data;
+		void this.channelEmitter.emit(channel as keyof T, message as any);
 	}
 
 	protected abstract addConnection(connection: DataConnection): void;

@@ -15,4 +15,5 @@ export type NetworkEvents = {
 	leave: {peer: PeerData; peers: PeerData[]};
 	update: any;
 	event: {event: string; data: any};
+	chat: {message: string; date: string};
 };

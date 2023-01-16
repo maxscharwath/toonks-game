@@ -62,10 +62,6 @@ export default class Explosion extends Entity {
 		this.object3d.removeFromParent();
 	}
 
-	update(): void {
-		// Do nothing
-	}
-
 	export(): Record<string, unknown> {
 		return {};
 	}

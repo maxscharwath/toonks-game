@@ -326,6 +326,10 @@ export default class Tank extends Entity {
 		this.properties.getProperty('health').value = value;
 	}
 
+	public get position() {
+		return this.properties.getProperty('position').value;
+	}
+
 	public get type() {
 		return this.properties.getProperty('type').value;
 	}
@@ -419,6 +423,7 @@ export default class Tank extends Entity {
 	}
 
 	public update() {
+		super.update();
 		const n = this.vehicle.getNumWheels();
 		for (let i = 0; i < n; i++) {
 			this.vehicle.updateWheelTransform(i, true);

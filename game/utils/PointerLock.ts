@@ -1,12 +1,20 @@
-export class PointerLock {
+import Emittery from 'emittery';
+
+export class PointerLock extends Emittery<{
+	pointerlockchange: boolean;
+}> {
 	constructor(private readonly element: HTMLElement) {
+		super();
+		document.addEventListener('pointerlockchange', event => {
+			void this.emit('pointerlockchange', this.isLocked());
+		});
 		element.addEventListener('pointerdown', () => {
 			this.lock();
 		});
 	}
 
 	public isLocked() {
-		return Boolean(document.pointerLockElement);
+		return document.pointerLockElement === this.element;
 	}
 
 	public lock() {

@@ -63,7 +63,13 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 	}
 
 	public send(channel: string, data: unknown): void {
-		this.broadcast({channel, data});
+		if (this.peer) {
+			this.broadcast({
+				channel,
+				data,
+				peer: this.peer.id,
+			});
+		}
 	}
 
 	public setHandleConnection(handleConnection: HandleConnection): void {
@@ -72,11 +78,18 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 
 	public connectedPeers(): PeerData[] {
 		const peers = Array.from(this.connections).map(connection => ({uuid: connection.peer, metadata: connection.metadata as Metadata}));
-		if (this.metadata && this.peer) {
-			peers.push({uuid: this.peer.id, metadata: this.metadata});
+		const peerData = this.getPeerData();
+		if (peerData) {
+			peers.push(peerData);
 		}
 
 		return peers;
+	}
+
+	public getPeerData(): PeerData | undefined {
+		if (this.metadata && this.peer) {
+			return {uuid: this.peer.id, metadata: this.metadata};
+		}
 	}
 
 	public getMetadata() {
@@ -124,10 +137,13 @@ export class ServerNetwork extends Network<NetworkEvents, Metadata> {
 
 	protected handleMessage(connection: DataConnection, data: Message): void {
 		super.handleMessage(connection, data);
-		this.broadcast(data, connection);
+		this.broadcast({
+			...data,
+			peer: connection.peer,
+		}, connection);
 	}
 
-	private broadcast(data: unknown, exclude?: DataConnection): void {
+	private broadcast(data: Message, exclude?: DataConnection): void {
 		this.connections.forEach(connection => {
 			if (connection !== exclude) {
 				connection.send(data);

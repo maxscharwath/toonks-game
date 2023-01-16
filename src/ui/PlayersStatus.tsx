@@ -7,7 +7,7 @@ import React, {useEffect, useState} from 'react';
 
 function PlayerAvatar(props: {src: string; isDead: boolean; className?: string}) {
 	return (
-		<div className={clsx('aspect-square overflow-hidden bg-gray-800', props.className)}>
+		<div className={clsx('aspect-square overflow-hidden bg-gray-900/50', props.className)}>
 			{ props.isDead && (<motion.div
 				className='absolute inset-0 flex h-full w-full items-center justify-center bg-gray-900/75'
 				initial={{opacity: 0}}
@@ -41,21 +41,21 @@ function HealthBar(props: {health: number; maxHealth: number; className?: string
 	});
 
 	return (
-		<div className={clsx('flex items-start space-x-1', props.className)}>
+		<div className={clsx('flex items-start', props.className)}>
 			{bars.map((p, i) => (
 				<div
 					style={{width: `${100 / maxNbBars}%`}} key={`health-bar-${i}`}
-					className={clsx('relative h-full overflow-hidden bg-white/50', props.barClassName)}
+					className={clsx('relative h-full overflow-hidden bg-gray-900/50 backdrop-blur', props.barClassName)}
 				>
 					<motion.div
-						className='absolute inset-0 h-full'
+						className='absolute inset-0 h-full bg-gradient-to-b from-white/50 to-black/30 bg-blend-lighten shadow-md'
 						initial={{
 							width: '100%',
-							backgroundColor: 'hsla(163, 94%, 24%, 0.75)',
+							backgroundColor: 'rgba(0,151,107,0.5)',
 						}}
 						animate={{
 							width: `${p}%`,
-							backgroundColor: healthPercent > 50 ? 'hsla(163, 94%, 24%, 0.75)' : healthPercent > 30 ? 'hsla(32, 95%, 44%, 0.75)' : 'hsla(0, 74%, 42%, 0.75)',
+							backgroundColor: healthPercent > 50 ? 'rgba(0,151,107,0.5)' : healthPercent > 30 ? 'rgba(219,119,6,0.5)' : 'rgba(186,28,28,0.5)',
 							opacity: healthPercent > 30 || healthPercent <= 0 ? 1 : 0,
 						}}
 						transition={{
@@ -73,20 +73,14 @@ function HealthBar(props: {health: number; maxHealth: number; className?: string
 	);
 }
 
-function PlayerStatus({
-	tankRaw,
-	isPlayer,
-}: {
-	tankRaw: Tank;
-	isPlayer: boolean;
-}) {
+function PlayerStatus({tank, isPlayer}: {tank: Tank; isPlayer: boolean}) {
 	const [tankData, setTankData] = useState({
-		type: tankRaw.type,
-		pseudo: tankRaw.pseudo,
-		health: tankRaw.health,
+		type: tank.type,
+		pseudo: tank.pseudo,
+		health: tank.health,
 	});
 	useEffect(() => {
-		const unregister = tankRaw.properties
+		const unregister = tank.properties
 			.getProperty('health')
 			.onChange(health => {
 				console.log('tank health changed', health);
@@ -99,13 +93,13 @@ function PlayerStatus({
 		return () => {
 			unregister();
 		};
-	}, [tankRaw]);
+	}, [tank]);
 
 	return (
 		<div
 			className={clsx('scale-100 transform-gpu', 'flex text-xl text-white')}
 			onClick={() => {
-				tankRaw.hit(5);
+				tank.hit(5);
 			}}
 		>
 			<PlayerAvatar
@@ -113,17 +107,25 @@ function PlayerStatus({
 				isDead={tankData.health <= 0}
 				className={clsx({
 					'h-24 2xl:h-32 rounded-xl': isPlayer,
-					'h-14 2xl:h-18 rounded-md': !isPlayer},
-				'relative border-2 border-gray-900/50 shadow-inner drop-shadow-md')}
+					'h-14 2xl:h-18 rounded-md outline-2': !isPlayer},
+				'relative outline outline-gray-900/80 drop-shadow-md')}
 			/>
-			<div className={clsx({'w-64 2xl:w-72 rounded-md mt-1 ml-2 space-y-2': isPlayer, 'w-32 2xl:w-36 rounded-md mt-0.5 ml-1 space-y-1': !isPlayer})}>
+			<div className={clsx({
+				'w-64 2xl:w-72 rounded-md mt-1 ml-2 space-y-2': isPlayer,
+				'w-32 2xl:w-36 rounded-md mt-0.5 ml-1 space-y-1': !isPlayer,
+			})}>
 				<HealthBar
 					health={tankData.health} maxHealth={100}
-					className={clsx({'h-10 2xl:h-14': isPlayer, 'h-6': !isPlayer})}
-					barClassName={clsx({'rounded-md': isPlayer, rounded: !isPlayer}, 'border-2 border-gray-900/50 shadow-inner drop-shadow-md')}
+					className={clsx({'h-10 2xl:h-14 space-x-2': isPlayer, 'h-6 space-x-1': !isPlayer})}
+					barClassName={clsx({'rounded-md': isPlayer, 'rounded outline-2': !isPlayer}, 'outline outline-gray-900/80 drop-shadow-md')}
 				/>
 				<div
-					className={clsx({'h-10 p-2 2xl:h-14 2xl:p-4 rounded-md leading-none': isPlayer, 'h-6 p-1 rounded text-xs leading-tight': !isPlayer}, 'truncate bg-gray-900/50 font-medium')}
+					className={clsx({
+						'h-10 p-2 2xl:h-14 2xl:p-4 rounded-md leading-none': isPlayer,
+						'h-6 p-1 rounded text-xs leading-tight outline-2': !isPlayer,
+					},
+					'truncate bg-gray-900/50 font-medium outline outline-gray-900/80 drop-shadow-md backdrop-blur',
+					)}
 				>
 					{tankData.pseudo}
 				</div>
@@ -133,18 +135,39 @@ function PlayerStatus({
 	);
 }
 
-export default function PlayersStatus({
-	player,
-	tanks,
-}: {
-	player?: TankPlayer;
-	tanks: Tank[];
-}) {
+function PlayerInfo({tank}: {tank: Tank}) {
+	const [x, setX] = useState('');
+	const [y, setY] = useState('');
+	const [z, setZ] = useState('');
+
+	useEffect(() => {
+		const unregister = tank.on('update', () => {
+			setX(tank.position.x.toFixed(0));
+			setY(tank.position.y.toFixed(0));
+			setZ(tank.position.z.toFixed(0));
+		});
+
+		return () => {
+			unregister();
+		};
+	}, [tank]);
+
+	return (
+		<p className='space-x-2 text-xl text-white'>
+			<span>x: {x}</span>
+			<span>y: {y}</span>
+			<span>z: {z}</span>
+		</p>
+	);
+}
+
+export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tanks: Tank[]}) {
 	return (
 		<div className='absolute top-0 left-0 z-10 m-4 flex flex-col justify-start space-y-4'>
-			{player && <PlayerStatus tankRaw={player} isPlayer={true} />}
+			{player && <PlayerStatus tank={player} isPlayer={true} />}
+			{player && <PlayerInfo tank={player} />}
 			{tanks.map(tank => (
-				<PlayerStatus tankRaw={tank} isPlayer={false} key={tank.uuid} />
+				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid} />
 			))}
 		</div>
 	);

@@ -11,15 +11,19 @@ export class Audio extends THREE.PositionalAudio {
 	}
 
 	async playAsync(src?: string, delay?: number) {
-		if (src) {
-			await this.setBufferAsync(src);
-		}
+		try {
+			if (src) {
+				await this.setBufferAsync(src);
+			}
 
-		if (this.isPlaying) {
-			this.stop();
-		}
+			if (this.isPlaying) {
+				this.stop();
+			}
 
-		super.play(delay);
+			super.play(delay);
+		} catch (e) {
+			console.log(e);
+		}
 	}
 
 	play(delay?: number): this;

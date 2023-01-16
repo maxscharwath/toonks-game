@@ -16,12 +16,12 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 
 	public constructor() {
 		super();
-		this.channel('join').on(({peer: peerData, peers}) => {
+		this.channel('join', false).on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
 			void this.emit('join', peerData.metadata.name);
 		});
-		this.channel('leave').on(({peer: peerData, peers}) => {
+		this.channel('leave', false).on(({peer: peerData, peers}) => {
 			this.peers = peers;
 			void this.emit('peers', peers);
 			void this.emit('leave', peerData.metadata.name);
@@ -38,6 +38,7 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 				.once('open', () => {
 					const connection = peer.connect(options?.id, {
 						metadata: options.metadata,
+						serialization: 'json',
 					});
 					connection
 						.once('open', () => {
@@ -69,7 +70,13 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 	}
 
 	send(channel: string, data: unknown): void {
-		this.connection?.send({channel, data});
+		if (this.peer) {
+			this.connection?.send({
+				channel,
+				data,
+				peer: this.peer.id,
+			});
+		}
 	}
 
 	public connectedPeers(): PeerData[] {
@@ -78,6 +85,15 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 
 	public getMetadata() {
 		return this.metadata;
+	}
+
+	public getPeerData(): PeerData | undefined {
+		if (this.peer && this.metadata) {
+			return {
+				uuid: this.peer.id,
+				metadata: this.metadata,
+			};
+		}
 	}
 
 	protected addConnection(connection: DataConnection): void {
