@@ -53,6 +53,16 @@ export default class TankNetwork extends Tank {
 		}, true);
 	}
 
+	public die() {
+		this.setCollisionFlags(0);
+		super.die();
+	}
+
+	public init() {
+		this.setCollisionFlags(2);
+		super.init();
+	}
+
 	public update(delta: number) {
 		super.update(delta);
 		void this.lerpTransform();

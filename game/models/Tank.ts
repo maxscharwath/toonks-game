@@ -7,6 +7,7 @@ import {Properties} from '@game/utils/Properties';
 import type Game from '@game/scenes/Game';
 import {type TankType, TankTypes} from '@game/models/TankType';
 import {type Audio} from '@game/utils/AudioManager';
+import Random from '@game/utils/Random';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -143,6 +144,7 @@ export default class Tank extends Entity {
 		);
 
 		this.vehicle.setCoordinateSystem(0, 1, 2);
+		this.game.physics.physicsWorld.addAction(this.vehicle);
 
 		this.init();
 
@@ -342,7 +344,17 @@ export default class Tank extends Entity {
 	}
 
 	public die() {
-		this.game.physics.physicsWorld.removeAction(this.vehicle);
+		const random = new Random();
+		this.chassis.body.applyForce(
+			random.number(-15000, 15000),
+			random.number(10000, 15000),
+			random.number(-15000, 15000),
+		);
+		this.chassis.body.applyTorque(
+			random.number(-10000, 10000),
+			random.number(-10000, 10000),
+			random.number(-10000, 10000),
+		);
 		this.game.physics.physicsWorld.removeConstraint(this.turretMotor);
 		this.game.physics.physicsWorld.removeConstraint(this.canonMotor);
 	}
@@ -361,7 +373,7 @@ export default class Tank extends Entity {
 	}
 
 	public shoot() {
-		if (this.lastShot + 750 > Date.now()) {
+		if (this.lastShot + 750 > Date.now() || this.isDead()) {
 			return false;
 		}
 
@@ -433,27 +445,29 @@ export default class Tank extends Entity {
 			this.wheelMeshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
 		}
 
-		const {engineForce, breakingForce, steering, speed} = this;
+		if (!this.isDead()) {
+			const {engineForce, breakingForce, steering, speed} = this;
 
-		this.vehicle.setSteeringValue(
-			steering,
-			WheelPosition.FrontLeft,
-		);
-		this.vehicle.setSteeringValue(
-			steering,
-			WheelPosition.FrontRight,
-		);
+			this.vehicle.setSteeringValue(
+				steering,
+				WheelPosition.FrontLeft,
+			);
+			this.vehicle.setSteeringValue(
+				steering,
+				WheelPosition.FrontRight,
+			);
 
-		this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
-		this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
+			this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontLeft);
+			this.vehicle.applyEngineForce(engineForce, WheelPosition.FrontRight);
 
-		this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
-		this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
-		this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
-		this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
+			this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontLeft);
+			this.vehicle.setBrake(breakingForce / 2, WheelPosition.FrontRight);
+			this.vehicle.setBrake(breakingForce, WheelPosition.RearLeft);
+			this.vehicle.setBrake(breakingForce, WheelPosition.RearRight);
 
-		this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearLeft);
-		this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearRight);
+			this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearLeft);
+			this.vehicle.applyEngineForce(-speed * 75, WheelPosition.RearRight);
+		}
 	}
 
 	public addToScene() {
@@ -526,8 +540,6 @@ export default class Tank extends Entity {
 
 		// Set the limits of the canon
 		this.canonMotor.setLimit(-Math.PI / 4, Math.PI / 4, 0.9, 0.3);
-
-		this.game.physics.physicsWorld.addAction(this.vehicle);
 	}
 
 	protected async updatePhysics() {
