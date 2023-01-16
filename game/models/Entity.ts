@@ -14,7 +14,7 @@ export default abstract class Entity extends Emittery<{
 		super();
 	}
 
-	public update(): void {
+	public update(delta: number): void {
 		void this.emit('update');
 	}
 

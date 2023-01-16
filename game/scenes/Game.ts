@@ -272,7 +272,7 @@ export default class Game extends ResizeableScene3D {
 		this.playerController.update();
 
 		this.tanks.forEach(entity => {
-			entity.update();
+			entity.update(delta);
 			if (entity instanceof TankNetwork && entity.getLastUpdate() + (5000 + delta) < Date.now()) {
 				this.tanks.remove(entity);
 			}

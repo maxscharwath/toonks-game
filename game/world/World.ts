@@ -77,8 +77,8 @@ export class World {
 	public async getSpawnPosition(): Promise<Vector3> {
 		const random = new Random();
 		return this.getPosition(
-			random.number(400, 600),
-			random.number(400, 600),
+			random.number(450, 550),
+			random.number(450, 550),
 		);
 	}
 

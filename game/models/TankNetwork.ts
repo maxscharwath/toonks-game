@@ -4,20 +4,33 @@ import type Game from '@game/scenes/Game';
 
 export default class TankNetwork extends Tank {
 	protected readonly targetTransform: {
-		position?: THREE.Vector3;
-		rotation?: THREE.Quaternion;
+		position?: {
+			from: THREE.Vector3;
+			to: THREE.Vector3;
+		};
+		rotation?: {
+			from: THREE.Quaternion;
+			to: THREE.Quaternion;
+		};
 	} = {};
 
 	private lastUpdate: number = Date.now();
+	private updateDelta = 0;
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string) {
 		super(game, position, uuid);
 		this.setCollisionFlags(2);
 		this.properties.getProperty('position').onChange(position => {
-			this.targetTransform.position = position;
+			this.targetTransform.position = {
+				from: this.object3d.position.clone(),
+				to: position,
+			};
 		}, true);
 		this.properties.getProperty('rotation').onChange(rotation => {
-			this.targetTransform.rotation = rotation;
+			this.targetTransform.rotation = {
+				from: this.object3d.quaternion.clone(),
+				to: rotation,
+			};
 		}, true);
 
 		const texture = new FLAT.TextTexture('Toonks', {
@@ -40,9 +53,9 @@ export default class TankNetwork extends Tank {
 		}, true);
 	}
 
-	public update() {
+	public update(delta: number) {
+		super.update(delta);
 		void this.lerpTransform();
-		super.update();
 	}
 
 	public getLastUpdate(): number {
@@ -50,23 +63,30 @@ export default class TankNetwork extends Tank {
 	}
 
 	public networkUpdate(state: Partial<TankState>): void {
-		this.lastUpdate = Date.now();
+		const now = Date.now();
+		this.updateDelta = now - this.lastUpdate;
+		this.lastUpdate = now;
 		this.import(state);
 	}
 
 	private async lerpTransform() {
-		if (this.isDead()) {
+		if (this.isDead() || !this.targetTransform) {
 			return;
 		}
 
-		const targetPosition = this.targetTransform.position ?? this.object3d.position;
-		const targetRotation = this.targetTransform.rotation ?? this.object3d.quaternion;
-		const diffPosition = this.object3d.position.distanceTo(targetPosition);
-		const diffRotation = this.object3d.quaternion.angleTo(targetRotation);
-		if (diffPosition > 0.2 || diffRotation > 0.2) {
-			this.object3d.position.lerp(targetPosition, diffPosition * 0.1);
-			this.object3d.quaternion.slerp(targetRotation, diffRotation * 0.1);
-			await this.updatePhysics();
+		const timeSinceLastUpdate = Date.now() - this.lastUpdate;
+		const delta = Math.min(timeSinceLastUpdate / this.updateDelta, 1);
+
+		if (this.targetTransform.position) {
+			const {from, to} = this.targetTransform.position;
+			this.object3d.position.lerpVectors(from, to, delta);
 		}
+
+		if (this.targetTransform.rotation) {
+			const {from, to} = this.targetTransform.rotation;
+			this.object3d.quaternion.slerpQuaternions(from, to, delta);
+		}
+
+		await this.updatePhysics();
 	}
 }

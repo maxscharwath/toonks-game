@@ -421,8 +421,8 @@ export default class Tank extends Entity {
 		return this.canon.getWorldDirection(new THREE.Vector3());
 	}
 
-	public update() {
-		super.update();
+	public update(delta: number) {
+		super.update(delta);
 		const n = this.vehicle.getNumWheels();
 		for (let i = 0; i < n; i++) {
 			this.vehicle.updateWheelTransform(i, true);
