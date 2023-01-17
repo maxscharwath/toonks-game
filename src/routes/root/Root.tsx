@@ -1,11 +1,10 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Logo from '@/ui/Logo';
 import Register from '@/routes/root/Register';
 import {useAudio, useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
-import {Howl} from 'howler';
 
 function useToggleTimeout(initial: boolean, timeout: number) {
 	const [value, setValue] = useState(initial);

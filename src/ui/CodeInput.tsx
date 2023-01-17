@@ -45,13 +45,17 @@ export default function CodeInput(props: CodeInputProps) {
 
 	const [activeIndex, setActiveIndex] = useState(0);
 
-	const [code, setCode] = useState(Array.from({length}, (_, i) => value[i] ?? ''));
+	const [code, setCode] = useState<string[]>([]);
 
 	function focusIndex(index: number) {
 		setActiveIndex(Math.max(0, Math.min(index, length - 1)));
 	}
 
 	function editCode(from: number, value: string): number {
+		if (code.join('') === value) {
+			return from;
+		}
+
 		const transformed = transform(value);
 		const newCode = Array.from({length}, (_, i) => (
 			((i === from) && !value) ? '' : transformed[i - from] ?? code[i] ?? ''
