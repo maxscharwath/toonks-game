@@ -1,13 +1,22 @@
 import Entity from '@game/models/Entity';
 import type * as Plugins from '@enable3d/three-graphics/jsm/plugins';
 import {type Vector3} from 'three';
-import {type GLTF} from 'three/examples/jsm/loaders/GLTFLoader';
 import shortUuid from 'short-uuid';
 import type Game from '@game/scenes/Game';
 import {type Audio} from '@game/utils/AudioManager';
 import {ExtendedObject3D, THREE} from 'enable3d';
 import type Tank from '@game/models/Tank';
 import {type AnimationClip} from 'three/src/Three';
+
+function lightBuffer(): () => THREE.PointLight {
+	const lights = Array.from({length: 3}, () => new THREE.PointLight(0xffdf5e, 3, 20, 2));
+	let i = 0;
+	return () => {
+		const light = lights[i];
+		i = (i + 1) % lights.length;
+		return light;
+	};
+}
 
 export default class Explosion extends Entity {
 	static async loadModel(loader: Plugins.Loaders, url: string) {
@@ -26,6 +35,8 @@ export default class Explosion extends Entity {
 		model: THREE.Group;
 		animation: AnimationClip;
 	};
+
+	private static readonly light = lightBuffer();
 
 	readonly object3d = new ExtendedObject3D();
 
@@ -54,8 +65,7 @@ export default class Explosion extends Entity {
 		this.object3d.scale.set(0.15 * this.scale, 0.15 * this.scale, 0.15 * this.scale);
 		this.object3d.add(Explosion.model.model.clone());
 		if (distance < 40) {
-			const light = new THREE.PointLight(0xffdf5e, 3, 20);
-			this.object3d.add(light);
+			this.object3d.add(Explosion.light());
 		}
 
 		this.game.animationMixers.add(this.object3d.anims.mixer);
@@ -89,7 +99,6 @@ export default class Explosion extends Entity {
 		const scale = this.scale * 1.5;
 		this.game.tanks.forEach(tank => {
 			const distance = this.object3d.position.distanceTo(tank.object3d.position);
-			console.log('Collision', tank.uuid, distance, scale);
 			if (distance < scale) {
 				this.onCollision?.(tank, distance);
 			}

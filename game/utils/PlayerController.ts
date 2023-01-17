@@ -3,6 +3,7 @@ import {THREE} from 'enable3d';
 import {Keyboard} from '@game/utils/Keyboard';
 import {AdvancedThirdPersonControls} from '@game/utils/AdvancedThirdPersonControls';
 import type Game from '@game/scenes/Game';
+import type TankPlayer from '@game/models/TankPlayer';
 
 export default class PlayerController {
 	private readonly keyboard = new Keyboard(false)
@@ -22,7 +23,7 @@ export default class PlayerController {
 	constructor(private readonly game: Game) {
 	}
 
-	public setTank(tank: Tank) {
+	public setTank(tank: TankPlayer) {
 		this.tank = tank;
 		this.control?.setTarget(tank.object3d);
 	}
@@ -82,8 +83,9 @@ export default class PlayerController {
 
 	init() {
 		this.control = new AdvancedThirdPersonControls(this.game.camera, this.game.renderer.domElement, {
-			offset: new THREE.Vector3(0, 0, 0),
-			targetRadius: 5,
+			offset: new THREE.Vector3(0, 0.5, 0),
+			targetRadius: 6,
+			autoUpdate: false,
 		});
 		this.control.onPointerLockChange(isLocked => {
 			this.keyboard.setEnabled(isLocked);

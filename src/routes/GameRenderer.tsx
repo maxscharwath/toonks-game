@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {initGame} from '@game/main';
-import {useNetwork} from '@/store/store';
+import {useAudio, useNetwork} from '@/store/store';
 import GameUi from '@/ui/GameUi';
 import {toast} from 'react-hot-toast';
 import ConnectionToast from '@/ui/toast/ConnectionToast';
@@ -13,7 +13,10 @@ export default function GameRenderer() {
 	const {network} = useNetwork();
 	const [game, setGame] = useState<Game>();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const audio = useAudio();
 	useEffect(() => {
+		audio.backsound.fade(1.0, 0.0, 5000);
+
 		if (!network) {
 			window.location.href = '/';
 		}

@@ -12,7 +12,6 @@ export default function GameUi({game}: {game: Game}) {
 
 	useEffect(() => {
 		const unregister = game.tanks.events.on(['add', 'remove'], () => {
-			console.log(player === game.player);
 			setPlayer(game.player);
 			setTanks(game.tanks.getNetworks());
 		});

@@ -3,6 +3,7 @@ import {Network, NetworkStatus} from '@game/network/Network';
 import {ClientNetwork} from '@game/network/ClientNetwork';
 import {ServerNetwork} from '@game/network/ServerNetwork';
 import {type Metadata, type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
+import {Howl} from 'howler';
 
 type Store = {
 	hostGame: (metadata: Metadata) => Promise<{code: string; network: ServerNetwork}>;
@@ -51,3 +52,12 @@ export const useNetwork = create<Store>((set, get) => {
 		},
 	};
 });
+
+export const useAudio = create<{
+	backsound: Howl;
+}>(() => ({
+	backsound: new Howl({
+		src: ['/audio/Eyes_on_the_Podium.mp3'],
+		volume: 0.5,
+	}),
+}));

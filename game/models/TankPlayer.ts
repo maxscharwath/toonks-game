@@ -41,6 +41,7 @@ class ShootHelper extends Line2 {
 }
 
 export default class TankPlayer extends Tank {
+	public camera: THREE.PerspectiveCamera;
 	private readonly shootHelper = new ShootHelper(this);
 	public constructor(game: Game, position: THREE.Vector3, uuid?: string) {
 		super(game, position, uuid);
@@ -52,6 +53,11 @@ export default class TankPlayer extends Tank {
 		this.properties.getProperty('canonAngle').onChange(() => {
 			this.shootHelper.update();
 		}, true);
+
+		this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+		this.camera.position.set(0, 0, 0);
+		this.camera.rotateY(Math.PI);
+		this.turret.add(this.camera);
 	}
 
 	shoot() {
@@ -82,6 +88,7 @@ export default class TankPlayer extends Tank {
 			Explosion.make(this.game, position, 5, tank => {
 				if (tank !== this) {
 					this.game.events.send('tank:hit', {
+						position: position.toArray(),
 						from: this.uuid,
 						to: tank.uuid,
 						damage: 10,

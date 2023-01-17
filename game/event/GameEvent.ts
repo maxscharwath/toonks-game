@@ -9,6 +9,7 @@ export type GameEvents = {
 		killed: string;
 	};
 	'tank:hit': {
+		position: Vector3Tuple;
 		from: string;
 		to: string;
 		damage: number;

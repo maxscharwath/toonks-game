@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import Logo from '@/ui/Logo';
 import Register from '@/routes/root/Register';
-import {useNetwork} from '@/store/store';
+import {useAudio, useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
@@ -23,13 +23,10 @@ function useToggleTimeout(initial: boolean, timeout: number) {
 export default function Root() {
 	const {status} = useNetwork();
 	const [confetti, toggleConfetti] = useToggleTimeout(false, 2000);
-	const audio = useRef(new Howl({
-		src: ['/audio/Eyes_on_the_Podium.mp3'],
-		volume: 0.5,
-	}));
+	const audio = useAudio();
 
 	useEffect(() => {
-		audio.current.play();
+		audio.backsound.play();
 	}, []);
 
 	useEffect(() => {

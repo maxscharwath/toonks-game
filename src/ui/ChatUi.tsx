@@ -33,9 +33,14 @@ export default function ChatUi(props: {className?: string}) {
 	const {network} = useNetwork();
 	const [messages, setMessages] = useState<Message[]>([]);
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	const lastMessageTime = useRef(0);
 
 	function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		if (Date.now() - lastMessageTime.current < 600) {
+			return;
+		}
+
 		const message = inputRef.current?.value;
 		if (message) {
 			send(message);
@@ -63,6 +68,7 @@ export default function ChatUi(props: {className?: string}) {
 				message,
 				date,
 			});
+			lastMessageTime.current = Date.now();
 		}
 	}
 

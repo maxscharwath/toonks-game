@@ -28,7 +28,9 @@ export default function PlayerInfosSelection({setTank, setName}: Props) {
 	};
 
 	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setName(e.target.value);
+		const value = e.target.value.trim().slice(0, 16);
+		setName(value);
+		e.target.value = value;
 	};
 
 	return (
