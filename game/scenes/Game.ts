@@ -16,6 +16,7 @@ import {type Metadata, type NetworkEvents} from '@game/network/NetworkEvents';
 import {type Network} from '@game/network/Network';
 import AudioManager from '@game/utils/AudioManager';
 import Emittery from 'emittery';
+import {pointLightBuffer} from '@game/utils/LightBuffer';
 
 export type GameConfig = {
 	network: Network<NetworkEvents, Metadata>;
@@ -135,7 +136,7 @@ export default class Game extends ResizeableScene3D {
 
 	async create() {
 		this.audioManager.setCamera(this.camera);
-
+		pointLightBuffer.init(this);
 		this.sun = new Sun(this);
 		this.scene.add(this.sun);
 		// Fog
