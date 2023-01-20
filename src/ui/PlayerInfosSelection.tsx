@@ -19,12 +19,12 @@ export default function PlayerInfosSelection({setTank, setName}: Props) {
 
 	const nextTank = () => {
 		setIndex((index + 1) % TankTypeList.length);
-		setDirection(1);
+		setDirection(-1);
 	};
 
 	const prevTank = () => {
 		setIndex((index - 1 + TankTypeList.length) % TankTypeList.length);
-		setDirection(-1);
+		setDirection(1);
 	};
 
 	const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {

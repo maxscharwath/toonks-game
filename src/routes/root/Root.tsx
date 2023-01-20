@@ -5,6 +5,8 @@ import {useAudio, useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
+import Button from '../../ui/Button';
+import SettingsMenu from '@/ui/SettingsMenu';
 
 function useToggleTimeout(initial: boolean, timeout: number) {
 	const [value, setValue] = useState(initial);
@@ -44,6 +46,10 @@ export default function Root() {
 				<div
 					className='w-full rounded-lg bg-white/90 shadow backdrop-blur dark:border dark:border-gray-700 dark:bg-gray-800/90 sm:max-w-xl md:mt-0 xl:p-0'>
 					{status === NetworkStatus.Connected ? <Connected/> : <Register/>}
+				</div>
+
+				<div className='fixed top-2 left-2'>
+					<SettingsMenu />
 				</div>
 			</div>
 		</>

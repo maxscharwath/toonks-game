@@ -61,9 +61,19 @@ export const useNetwork = create<Store>((set, get) => {
 
 export const useAudio = create<{
 	backsound: Howl;
+	toggleBacksound: () => void;
+	setBacksoundVolume: (volume: number) => void;
 }>(() => ({
-	backsound: new Howl({
-		src: ['/audio/Eyes_on_the_Podium.mp3'],
-		volume: 0.5,
-	}),
-}));
+			backsound: new Howl({
+				src: ['/audio/Eyes_on_the_Podium.mp3'],
+				loop: true,
+				volume: 0.5,
+				mute: false,
+			}),
+			toggleBacksound() {
+				this.backsound.mute(!this.backsound.mute());
+			},
+			setBacksoundVolume(volume: number) {
+				this.backsound.volume(volume);
+			},
+		}));
