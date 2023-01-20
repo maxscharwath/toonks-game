@@ -12,6 +12,7 @@ type Store = {
 	network?: Network<NetworkEvents, Metadata>;
 	status: NetworkStatus;
 	peers: PeerData[];
+	readonly maxNbPlayers: number;
 };
 
 export const useNetwork = create<Store>((set, get) => {
@@ -35,6 +36,9 @@ export const useNetwork = create<Store>((set, get) => {
 		async hostGame(metadata: Metadata) {
 			const {full, code} = Network.createRoomId({prefix: 'TOONKS', length: 6});
 			const network = switchNetwork(new ServerNetwork(full));
+
+			network.setHandleConnection(() => network.getConnections().length + 1 < get().maxNbPlayers);
+
 			await network.connect({
 				metadata,
 			});
@@ -47,9 +51,11 @@ export const useNetwork = create<Store>((set, get) => {
 				id: Network.createRoomId({prefix: 'TOONKS', value: code}).full,
 				metadata,
 			});
+
 			set({code});
 			return {network, code};
 		},
+		maxNbPlayers: 6,
 	};
 });
 
