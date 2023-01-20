@@ -116,12 +116,12 @@ function PlayerStatus({tank, isPlayer, children}: {tank: Tank; isPlayer: boolean
 						'h-10 p-2 2xl:h-14 2xl:p-4 rounded-md leading-none': isPlayer,
 						'h-6 p-1 rounded text-xs leading-tight outline-2': !isPlayer,
 					},
-					'truncate bg-gray-900/50 font-medium outline outline-gray-900/80 drop-shadow-md backdrop-blur',
+					'flex items-center justify-between bg-gray-900/50 font-medium outline outline-gray-900/80 drop-shadow-md backdrop-blur',
 					)}
 				>
-					{tankData.pseudo}
+					<span className='truncate'>{tankData.pseudo}</span>
+					{children}
 				</div>
-				{children}
 			</div>
 		</div>
 
@@ -154,7 +154,7 @@ function PlayerInfo({tank}: {tank: Tank}) {
 	);
 }
 
-function PlayerCompas({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
+function PlayerCompass({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
 	const [info, setInfo] = useState({
 		direction: 0,
 		distance: 0,
@@ -162,7 +162,11 @@ function PlayerCompas({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
 
 	useEffect(() => {
 		const unregister = tankA.on('update', () => {
-			setInfo(tankA.getDistanceTo(tankB));
+			const {direction, distance} = tankA.getDistanceTo(tankB);
+			setInfo({
+				direction: direction * 180 / Math.PI,
+				distance,
+			});
 		});
 
 		return () => {
@@ -171,10 +175,17 @@ function PlayerCompas({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
 	}, [tankA, tankB]);
 
 	return (
-		<p className='space-x-2 text-sm text-white'>
-			<span>{Math.round(info.direction * 180 / Math.PI)}°</span>
+		<div className='m-2 flex items-center space-x-1 text-white drop-shadow-md'>
 			<span>{info.distance.toFixed(0)}m</span>
-		</p>
+			<motion.div
+				className='relative inline-block h-4 w-4 rounded-full'
+				animate={{
+					rotate: info.direction,
+				}}
+			>
+				<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><path fill='currentColor' d='M231.4 123.1a8 8 0 0 1-7.4 4.9h-40v80a16 16 0 0 1-16 16H88a16 16 0 0 1-16-16v-80H32a8 8 0 0 1-7.4-4.9a8.4 8.4 0 0 1 1.7-8.8l96-96a8.1 8.1 0 0 1 11.4 0l96 96a8.4 8.4 0 0 1 1.7 8.8Z'/></svg>
+			</motion.div>
+		</div>
 	);
 }
 
@@ -185,7 +196,7 @@ export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tan
 			{player && <PlayerInfo tank={player}/>}
 			{player && tanks.map(tank => (
 				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid}>
-					<PlayerCompas tankA={player} tankB={tank}/>
+					<PlayerCompass tankA={player} tankB={tank}/>
 				</PlayerStatus>
 			))}
 		</div>

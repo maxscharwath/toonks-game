@@ -495,10 +495,11 @@ export default class Tank extends Entity {
 
 	public getDistanceTo(tank: Tank): {distance: number; direction: number} {
 		const distance = this.position.distanceTo(tank.position);
-		const direction = Math.atan2(
-			tank.position.x - this.object3d.position.x,
-			tank.position.z - this.object3d.position.z,
-		);
+
+		const turretAngle = this.turret.getWorldDirection(new THREE.Vector3());
+		const direction = Math.atan2(turretAngle.x, turretAngle.z)
+			- Math.atan2(tank.position.x - this.position.x, tank.position.z - this.position.z);
+
 		return {distance, direction};
 	}
 
