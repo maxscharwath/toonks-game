@@ -17,6 +17,7 @@ class ShootHelper extends Line2 {
 		});
 
 		super(new LineGeometry(), material);
+		this.position.z = 0.3;
 		this.rotateY(-Math.PI / 2);
 	}
 
@@ -33,7 +34,7 @@ class ShootHelper extends Line2 {
 			const t = i * (tMax / nbSteps);
 			const x = t * speed.x;
 			const y = (t * speed.y) - (0.5 * (gravity * bulletWeight) * t * t);
-			return [x, y, 0];
+			return [x / 500, y / 500, 0];
 		}).flat();
 		this.geometry.setPositions(points);
 		this.computeLineDistances();
@@ -60,6 +61,11 @@ export default class TankPlayer extends Tank {
 		this.turret.add(this.camera);
 	}
 
+	update(delta: number) {
+		super.update(delta);
+		this.shootHelper.update();
+	}
+
 	shoot() {
 		const hadShoot = super.shoot();
 		if (hadShoot) {
@@ -72,6 +78,12 @@ export default class TankPlayer extends Tank {
 	honk() {
 		super.honk();
 		this.game.events.send('tank:honk', this.uuid);
+	}
+
+	protected initPhysics() {
+		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500, collisionGroup: 1});
+		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200, collisionGroup: 1});
+		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50, collisionGroup: 1});
 	}
 
 	protected createBullet(pos: THREE.Vector3, dir: THREE.Vector3) {

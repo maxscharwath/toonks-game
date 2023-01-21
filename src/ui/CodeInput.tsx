@@ -52,7 +52,7 @@ export default function CodeInput(props: CodeInputProps) {
 	}
 
 	function editCode(from: number, value: string): number {
-		if (code.join('') === value) {
+		if (value && code.join('') === value) {
 			return from;
 		}
 

@@ -1,9 +1,8 @@
 import {useNetwork} from '@/store/store';
 import React, {type RefObject, useEffect, useRef, useState} from 'react';
 import {type PeerData} from '@game/network/NetworkEvents';
-import {AnimatePresence, motion, useScroll, useTransform} from 'framer-motion';
+import {AnimatePresence, motion} from 'framer-motion';
 import clsx from 'clsx';
-import {root} from 'postcss';
 
 type Message = {
 	from: PeerData;

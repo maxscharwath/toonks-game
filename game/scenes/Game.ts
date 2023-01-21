@@ -190,6 +190,14 @@ export default class Game extends ResizeableScene3D {
 
 		await this.respawn();
 
+		const position = this.player.position.clone();
+		for (let i = 0; i < 0; i++) {
+			position.y += 1;
+			const tank = new Tank(this, position);
+			tank.addToScene();
+			this.tanks.add(tank);
+		}
+
 		const panel = new GUI();
 		const params = {
 			debug: false,

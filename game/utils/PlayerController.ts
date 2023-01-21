@@ -98,7 +98,7 @@ export default class PlayerController {
 		this.keyboard.start();
 		this.keyboard.on('wheel', (event: WheelEvent) => {
 			if (this.tank) {
-				this.tank.canonAngle += event.deltaY * 0.0005;
+				this.tank.canonAngle += 0.005 * Math.sign(event.deltaY);
 			}
 		});
 		this.keyboard.getOnAction('shoot', () => {

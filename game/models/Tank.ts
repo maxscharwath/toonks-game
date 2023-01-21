@@ -120,9 +120,7 @@ export default class Tank extends Entity {
 		this.chassis.add(headlightA, headlightA.target, headlightB, headlightB.target);
 		this.headlights.push(headlightA, headlightB);
 
-		this.game.physics.add.existing(this.chassis, {shape: 'convexMesh', mass: 1500, collisionGroup: 1});
-		this.game.physics.add.existing(this.turret, {shape: 'convexMesh', mass: 200, collisionGroup: 1});
-		this.game.physics.add.existing(this.canon, {shape: 'convexMesh', mass: 50, collisionGroup: 1});
+		this.initPhysics();
 
 		this.wheelMeshes = [
 			this.model.get('TankFree_Wheel_f_right')!,
@@ -359,15 +357,6 @@ export default class Tank extends Entity {
 		this.vehicle.applyEngineForce(0, WheelPosition.FrontRight);
 	}
 
-	public respawn() {
-		if (!this.isDead()) {
-			return;
-		}
-
-		this.health = 100;
-		this.init();
-	}
-
 	public hit(damage: number) {
 		this.properties.getProperty('health').value -= damage;
 	}
@@ -383,7 +372,7 @@ export default class Tank extends Entity {
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
 		// Translate the position to the front of the canon
 		pos.add(
-			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(1),
+			this.canon.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.6),
 		);
 
 		Explosion.make(this.game, pos);
@@ -578,6 +567,12 @@ export default class Tank extends Entity {
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		bullet.body.applyForce(force.x, force.y, force.z);
 		return bullet;
+	}
+
+	protected initPhysics() {
+		this.game.physics.add.existing(this.chassis, {mass: 1500, collisionGroup: 1, shape: 'box', width: 0.8, height: 0.5, depth: 1.1, y: 0.01});
+		this.game.physics.add.existing(this.turret, {mass: 200, collisionGroup: 1, shape: 'box', width: 0.5, height: 0.3, depth: 0.5});
+		this.game.physics.add.existing(this.canon, {mass: 50, collisionGroup: 1, shape: 'box', width: 0.1, height: 0.1, depth: 0.7});
 	}
 
 	private setVelocity(velocity: THREE.Vector3) {
