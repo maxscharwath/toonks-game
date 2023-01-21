@@ -1,9 +1,11 @@
-import create from 'zustand';
+import {create} from 'zustand';
+import {persist, createJSONStorage} from 'zustand/middleware';
 import {Network, NetworkStatus} from '@game/network/Network';
 import {ClientNetwork} from '@game/network/ClientNetwork';
 import {ServerNetwork} from '@game/network/ServerNetwork';
 import {type Metadata, type NetworkEvents, type PeerData} from '@game/network/NetworkEvents';
 import {Howl} from 'howler';
+import {type TankType} from '@game/models/TankType';
 
 type Store = {
 	hostGame: (metadata: Metadata) => Promise<{code: string; network: ServerNetwork}>;
@@ -58,6 +60,31 @@ export const useNetwork = create<Store>((set, get) => {
 		maxNbPlayers: 6,
 	};
 });
+
+export const usePlayerSettings = create(persist<{
+	showMenu: boolean;
+	name: string;
+	tank: TankType;
+	setName: (name: string) => void;
+	setTank: (type: TankType) => void;
+	setMenu: (showMenu: boolean) => void;
+}>(
+		set => ({
+			showMenu: true,
+			name: 'Player',
+			tank: 'heig',
+			setName(name: string) {
+				set({name});
+			},
+			setTank(tank: TankType) {
+				set({tank});
+			},
+			setMenu(showMenu: boolean) {
+				set({showMenu});
+			},
+		}),
+		{name: 'player-storage'},
+		));
 
 export const useAudio = create<{
 	backsound: Howl;
