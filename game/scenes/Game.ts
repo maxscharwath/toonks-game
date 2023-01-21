@@ -22,6 +22,9 @@ export type GameConfig = {
 	network: Network<NetworkEvents, Metadata>;
 };
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const DEBUG = false;
+
 class TankManager extends Map<string, Tank> {
 	public readonly events = new Emittery<{
 		add: Tank;
@@ -198,25 +201,30 @@ export default class Game extends ResizeableScene3D {
 			this.tanks.add(tank);
 		}
 
-		const panel = new GUI();
-		const params = {
-			debug: false,
-			mode: 2049,
-		};
+		if (DEBUG) {
+			// GUI
+			const panel = new GUI();
+			const params = {
+				debug: false,
+				mode: 2049,
+			};
 
-		panel.add(params, 'debug').onChange((value: boolean) => {
-			if (value) {
-				this.physics.debug?.enable();
-			} else {
-				this.physics.debug?.disable();
-			}
-		});
-		panel
-			.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096])
-			.onChange((value: number) => {
-				this.physics.debug?.mode(value);
+			panel.add(params, 'debug').onChange((value: boolean) => {
+				if (value) {
+					this.physics.debug?.enable();
+				} else {
+					this.physics.debug?.disable();
+				}
 			});
-		this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
+			panel
+				.add(params, 'mode', [1 + 2048, 1 + 4096, 1 + 2048 + 4096])
+				.onChange((value: number) => {
+					this.physics.debug?.mode(value);
+				});
+
+			// Stats
+			this.renderer.domElement.parentElement?.appendChild(this.stats.dom);
+		}
 
 		this.events.on('tank:shoot', uuid => {
 			this.tanks.getNetwork(uuid)?.shoot();

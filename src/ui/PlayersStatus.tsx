@@ -128,32 +128,6 @@ function PlayerStatus({tank, isPlayer, children}: {tank: Tank; isPlayer: boolean
 	);
 }
 
-function PlayerInfo({tank}: {tank: Tank}) {
-	const [x, setX] = useState('');
-	const [y, setY] = useState('');
-	const [z, setZ] = useState('');
-
-	useEffect(() => {
-		const unregister = tank.on('update', () => {
-			setX(tank.position.x.toFixed(0));
-			setY(tank.position.y.toFixed(0));
-			setZ(tank.position.z.toFixed(0));
-		});
-
-		return () => {
-			unregister();
-		};
-	}, [tank]);
-
-	return (
-		<p className='space-x-2 text-sm text-white'>
-			<span>x: {x}</span>
-			<span>y: {y}</span>
-			<span>z: {z}</span>
-		</p>
-	);
-}
-
 function PlayerCompass({tankA, tankB}: {tankA: Tank; tankB: Tank}) {
 	const [info, setInfo] = useState({
 		direction: 0,
@@ -193,7 +167,6 @@ export default function PlayersStatus({player, tanks}: {player?: TankPlayer; tan
 	return (
 		<div className='absolute top-0 left-0 z-10 m-4 flex flex-col justify-start space-y-4'>
 			{player && <PlayerStatus tank={player} isPlayer={true}/>}
-			{player && <PlayerInfo tank={player}/>}
 			{player && tanks.map(tank => (
 				<PlayerStatus tank={tank} isPlayer={false} key={tank.uuid}>
 					<PlayerCompass tankA={player} tankB={tank}/>

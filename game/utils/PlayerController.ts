@@ -37,7 +37,6 @@ export default class PlayerController {
 		const steeringIncrement = 0.04;
 		const steeringClamp = 0.5;
 		const maxEngineForce = 6000;
-		const maxBreakingForce = 100;
 
 		// Front/back
 		if (this.keyboard.getAction('moveForward')) {

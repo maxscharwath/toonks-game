@@ -34,6 +34,21 @@ export default function ChatUi(props: {className?: string}) {
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const lastMessageTime = useRef(0);
 
+	useEffect(() => {
+		const listener = (event: KeyboardEvent) => {
+			if (event.key === 'Tab') {
+				event.preventDefault();
+				document.exitPointerLock();
+				inputRef.current?.focus();
+			}
+		};
+
+		document.addEventListener('keydown', listener);
+		return () => {
+			document.removeEventListener('keydown', listener);
+		};
+	}, []);
+
 	function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (Date.now() - lastMessageTime.current < 600) {
@@ -57,6 +72,7 @@ export default function ChatUi(props: {className?: string}) {
 	function send(message: string) {
 		const peerData = network?.getPeerData();
 		if (peerData) {
+			message = message.trim().slice(0, 100);
 			const date = new Date();
 			network?.channel('chat').send({
 				message,
@@ -86,7 +102,7 @@ export default function ChatUi(props: {className?: string}) {
 
 	return (
 		<div className={clsx(props.className, 'flex flex-col justify-end overflow-hidden')}>
-			<div className='flex flex-1 flex-col-reverse overflow-y-auto' ref={scrollRef}>
+			<div className='mb-1 flex flex-1 flex-col-reverse overflow-y-auto' ref={scrollRef}>
 				<AnimatePresence mode='sync'>
 					{messages.map(message => (
 						<Item message={message} container={scrollRef} key={`${message.from.uuid}-${message.date.getTime()}`}/>
@@ -94,7 +110,7 @@ export default function ChatUi(props: {className?: string}) {
 				</AnimatePresence>
 			</div>
 			<form onSubmit={handleSubmit}>
-				<input type='text' ref={inputRef} className='w-full rounded-md border bg-gray-200/50 p-2 text-black backdrop-blur-sm placeholder:text-gray-900' placeholder='Type a message'/>
+				<input type='text' ref={inputRef} className='focus-visible:ring-toonks-orange w-full rounded-md border border-gray-800/50 bg-gray-900/50 p-2 text-gray-300 backdrop-blur-sm placeholder:text-gray-300 focus-visible:outline-none focus-visible:ring-1' placeholder='Type a message'/>
 			</form>
 		</div>
 	);

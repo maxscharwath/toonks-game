@@ -24,7 +24,7 @@ export default function GameUi({game}: {game: Game}) {
 	return (
 		<>
 			<PlayersStatus player={player} tanks={tanks}/>
-			<ChatUi className='absolute bottom-0 left-0 h-1/3 w-full max-w-sm p-3 text-sm'/>
+			<ChatUi className='absolute bottom-0 left-0 h-2/5 w-full max-w-sm p-3 text-sm'/>
 			<Toaster
 				position='top-right'
 				gutter={4}
