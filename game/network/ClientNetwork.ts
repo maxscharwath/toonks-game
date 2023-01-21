@@ -47,10 +47,18 @@ export class ClientNetwork extends Network<NetworkEvents, Metadata> {
 							this.addConnection(connection);
 							resolve();
 						})
+						.once('close', () => {
+							this.disconnect();
+							reject(new Error('Connection closed'));
+						})
 						.once('error', error => {
 							this.disconnect();
 							reject(error);
 						});
+				})
+				.once('close', () => {
+					this.disconnect();
+					reject(new Error('Connection closed'));
 				})
 				.once('error', error => {
 					this.disconnect();
