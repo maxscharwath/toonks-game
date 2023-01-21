@@ -5,7 +5,6 @@ import {useAudio, useNetwork} from '@/store/store';
 import {NetworkStatus} from '@game/network/Network';
 import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
-import Button from '../../ui/Button';
 import SettingsMenu from '@/ui/SettingsMenu';
 
 function useToggleTimeout(initial: boolean, timeout: number) {

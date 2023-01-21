@@ -29,7 +29,7 @@ export default function Connected() {
 					</span>
 				</button>
 			</h2>
-			<h2 className='flex justify-center text-white'>
+			<h2 className='bg:text-white flex justify-center'>
 				{peers.length} / {maxNbPlayers} player(s) connected
 			</h2>
 			<div className='grid grid-cols-3 gap-3'>
