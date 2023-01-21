@@ -8,6 +8,7 @@ import type Game from '@game/scenes/Game';
 import {type TankType, TankTypes} from '@game/models/TankType';
 import {type Audio} from '@game/utils/AudioManager';
 import Random from '@game/utils/Random';
+import {makeBullet} from '@game/models/Bullet';
 
 export enum WheelPosition {
 	FrontLeft = 0,
@@ -87,13 +88,15 @@ export default class Tank extends Entity {
 	private readonly model = Tank.parts.clone();
 	private readonly shootSound: Audio;
 	private readonly honkSound: Audio;
+	private readonly engineSound: Audio;
 
 	constructor(game: Game, position: THREE.Vector3, uuid: string = shortUuid.uuid()) {
 		super(game, uuid);
 		this.group = new ExtendedGroup();
 
-		this.shootSound = game.audioManager.createAudio('/sounds/shoot.mp3');
-		this.honkSound = game.audioManager.createAudio('/sounds/horn.mp3');
+		this.shootSound = game.audioManager.createAudio('/sounds/shoot.ogg');
+		this.honkSound = game.audioManager.createAudio('/sounds/horn.ogg');
+		this.engineSound = game.audioManager.createAudio();
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
 		this.turret = new ExtendedObject3D().add(this.model.get('TankFree_Tower')!);
@@ -108,7 +111,9 @@ export default class Tank extends Entity {
 		this.turret.position.copy(position);
 		this.turret.rotation.set(0, Math.PI, 0);
 
-		this.chassis.add(this.shootSound, this.honkSound);
+		this.chassis.add(this.shootSound, this.honkSound, this.engineSound);
+
+		this.engineSound.setLoop(true);
 
 		// Add lights to chassis
 		const headlightA = new THREE.SpotLight(0xfff0c7, 5, 50, Math.PI / 5, 0.5);
@@ -366,7 +371,7 @@ export default class Tank extends Entity {
 			return false;
 		}
 
-		this.shootSound.play('/sounds/shoot.mp3');
+		this.shootSound.play();
 		this.lastShot = Date.now();
 		// Get canon position
 		const pos = this.canon.getWorldPosition(new THREE.Vector3());
@@ -417,6 +422,14 @@ export default class Tank extends Entity {
 				WheelPosition.FrontRight,
 			);
 
+			this.engineSound.setVolume(
+				Math.max(0, (Math.abs(speed) + 30) / 100),
+			);
+			// Set pitch
+			this.engineSound.setPlaybackRate(
+				Math.max(0.5, (Math.abs(speed) + 30) / 50),
+			);
+
 			this.vehicle.applyEngineForce(engineForce - (speed * 75), WheelPosition.FrontLeft);
 			this.vehicle.applyEngineForce(engineForce - (speed * 75), WheelPosition.FrontRight);
 
@@ -433,6 +446,7 @@ export default class Tank extends Entity {
 	public addToScene() {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		this.game.add.existing(this.group);
+		this.engineSound.play('/sounds/engine-loop2.ogg');
 	}
 
 	public removeFromScene() {
@@ -552,17 +566,8 @@ export default class Tank extends Entity {
 	}
 
 	protected createBullet(pos: THREE.Vector3, direction: THREE.Vector3) {
-		const bullet = this.game.physics.add.sphere(
-			{radius: 0.1, x: pos.x, y: pos.y, z: pos.z, mass: 100},
-			{phong: {color: 0x202020}},
-		);
-		setTimeout(() => {
-			this.game.physics.destroy(bullet);
-			bullet.removeFromParent();
-		}, 5000);
-
+		const bullet = makeBullet(this.game, pos);
 		const force = direction.clone().multiplyScalar(10000);
-
 		const recoil = force.clone().multiplyScalar(-0.2);
 		this.canon.body.applyForce(recoil.x, recoil.y, recoil.z);
 		bullet.body.applyForce(force.x, force.y, force.z);

@@ -37,7 +37,7 @@ export default class Explosion extends Entity {
 		this.audio = game.audioManager.createAudio();
 		this.object3d.add(this.audio);
 
-		this.audio.play('/sounds/explosion.mp3');
+		this.audio.play('/sounds/explosion.ogg');
 		if (this.onCollision) {
 			setTimeout(() => {
 				this.checkCollision();

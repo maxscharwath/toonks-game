@@ -12,7 +12,6 @@ export default class PlayerController {
 		.addAction('moveForward', ['KeyW'])
 		.addAction('moveBackward', ['KeyS'])
 		.addAction('shoot', ['Space'])
-		.addAction('break', ['AltLeft'])
 		.addAction('resetPosition', ['KeyR'])
 		.addAction('headlights', ['KeyL'])
 		.addAction('honk', ['KeyK']);
@@ -69,11 +68,6 @@ export default class PlayerController {
 			if (Math.abs(this.tank.steering) <= steeringIncrement) {
 				this.tank.steering = 0;
 			}
-		}
-
-		// Break
-		if (this.keyboard.getAction('break')) {
-			this.tank.breakingForce = maxBreakingForce;
 		}
 
 		const rotation = this.game.camera.getWorldDirection(new THREE.Vector3());

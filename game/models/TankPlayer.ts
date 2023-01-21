@@ -63,7 +63,6 @@ export default class TankPlayer extends Tank {
 
 	update(delta: number) {
 		super.update(delta);
-		this.shootHelper.update();
 	}
 
 	shoot() {
@@ -89,9 +88,7 @@ export default class TankPlayer extends Tank {
 	protected createBullet(pos: THREE.Vector3, dir: THREE.Vector3) {
 		const bullet = super.createBullet(pos, dir);
 		// Event when bullet hit something
-		bullet.body.on.collision(() => {
-			this.game.physics.destroy(bullet);
-			bullet.removeFromParent();
+		bullet.onCollision(() => {
 			const position = bullet.getWorldPosition(new THREE.Vector3());
 			this.game.events.send('explosion:create', {
 				position: position.toArray(),
