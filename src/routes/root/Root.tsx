@@ -7,6 +7,8 @@ import Connected from '@/routes/root/Connected';
 import Confetti from '@/ui/Confetti';
 import SettingsMenu from '@/ui/SettingsMenu';
 import PlayerInfosSelection from '@/ui/PlayerInfosSelection';
+import Credits from '@/ui/Credits';
+import Button from '@/ui/Button';
 
 function useToggleTimeout(initial: boolean, timeout: number) {
 	const [value, setValue] = useState(initial);
@@ -26,9 +28,10 @@ export default function Root() {
 	const [confetti, toggleConfetti] = useToggleTimeout(false, 2000);
 	const audio = useAudio();
 	const {showMenu} = usePlayerSettings();
+	const [showCredits, setShowCredits] = useState(false);
 
 	useEffect(() => {
-		audio.backsound.play();
+		audio.play();
 	}, []);
 
 	useEffect(() => {
@@ -54,6 +57,16 @@ export default function Root() {
 
 				<div className='fixed top-2 left-2'>
 					<SettingsMenu />
+				</div>
+				<div className='fixed top-2 right-2'>
+					<Button
+						size='small'
+						onClick={() => {
+							setShowCredits(true);
+						}}>Credits</Button>
+					<Credits isOpen={showCredits} onClose={() => {
+						setShowCredits(false);
+					}}/>
 				</div>
 			</div>
 		</>

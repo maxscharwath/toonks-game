@@ -86,21 +86,46 @@ export const usePlayerSettings = create(persist<{
 		{name: 'player-storage'},
 		));
 
-export const useAudio = create<{
-	backsound: Howl;
+export const useAudio = create(persist<{
+	mute: boolean;
+	volume: number;
 	toggleBacksound: () => void;
 	setBacksoundVolume: (volume: number) => void;
-}>(() => ({
-			backsound: new Howl({
-				src: ['/audio/Eyes_on_the_Podium.mp3'],
-				loop: true,
-				volume: 0.5,
+	play(): void;
+	fadeOut(): void;
+}>((set, get) => {
+			let _backsound: Howl;
+			const backsound = () => {
+				if (!_backsound) {
+					_backsound = new Howl({
+						src: ['/audio/Eyes_on_the_Podium.mp3'],
+						loop: true,
+						volume: get()?.volume ?? 0.5,
+						mute: get()?.mute ?? false,
+					});
+				}
+
+				return _backsound;
+			};
+
+			return ({
 				mute: false,
-			}),
-			toggleBacksound() {
-				this.backsound.mute(!this.backsound.mute());
-			},
-			setBacksoundVolume(volume: number) {
-				this.backsound.volume(volume);
-			},
-		}));
+				volume: 0.5,
+				toggleBacksound() {
+					const mute = !backsound().mute();
+					set({mute});
+					backsound().mute(mute);
+				},
+				setBacksoundVolume(volume: number) {
+					set({volume});
+					backsound().volume(volume);
+				},
+				play() {
+					backsound().play();
+				},
+				fadeOut() {
+					const from = backsound().volume();
+					backsound().fade(from, 0.0, 5000);
+				},
+			});
+		}, {name: 'audio-storage'}));

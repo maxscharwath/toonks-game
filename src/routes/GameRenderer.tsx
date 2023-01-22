@@ -15,7 +15,7 @@ export default function GameRenderer() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const audio = useAudio();
 	useEffect(() => {
-		audio.backsound.fade(1.0, 0.0, 5000);
+		audio.fadeOut();
 
 		if (!network) {
 			window.location.href = '/';

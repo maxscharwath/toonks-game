@@ -18,7 +18,7 @@ class ChunkLoaderWorker {
 			throw new Error('Could not get canvas context');
 		}
 
-		this.context = context as OffscreenCanvasRenderingContext2D;
+		this.context = context;
 
 		this.image = new Promise<ImageBitmap>((resolve, reject) => {
 			fetch(options.worldHeightMapUrl)

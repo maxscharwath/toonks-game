@@ -9,6 +9,7 @@ export default function SettingsMenu() {
 	return (
 		<>
 			<Button
+				size='small'
 				onClick={() => {
 					setOpen(!open);
 				}}
@@ -49,7 +50,7 @@ export default function SettingsMenu() {
 								<input
 									id='mute'
 									type='checkbox'
-									value=''
+									defaultChecked={audio.mute}
 									className='accent-toonks-orange text-toonks-orange focus:ring-toonks-orangeLight dark:ring-toonks-orange dark:focus:ring-toonks-orange h-4 w-4 cursor-pointer rounded border-gray-300 bg-gray-100 focus:ring-2 dark:border-gray-500 dark:bg-gray-600 dark:focus:ring-offset-gray-700'
 									onChange={() => {
 										audio.toggleBacksound();
@@ -68,10 +69,10 @@ export default function SettingsMenu() {
 						<li>
 							<input
 								type='range'
-								min='0.1'
+								min='0'
 								max='1'
-								defaultValue={audio.backsound.volume()}
-								step='0.1'
+								defaultValue={audio.volume}
+								step='0.01'
 								className='accent-toonks-orange h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200'
 								onChange={e => {
 									audio.setBacksoundVolume(parseFloat(e.target.value));
