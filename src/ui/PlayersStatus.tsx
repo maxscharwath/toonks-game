@@ -1,6 +1,5 @@
 import type Tank from '@game/models/Tank';
 import type TankPlayer from '@game/models/TankPlayer';
-import {TankTypes} from '@game/models/TankType';
 import clsx from 'clsx';
 import {motion} from 'framer-motion';
 import React, {useEffect, useState} from 'react';
@@ -95,7 +94,7 @@ function PlayerStatus({tank, isPlayer, children}: {tank: Tank; isPlayer: boolean
 			}}
 		>
 			<PlayerAvatar
-				src={TankTypes[tankData.type].avatar}
+				src={tankData.type.avatar}
 				isDead={tankData.health <= 0}
 				className={clsx({
 					'h-24 2xl:h-32 rounded-xl': isPlayer,

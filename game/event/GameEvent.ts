@@ -24,6 +24,7 @@ export type GameEvents = {
 		message: string;
 		icon: string;
 	};
+	'sync:time': number;
 };
 
 export default class GameEvent {

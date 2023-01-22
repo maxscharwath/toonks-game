@@ -146,20 +146,6 @@ export default class Game extends ResizeableScene3D {
 		const fogColor = new THREE.Color('#63a7ff');
 		this.scene.fog = new THREE.Fog(fogColor, 50, 150);
 		this.scene.background = new THREE.Color(fogColor);
-		const skybox = new THREE.Mesh(
-			new THREE.SphereGeometry(1000, 50, 50),
-			new THREE.MeshBasicMaterial({
-				blending: THREE.CustomBlending,
-				blendEquation: THREE.AddEquation,
-				blendSrc: THREE.DstColorFactor,
-				blendDst: THREE.DstColorFactor,
-				side: THREE.BackSide,
-				fog: false,
-				map: new THREE.TextureLoader().load('/images/skybox.png'),
-			}),
-		);
-		skybox.position.y = -100;
-		this.scene.add(skybox);
 
 		const chunkLoader = new ChunkLoader({
 			worldHeightMapUrl: '/images/heightmap.png',
@@ -242,6 +228,10 @@ export default class Game extends ResizeableScene3D {
 			Explosion.make(this, new THREE.Vector3().fromArray(position), scale);
 		});
 
+		this.events.on('sync:time', time => {
+			this.sun.angle = time;
+		});
+
 		const tanks = new Map<string, any>();
 		this.config.network.channel('update').on((data: any) => {
 			if (!this.player || data.uuid === this.player.uuid) {
@@ -251,7 +241,12 @@ export default class Game extends ResizeableScene3D {
 			tanks.set(data.uuid, data);
 		});
 
-		asyncLoop(async () => this.world.update(), 300);
+		asyncLoop(async () => {
+			await this.world.update();
+			if (this.config.network.isHost) {
+				this.events.send('sync:time', this.sun.angle, false);
+			}
+		}, 300);
 		asyncLoop(async () => {
 			this.config.network.channel('update').send(this.player.export());
 			tanks.forEach((data, uuid) => {

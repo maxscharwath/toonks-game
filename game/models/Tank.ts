@@ -95,7 +95,7 @@ export default class Tank extends Entity {
 		this.group = new ExtendedGroup();
 
 		this.shootSound = game.audioManager.createAudio('/sounds/shoot.ogg');
-		this.honkSound = game.audioManager.createAudio('/sounds/horn.ogg');
+		this.honkSound = game.audioManager.createAudio('/sounds/honk.ogg');
 		this.engineSound = game.audioManager.createAudio();
 
 		this.chassis = new ExtendedObject3D().add(this.model.get('TankFree_Body')!);
@@ -337,7 +337,7 @@ export default class Tank extends Entity {
 	}
 
 	public get type() {
-		return this.properties.getProperty('type').value;
+		return TankTypes[this.properties.getProperty('type').value];
 	}
 
 	public isDead() {
@@ -392,7 +392,9 @@ export default class Tank extends Entity {
 	}
 
 	public honk() {
-		this.honkSound.play();
+		this.honkSound.play(
+			this.type.honk,
+		);
 	}
 
 	public getCanonDirection() {
