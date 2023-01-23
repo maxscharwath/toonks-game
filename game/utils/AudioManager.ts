@@ -25,6 +25,14 @@ export class Audio extends THREE.PositionalAudio {
 		}
 	}
 
+	stop() {
+		return this.source ? super.stop() : this;
+	}
+
+	pause(): this {
+		return this.source ? super.pause() : this;
+	}
+
 	play(delay?: number): this;
 	play(src?: string, delay?: number): this;
 	play(src?: string | number, delay?: number): this {

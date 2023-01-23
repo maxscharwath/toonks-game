@@ -24,7 +24,7 @@ export function makeBullet(game: Game, position: Vector3): Bullet {
 	}, 2000);
 
 	const destroy = () => {
-		audio?.stop();
+		audio.stop();
 		game.physics.destroy(bullet);
 		bullet.removeFromParent();
 		clearTimeout(timeout);
