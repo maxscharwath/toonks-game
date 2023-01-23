@@ -28,6 +28,13 @@ export const TankTypes = {
 		avatar: '/images/avatar/weeb.cropped.png',
 		honk: '/sounds/uwu.ogg',
 	},
+	thomas: {
+		name: 'Thomas The Tank',
+		url: '/images/tank/thomas.png',
+		backdrop: '/images/avatar/thomas.png',
+		avatar: '/images/avatar/thomas.cropped.png',
+		honk: '/sounds/thomas.ogg',
+	},
 } as const satisfies Record<string, {
 	name: string;
 	url: string;
