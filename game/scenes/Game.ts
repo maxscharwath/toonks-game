@@ -148,7 +148,7 @@ export default class Game extends ResizeableScene3D {
 		this.scene.background = new THREE.Color(fogColor);
 
 		const chunkLoader = new ChunkLoader({
-			worldHeightMapUrl: '/images/heightmap.png',
+			worldHeightMapUrl: '/images/heightmap.webp',
 			chunkSize: 128,
 			scale: 0.25,
 		});

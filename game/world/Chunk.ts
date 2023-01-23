@@ -12,17 +12,17 @@ export class Chunk extends ExtendedGroup {
 	}
 
 	static {
-		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.png');
+		const oceanTexture = new THREE.TextureLoader().load('/images/dirt.webp');
 		oceanTexture.wrapS = oceanTexture.wrapT = THREE.RepeatWrapping;
-		const sandTexture = new THREE.TextureLoader().load('/images/sand.png');
+		const sandTexture = new THREE.TextureLoader().load('/images/sand.webp');
 		sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-		const grassTexture = new THREE.TextureLoader().load('/images/grass.png');
+		const grassTexture = new THREE.TextureLoader().load('/images/grass.webp');
 		grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
-		const rockTexture = new THREE.TextureLoader().load('/images/rock.png');
+		const rockTexture = new THREE.TextureLoader().load('/images/rock.webp');
 		rockTexture.wrapS = rockTexture.wrapT = THREE.RepeatWrapping;
-		const snowTexture = new THREE.TextureLoader().load('/images/snow.png');
+		const snowTexture = new THREE.TextureLoader().load('/images/snow.webp');
 		snowTexture.wrapS = snowTexture.wrapT = THREE.RepeatWrapping;
-		const texture = new THREE.TextureLoader().load('/images/water.png');
+		const texture = new THREE.TextureLoader().load('/images/water.webp');
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		texture.repeat.set(10, 10);
 		this.waterMaterial = new WaterMaterial(texture);

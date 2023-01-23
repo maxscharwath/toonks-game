@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
+import {useParams} from 'react-router-dom';
 import {useNetwork, usePlayerSettings} from '@/store/store';
 import Button from '@/ui/Button';
 import {NetworkStatus} from '@game/network/Network';
 import CodeInput from '@/ui/CodeInput';
-import {useParams} from 'react-router-dom';
 
 export default function JoinGameTab() {
 	const {status, joinGame} = useNetwork();

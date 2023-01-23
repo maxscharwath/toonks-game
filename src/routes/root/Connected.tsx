@@ -39,7 +39,7 @@ export default function Connected() {
 					{maxNbPlayers}
 				</span>
 			</p>
-			<div className='grid grid-cols-3 gap-3'>
+			<div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
 				{peers.map(peer => (
 					<div
 						className='flex flex-col items-center space-y-2 rounded-lg bg-gray-100 py-4 dark:bg-gray-700'
@@ -48,7 +48,7 @@ export default function Connected() {
 						<h2 className='w-full truncate px-4 text-center text-lg font-bold text-gray-900 dark:text-white'>
 							{peer.metadata.name}
 						</h2>
-						<div>
+						<div className='w-full'>
 							<Canvas camera={{fov: 35, zoom: 1.5}}>
 								<TankModel type={peer.metadata.tank}/>
 							</Canvas>

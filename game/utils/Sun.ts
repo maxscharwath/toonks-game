@@ -18,7 +18,7 @@ export class SkyBox extends THREE.Group {
 
 	constructor() {
 		super();
-		const skyboxTexture = new THREE.TextureLoader().load('/images/skybox.png');
+		const skyboxTexture = new THREE.TextureLoader().load('/images/skybox.webp');
 		this.skybox = this.createMesh(skyboxTexture, 10, {
 			blending: THREE.CustomBlending,
 			blendEquation: THREE.AddEquation,
@@ -26,7 +26,7 @@ export class SkyBox extends THREE.Group {
 			blendDst: THREE.DstColorFactor,
 		});
 
-		const starTexture = new THREE.TextureLoader().load('/images/starbox.png');
+		const starTexture = new THREE.TextureLoader().load('/images/starbox.webp');
 		starTexture.wrapS = THREE.RepeatWrapping;
 		starTexture.wrapT = THREE.RepeatWrapping;
 		starTexture.repeat.set(3, 3);

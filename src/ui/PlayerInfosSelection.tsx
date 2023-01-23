@@ -54,7 +54,7 @@ export default function PlayerInfosSelection() {
 					</label>
 				</div>
 				<div>
-					<div className='relative overflow-hidden rounded border border-gray-100/90 dark:border-gray-700/90'>
+					<div className='bg-gradient-radial relative overflow-hidden rounded border border-gray-100/90 from-slate-900/80 to-gray-900/30 dark:border-gray-700/90'>
 						<AnimatePresence mode={'popLayout'}>
 							<motion.img
 								key={TankTypeList[index].key}
@@ -62,7 +62,7 @@ export default function PlayerInfosSelection() {
 								animate={{opacity: 0.5}}
 								exit={{opacity: 0}}
 								transition={{duration: 0.25}}
-								className='absolute inset-0 -z-10 h-full w-full object-cover object-[center_20%] opacity-50 blur-sm' src={TankTypeList[index].value.backdrop}
+								className='absolute inset-0 -z-10 h-full w-full object-cover object-[center_20%] opacity-50 blur-[1px]' src={TankTypeList[index].value.backdrop}
 							/>
 						</AnimatePresence>
 						<AnimatePresence mode={'wait'}>
