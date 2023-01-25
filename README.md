@@ -9,7 +9,14 @@ TOONKS is a 3D Multiplayer Game where you can play a tiny tank against your frie
 You can play on your browser without any installation.
 
 ## How to play
-> Go to https://toonks.vercel.app/
+> Go to https://toonks.com/
+
+## Before playing
+For the moment, please play only with Chromium-based browsers (Chrome, Edge, Opera, Brave, Vivaldi, etc.). This game is not compatible with Firefox and Safari.
+For the best experience, please use a powerful computer with a good internet connection.
+This game use WebRTC to connect players. Your IP can be leaked if you play with a VPN.
+We are not responsible for any damage caused by this game. Please play responsibly.
+
 
 ## Technical details
 - [x] 3D Game
